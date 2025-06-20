@@ -19,6 +19,10 @@ import PurchaseTilesList from "@/app/purchaseTiles/PurchaseTilesList";
 import ProductList from "@/app/product/ProductList";
 import TrialBalanceReport from "@/app/trialBalance/TrialBalanceReport";
 import LedgerReport from "@/app/ledger/LedgerReport";
+import EstimateView from "@/app/estimate/EstimateView";
+import PurchaseGraniteView from "@/app/purchaseGranite/PurchaseGraniteView";
+import PurchaseTilesView from "@/app/purchaseTiles/PurchaseTilesView";
+import SalesView from "@/app/sales/SalesView";
 
 function AppRoutes() {
   return (
@@ -33,13 +37,17 @@ function AppRoutes() {
         <Route path="/" element={<ProtectedRoute />}>
           <Route path="/home" element={<Home />} />
           <Route path="/estimate" element={<EstimateList />} />
+          <Route path="/estimate/view/:id" element={<EstimateView />} />
           <Route path="/day-book" element={<DayBookReport />} />
           <Route path="/ledger" element={<LedgerReport />} />
           <Route path="/trial-balance" element={<TrialBalanceReport />} />
           <Route path="/product" element={<ProductList />} />
           <Route path="/purchase-granite" element={<PurchaseGraniteList />} />
-          <Route path="/Purchase-tiles" element={<PurchaseTilesList />} />
+          <Route path="/purchase-granite/view/:id" element={<PurchaseGraniteView />} />
+          <Route path="/purchase-tiles" element={<PurchaseTilesList />} />
+          <Route path="/purchase-tiles/view/:id" element={<PurchaseTilesView />} />
           <Route path="/sales" element={<SalesList />} />
+          <Route path="/sales/view/:id" element={<SalesView />} />
           <Route path="/stocks" element={<StocksReport />} />
          
         </Route>

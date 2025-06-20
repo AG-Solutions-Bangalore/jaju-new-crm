@@ -40,7 +40,7 @@ export function AppBottombar() {
         },
         {
           title: "Purchase Tiles",
-          url: "/Purchase-tiles",
+          url: "/purchase-tiles",
         },
       
       ],
@@ -50,11 +50,11 @@ export function AppBottombar() {
       url: "/product",
       icon: ShoppingBag,
     },
-    // {
-    //   title: "Sales",
-    //   url: "/sales",
-    //   icon: ShoppingBag,
-    // },
+    {
+      title: "Sales",
+      url: "/sales",
+      icon: ShoppingBag,
+    },
 
     {
       title: "Report",
@@ -82,7 +82,7 @@ export function AppBottombar() {
   ];
 
   // show only first 5 items in bottom navigation
-  const mobileNavItems = navItems.slice(0, 5);
+  const mobileNavItems = navItems.slice(0, 6);
 
   const handleItemClick = (item, e) => {
     if (item.items) {
@@ -149,75 +149,90 @@ export function AppBottombar() {
         </div>
       </div>
 
-      {/* master and report*/}
-      <AnimatePresence>
-        {activeMenu && (
-          <motion.div 
-            className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-end"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setActiveDropdown(null)}
-          >
-            <motion.div 
-              className="w-full bg-white rounded-t-xl overflow-hidden"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex flex-col">
-                {/* Handle bar for swipe gestures */}
-                <div className="w-full flex justify-center pt-2 pb-4">
-                  <div className="w-12 h-1 bg-gray-300 rounded-full" />
-                </div>
-                
-                <div className="px-4 pb-2">
-                  <h3 className="font-medium text-base flex items-center">
-                    {React.createElement(activeMenu.icon, { className: "h-4 w-4 mr-2 text-blue-600" })}
-                    {activeMenu.title}
-                  </h3>
-                </div>
-                
-                <div className="max-h-64 overflow-y-auto">
-                  {activeMenu.items.map((subItem, index) => (
-                    <motion.div
-                      key={subItem.title}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <Link
-                        to={subItem.url}
-                        className={`flex justify-between items-center py-2 px-3 border-b border-gray-100 ${
-                          location.pathname.startsWith(subItem.url)
-                            ? "text-blue-700 font-medium bg-blue-50"
-                            : "text-gray-700"
-                        }`}
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <span className=" text-sm ">{subItem.title}</span>
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
-                      </Link>
-                    </motion.div>
-                  ))}
-                </div>
-                
-                <div className="p-4">
-                  <button 
-                    onClick={() => setActiveDropdown(null)}
-                    className="w-full py-1 rounded-lg bg-gray-100 text-gray-700 font-medium text-sm flex items-center justify-center"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Close
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+   <AnimatePresence>
+           {activeMenu && (
+             <motion.div 
+               className="fixed inset-0 bg-black/30 z-50 flex items-end justify-center"
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               onClick={() => setActiveDropdown(null)}
+             >
+               <motion.div 
+                 className="w-full max-w-md mx-4 mb-16 bg-white rounded-xl shadow-xl overflow-hidden"
+                 initial={{ y: 50, opacity: 0, scale: 0.9 }}
+                 animate={{ y: 0, opacity: 1, scale: 1 }}
+                 exit={{ y: 50, opacity: 0, scale: 0.9 }}
+                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                 onClick={e => e.stopPropagation()}
+               >
+                 {/* Header */}
+                 <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center">
+                       <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                         {React.createElement(activeMenu.icon, { className: "h-4 w-4 text-blue-600" })}
+                       </div>
+                       <h3 className="font-semibold text-gray-900">
+                         {activeMenu.title}
+                       </h3>
+                     </div>
+                     <motion.button
+                       onClick={() => setActiveDropdown(null)}
+                       className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center"
+                       whileHover={{ scale: 1.1, rotate: 90 }}
+                       whileTap={{ scale: 0.9 }}
+                     >
+                       <X className="h-3 w-3 text-gray-600" />
+                     </motion.button>
+                   </div>
+                 </div>
+                 
+                 {/* Menu items */}
+                 <div className="py-1">
+                   {activeMenu.items.map((subItem, index) => (
+                     <motion.div
+                       key={subItem.title}
+                       initial={{ opacity: 0, x: -10 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       transition={{ delay: index * 0.05, duration: 0.2 }}
+                     >
+                       <Link
+                         to={subItem.url}
+                         onClick={() => setActiveDropdown(null)}
+                         className={`w-full flex items-center justify-between px-4 py-3 text-left transition-all duration-200 ${
+                           location.pathname.startsWith(subItem.url)
+                             ? "bg-blue-50 border-l-2 border-blue-500"
+                             : "hover:bg-gray-50"
+                         }`}
+                       >
+                         <span className={`text-sm font-medium ${
+                           location.pathname.startsWith(subItem.url)
+                             ? "text-blue-700"
+                             : "text-gray-700"
+                         }`}>
+                           {subItem.title}
+                         </span>
+                         <motion.div
+                           whileHover={{ x: 3 }}
+                           transition={{ duration: 0.2 }}
+                         >
+                           <ChevronRight className={`h-4 w-4 ${
+                             location.pathname.startsWith(subItem.url)
+                               ? "text-blue-500"
+                               : "text-gray-400"
+                           }`} />
+                         </motion.div>
+                       </Link>
+                     </motion.div>
+                   ))}
+                 </div>
+               </motion.div>
+             </motion.div>
+           )}
+         </AnimatePresence>
     </>
   );
 }
+
+//sajid 

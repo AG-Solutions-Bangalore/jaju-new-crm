@@ -1,18 +1,56 @@
 import { decryptId, encryptId } from "@/components/common/Encryption";
 import BASE_URL from "@/config/BaseUrl";
+
 import axios from "axios";
 
-// PURCHASE
-export const PURCHASE_LIST = `${BASE_URL}/api/purchases-list`;
+// Estimate
+export const ESTIMATE_LIST = `${BASE_URL}/api/web-fetch-estimate-list`;
+export const PURCHASE_LIST = `${BASE_URL}/api/web-fetch-estimate-list`;
 export const PURCHASE_EDIT_LIST = `${BASE_URL}/api/purchases`;
 export const PURCHASE_CREATE = `${BASE_URL}/api/purchases`;
-//SALES
-export const SALES_LIST = `${BASE_URL}/api/sales-list`;
-export const SALES_EDIT_LIST = `${BASE_URL}/api/sales`;
-export const SALES_CREATE = `${BASE_URL}/api/sales`;
+//Product
+export const PRODUCT_LIST = `${BASE_URL}/api/web-fetch-product-type-list`;
+
 //DASHBOARD
 export const DASHBOARD_LIST = `${BASE_URL}/api/dashboard`;
-//MASTER-CATEGORY-ITEM-BUYER
+//purchase granite
+export const PURCHASE_GRANITE_LIST = `${BASE_URL}/api/web-fetch-purchase-list/Granites`;
+
+
+
+
+
+
+
+
+//purchase tiles
+export const PURCHASE_TILES_LIST = `${BASE_URL}/api/web-fetch-purchase-list/Tiles`;
+
+
+//sales
+export const SALES_LIST = `${BASE_URL}/api/web-fetch-sales-list`;
+export const SALES_EDIT_LIST = `${BASE_URL}/api/sales`;
+export const SALES_CREATE = `${BASE_URL}/api/sales`;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const CATEGORY_LIST = `${BASE_URL}/api/categorys-list`;
 export const CATEGORY_CREATE = `${BASE_URL}/api/categorys`;
 export const ITEM_LIST = `${BASE_URL}/api/items-list`;
@@ -32,20 +70,66 @@ export const SINGLE_ITEM_STOCK_REPORT = `${BASE_URL}/api/item-stock`;
 
 // ROUTE CONFIGURATION 
 export const ROUTES = {
-  PURCHASE_EDIT: (id) => `/purchase/edit/${encryptId(id)}`,
-  SALES_EDIT: (id) => `/dispatch/edit/${encryptId(id)}`,
-  SALES_VIEW: (id) => `/dispatch/view/${encryptId(id)}`,
+  PRODUCT_EDIT: (id) => `/product/edit/${encryptId(id)}`,
+  PURCHASE_GRANITE_EDIT: (id) => `/purchase-granite/edit/${encryptId(id)}`,
+  PURCHASE_GRANITE_VIEW: (id) => `/purchase-granite/view/${encryptId(id)}`,
+  PURCHASE_TILES_EDIT: (id) => `/purchase-tiles/edit/${encryptId(id)}`,
+  PURCHASE_TILES_VIEW: (id) => `/purchase-tiles/view/${encryptId(id)}`,
+  SALES_EDIT: (id) => `/sales/edit/${encryptId(id)}`,
+  SALES_VIEW: (id) => `/sales/view/${encryptId(id)}`,
+  ESTIMATE_VIEW: (id) => `/estimate/view/${encryptId(id)}`,
 };
 
-export const navigateToPurchaseEdit = (navigate, purchaseId) => {
-  navigate(ROUTES.PURCHASE_EDIT(purchaseId));
+// product 
+export const navigateToProductEdit = (navigate, productId) => {
+  navigate(ROUTES.PRODUCT_EDIT(productId));
 };
+
+
+// purchase granite 
+export const navigateTOPurchaseGraniteEdit = (navigate, purchaseGranitetId) => {
+  navigate(ROUTES.PURCHASE_GRANITE_EDIT(purchaseGranitetId));
+};
+
+export const navigateTOPurchaseGraniteView = (navigate, purchaseGranitetId) => {
+  navigate(ROUTES.PURCHASE_GRANITE_VIEW(purchaseGranitetId));
+};
+// purchase Tiles 
+export const navigateTOPurchaseTilesEdit = (navigate, purchaseTilesId) => {
+  navigate(ROUTES.PURCHASE_TILES_EDIT(purchaseTilesId));
+};
+
+export const navigateTOPurchaseTilesView = (navigate, purchaseTilesId) => {
+  navigate(ROUTES.PURCHASE_TILES_VIEW(purchaseTilesId));
+};
+//sales
+
 export const navigateTOSalesEdit = (navigate, salesId) => {
   navigate(ROUTES.SALES_EDIT(salesId));
 };
+
+
 export const navigateTOSalesView = (navigate, salesId) => {
   navigate(ROUTES.SALES_VIEW(salesId));
 };
+
+
+
+//ESTIMATE
+
+
+export const navigateTOEstimateView = (navigate, salesId) => {
+  navigate(ROUTES.ESTIMATE_VIEW(salesId));
+};
+
+
+
+
+
+
+
+
+
 
 export const fetchPurchaseById = async (encryptedId) => {
   try {
