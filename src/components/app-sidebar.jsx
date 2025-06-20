@@ -121,7 +121,7 @@ export function AppSidebar({ ...props }) {
       },
       {
         title: "Purchase Tiles",
-        url: "/Purchase-tiles",
+        url: "/purchase-tiles",
         icon: Package,
         isActive: false,
       },

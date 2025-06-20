@@ -100,7 +100,8 @@ export default function Page({ children }) {
 
         <div className="sm:hidden sticky top-0 flex justify-between items-center px-4 py-2  border-b z-40 bg-white  rounded-b-lg shadow-sm">
           <div className="font-semibold flex items-center space-x-2">
-            <img src={logo} alt="logo"  className="h-8 w-full" />
+            {/* <img src={logo} alt="logo"  className="h-8 w-full" /> */}
+            <span>JAJU-CRM</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -158,7 +159,7 @@ export default function Page({ children }) {
 
         {/* Main content area - adjusted for mobile bottom nav */}
         <div className="flex flex-1 flex-col gap-4 p-0 md:p-4 pt-0">
-          <div className="min-h-[calc(100vh-8rem)] md:min-h-[100vh] flex-1 rounded-xl p-2 pb-16  md:pb-2">
+          <div className="min-h-[calc(100vh-8rem)] md:min-h-[100vh] flex-1 rounded-xl p-0 pb-16  md:pb-2">
             {children}
           </div>
         </div>
