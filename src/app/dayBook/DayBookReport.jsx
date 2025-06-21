@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Printer, FileText, FileDown } from "lucide-react";
 import ReactToPrint, { useReactToPrint } from "react-to-print";
 import html2pdf from "html2pdf.js";
-import { format } from "date-fns";
+import moment from "moment";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -29,13 +29,14 @@ import { Label } from "@/components/ui/label";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import Loader from "@/components/loader/Loader";
+import { ButtonConfig } from "@/config/ButtonConfig";
 
 const DayBookReport = () => {
   const tableRef = useRef(null);
     const { toast } = useToast();
     const navigate = useNavigate();
     
-    const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   
     const { data: dayBookData, isLoading, isError, refetch } = useQuery({
       queryKey: ["daybook", date],
@@ -131,7 +132,7 @@ const DayBookReport = () => {
     };
   
     const formatDisplayDate = (dateStr) => {
-      return format(new Date(dateStr), 'dd-MM-yyyy');
+      return moment(dateStr).format('DD-MM-YYYY');
     };
     const handlePrintPdf = useReactToPrint({
       content: () => tableRef.current,
@@ -190,9 +191,170 @@ const DayBookReport = () => {
        <Page>
           <div className="w-full p-0 md:p-0 grid grid-cols-1">
             <div className="sm:hidden">
-             <p>
-               mobile day book
-             </p>
+             <div
+            className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}
+          >
+            <div className="flex flex-col gap-2">
+              {/* Title + Print Button */}
+              <div className="flex justify-between items-center">
+                <h1 className="text-base font-bold text-gray-800 px-2">
+                  Day Book Report
+                </h1>
+                <div className="flex gap-[2px]">
+                  <button
+                    className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                    onClick={handleDownload}
+                  >
+                    <FileDown className="h-3 w-3" />
+                  </button>
+                  <button
+                    className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                    onClick={handleSavePDF}
+                  >
+                    <FileText className="h-3 w-3" />
+                  </button>
+                  <button
+                    className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                   onClick={handlePrintPdf}
+                  >
+                    <Printer className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Form */}
+              <div className="bg-white p-2 rounded-md shadow-xs">
+                <div className="grid grid-cols-1 gap-2 mb-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="mobile-report-date" className="text-xs">
+                      Date:
+                    </Label>
+                    <Input
+                      id="mobile-report-date"
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="text-xs h-7"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Table */}
+          {isLoading && (
+            <div className="flex justify-center items-center h-64">
+              <Loader />
+            </div>
+          )}
+          {isError && (
+            <div className="text-center text-red-500 p-4">
+              <p>Error Fetching day book report</p>
+              <Button onClick={() => refetch()} variant="outline" size="sm" className="mt-2">
+                Try Again
+              </Button>
+            </div>
+          )}
+          {!isLoading && !isError && (
+            <div ref={tableRef} className="p-2">
+              <div className="text-center mb-2 font-semibold text-sm">
+                Day Book Report - {formatDisplayDate(date)}
+              </div>
+              
+              {/* Credit Section */}
+              <div className="mb-4">
+                <div className="text-sm font-medium bg-blue-50 p-1 text-center border">
+                  Credit Transactions
+                </div>
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-1 w-8">#</th>
+                      <th className="border p-1 text-left">Credit By</th>
+                      <th className="border p-1">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dayBookData?.received?.length ? (
+                      dayBookData.received.map((item, index) => (
+                        <tr
+                          key={`credit-${index}`}
+                          className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                        >
+                          <td className="border p-1 text-center">{index + 1}</td>
+                          <td className="border p-1 text-left">{item.received_about}</td>
+                          <td className="border p-1 text-center">{item.received_amount}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="border p-2 text-center text-gray-500">
+                          No credit transactions
+                        </td>
+                      </tr>
+                    )}
+                    {dayBookData?.total_received_amount && (
+                      <tr className="bg-blue-50 font-medium">
+                        <td colSpan={2} className="border p-1 text-center">
+                          Total
+                        </td>
+                        <td className="border p-1 text-center">
+                          {dayBookData.total_received_amount.total_received_amount}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Debit Section */}
+              <div className="mb-4">
+                <div className="text-sm font-medium bg-blue-50 p-1 text-center border">
+                  Debit Transactions
+                </div>
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-1 w-8">#</th>
+                      <th className="border p-1 text-left">Debit By</th>
+                      <th className="border p-1">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dayBookData?.payment?.length ? (
+                      dayBookData.payment.map((item, index) => (
+                        <tr
+                          key={`debit-${index}`}
+                          className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                        >
+                          <td className="border p-1 text-center">{index + 1}</td>
+                          <td className="border p-1 text-left">{item.payment_about}</td>
+                          <td className="border p-1 text-center">{item.payment_amount}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="border p-2 text-center text-gray-500">
+                          No debit transactions
+                        </td>
+                      </tr>
+                    )}
+                    {dayBookData?.total_payment_amount && (
+                      <tr className="bg-blue-50 font-medium">
+                        <td colSpan={2} className="border p-1 text-center">
+                          Total
+                        </td>
+                        <td className="border p-1 text-center">
+                          {dayBookData.total_payment_amount.total_payment_amount}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
             </div>
     
             <div className="hidden sm:block">

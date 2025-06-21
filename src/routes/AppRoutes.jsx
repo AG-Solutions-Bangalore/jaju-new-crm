@@ -23,6 +23,8 @@ import EstimateView from "@/app/estimate/EstimateView";
 import PurchaseGraniteView from "@/app/purchaseGranite/PurchaseGraniteView";
 import PurchaseTilesView from "@/app/purchaseTiles/PurchaseTilesView";
 import SalesView from "@/app/sales/SalesView";
+import EditDayBook from "@/app/dayBook/EditDayBook";
+import AddDayBook from "@/app/dayBook/AddDayBook";
 
 function AppRoutes() {
   return (
@@ -35,6 +37,9 @@ function AppRoutes() {
         </Route>
 
         <Route path="/" element={<ProtectedRoute />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/edit-daybook" element={<EditDayBook />} />
+          <Route path="/add-daybook" element={<AddDayBook />} />
           <Route path="/home" element={<Home />} />
           <Route path="/estimate" element={<EstimateList />} />
           <Route path="/estimate/view/:id" element={<EstimateView />} />

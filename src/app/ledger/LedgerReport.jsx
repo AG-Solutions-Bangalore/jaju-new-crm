@@ -34,6 +34,7 @@ import { getTodayDate } from "@/utils/currentDate";
 import BASE_URL from "@/config/BaseUrl";
 import html2pdf from "html2pdf.js";
 import Select from "react-select";
+import { ButtonConfig } from "@/config/ButtonConfig";
 const formSchema = z.object({
   account_name: z.string().min(1, "Account name is required"),
   from_date: z.string().min(1, "From date is required"),
@@ -313,11 +314,258 @@ const LedgerReport = () => {
   return (
     <Page>
       <div className="w-full p-0 md:p-0">
-               <div className="sm:hidden">
-                <p>
-                  mobile ledger
-                </p>
-               </div>
+
+
+
+                 <div className="sm:hidden">
+                         <div
+                           className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}
+                         >
+                           <div className="flex flex-col gap-2">
+                             {/* Title + Print Button */}
+                             <div className="flex justify-between items-center">
+                               <h1 className="text-base font-bold text-gray-800 px-2">
+                                 Ledger Report
+                               </h1>
+                               <div className="flex gap-[2px]">
+                                 <button
+                                   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                                   onClick={handleDownloadCsv}
+                                 >
+                                   <FileDown className="h-3 w-3" />
+                                 </button>
+                                 <button
+                                   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                                    onClick={handleDownloadPDF}
+                                 >
+                                   <FileText className="h-3 w-3" />
+                                 </button>
+                                 <button
+                                   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                                 onClick={handlePrintPdf}
+                                 >
+                                   <Printer className="h-3 w-3" />
+                                 </button>
+                               </div>
+                             </div>
+               
+                             {/* Form */}
+                             <div className="bg-white p-2 rounded-md shadow-xs">
+                               <div className="grid grid-cols-2 gap-2 mb-2">
+                                 <div className="space-y-1">
+                                   <Label htmlFor="mobile-account-name" className="text-xs">
+                                     Account Name
+                                   </Label>
+                                   <Select
+                                     id="mobile-account-name"
+                                     options={accountNames.map(account => ({
+                                       value: account.account_name,
+                                       label: account.account_name
+                                     }))}
+                                     value={accountNames.find(account => 
+                                       account.account_name === form.watch("account_name")
+                                     ) ? {
+                                       value: form.watch("account_name"),
+                                       label: form.watch("account_name")
+                                     } : null}
+                                     onChange={(selected) => 
+                                       form.setValue("account_name", selected?.value || "")
+                                     }
+                                     styles={selectStyles}
+                                     className="react-select-container"
+                                     classNamePrefix="react-select"
+                                     placeholder="Select account..."
+                                     isClearable
+                                     required
+                                   />
+                                   {form.formState.errors.account_name && (
+                                     <p className="text-xs text-red-500">
+                                       {form.formState.errors.account_name.message}
+                                     </p>
+                                   )}
+                                 </div>
+               
+                                 <div className="space-y-1">
+                                   <Label htmlFor="mobile-from-date" className="text-xs">
+                                     From Date
+                                   </Label>
+                                   <Input
+                                     id="mobile-from-date"
+                                     type="date"
+                                     {...form.register("from_date")}
+                                     className="text-xs h-8"
+                                   />
+                                   {form.formState.errors.from_date && (
+                                     <p className="text-xs text-red-500">
+                                       {form.formState.errors.from_date.message}
+                                     </p>
+                                   )}
+                                 </div>
+               
+                                 <div className="space-y-1">
+                                   <Label htmlFor="mobile-to-date" className="text-xs">
+                                     To Date
+                                   </Label>
+                                   <Input
+                                     id="mobile-to-date"
+                                     type="date"
+                                     {...form.register("to_date")}
+                                     className="text-xs h-8"
+                                   />
+                                   {form.formState.errors.to_date && (
+                                     <p className="text-xs text-red-500">
+                                       {form.formState.errors.to_date.message}
+                                     </p>
+                                   )}
+                                 </div>
+               
+                                 <div className="pt-1 mt-6">
+                                   <Button
+                                     type="submit"
+                                     onClick={form.handleSubmit(onSubmit)}
+                                     disabled={isLoading}
+                                     className={`w-full h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                                   >
+                                     {isLoading ? (
+                                       <>
+                                         <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                         Generating...
+                                       </>
+                                     ) : (
+                                       <>
+                                         <Search className="h-3 w-3 mr-1" />
+                                         Generate Report
+                                       </>
+                                     )}
+                                   </Button>
+                                 </div>
+                               </div>
+                             </div>
+                           </div>
+                         </div>
+               
+                         {/* Mobile Results */}
+                         {searchParams && (
+                           <div ref={tableRef} className="p-2">
+                             {isLoading ? (
+                               <div className="flex justify-center items-center h-64">
+                                 <Loader2 className="h-8 w-8 animate-spin" />
+                               </div>
+                             ) : (
+                               <>
+                                 <div className="text-center font-semibold text-sm mb-2">
+                                   Ledger Report - {searchParams.account_name}
+                                 </div>
+                                 <div className="text-center text-xs mb-3">
+                                   From {moment(searchParams.from_date).format("DD-MM-YYYY")} to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+                                 </div>
+               
+                                 {/* Debit Section */}
+                                 <div className="mb-4">
+                                   <div className="text-xs font-medium bg-blue-50 p-1 text-center border">
+                                     Debit Transactions
+                                   </div>
+                                   <table className="w-full border-collapse text-xs">
+                                     <thead>
+                                       <tr className="bg-gray-100">
+                                         <th className="border p-1">Date</th>
+                                         <th className="border p-1">Amount</th>
+                                       </tr>
+                                     </thead>
+                                     <tbody>
+                                       {ledgerData?.payment?.length ? (
+                                         ledgerData.payment.map((item, index) => (
+                                           <tr
+                                             key={`debit-${index}`}
+                                             className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                           >
+                                             <td className="border p-1 text-center">
+                                               {moment(item.payment_date).format("DD-MM-YYYY")}
+                                             </td>
+                                             <td className="border p-1 text-center">
+                                               {item.payment_amount}
+                                             </td>
+                                           </tr>
+                                         ))
+                                       ) : (
+                                         <tr>
+                                           <td colSpan={2} className="border p-2 text-center text-gray-500">
+                                             No debit transactions
+                                           </td>
+                                         </tr>
+                                       )}
+                                       <tr className="bg-blue-50 font-medium">
+                                         <td className="border p-1 text-center">Total</td>
+                                         <td className="border p-1 text-center">
+                                           {calculateTotalPayment()}
+                                         </td>
+                                       </tr>
+                                     </tbody>
+                                   </table>
+                                 </div>
+               
+                                 {/* Credit Section */}
+                                 <div className="mb-4">
+                                   <div className="text-xs font-medium bg-blue-50 p-1 text-center border">
+                                     Credit Transactions
+                                   </div>
+                                   <table className="w-full border-collapse text-xs">
+                                     <thead>
+                                       <tr className="bg-gray-100">
+                                         <th className="border p-1">Date</th>
+                                         <th className="border p-1">Amount</th>
+                                       </tr>
+                                     </thead>
+                                     <tbody>
+                                       {ledgerData?.received?.length ? (
+                                         ledgerData.received.map((item, index) => (
+                                           <tr
+                                             key={`credit-${index}`}
+                                             className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                           >
+                                             <td className="border p-1 text-center">
+                                               {moment(item.received_date).format("DD-MM-YYYY")}
+                                             </td>
+                                             <td className="border p-1 text-center">
+                                               {item.received_amount}
+                                             </td>
+                                           </tr>
+                                         ))
+                                       ) : (
+                                         <tr>
+                                           <td colSpan={2} className="border p-2 text-center text-gray-500">
+                                             No credit transactions
+                                           </td>
+                                         </tr>
+                                       )}
+                                       <tr className="bg-blue-50 font-medium">
+                                         <td className="border p-1 text-center">Total</td>
+                                         <td className="border p-1 text-center">
+                                           {calculateTotalReceived()}
+                                         </td>
+                                       </tr>
+                                     </tbody>
+                                   </table>
+                                 </div>
+               
+                                 <div className="text-center text-xs font-medium mb-4">
+                                   Balance (
+                                   {calculateTotalReceived() - calculateTotalPayment() >= 0
+                                     ? " to be paid "
+                                     : " to be received "}
+                                   ) = ₹
+                                   {Math.abs(calculateTotalReceived() - calculateTotalPayment())}
+                                 </div>
+                               </>
+                             )}
+                           </div>
+                         )}
+                       </div>
+
+
+
+
+
       <div className="hidden sm:block">
         <Card className="shadow-sm">
           <CardHeader>
