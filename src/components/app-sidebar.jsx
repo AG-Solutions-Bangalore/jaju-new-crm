@@ -33,6 +33,60 @@ export function AppSidebar({ ...props }) {
   const nameL = localStorage.getItem("name");
   const emailL = localStorage.getItem("email");
 
+  // const initialData = {
+  //   user: {
+  //     name: `${nameL}`,
+  //     email: `${emailL}`,
+  //     avatar: "/avatars/shadcn.jpg",
+  //   },
+  //   teams: [
+  //     {
+  //       name: `Jaju Flooring`,
+  //       logo: GalleryVerticalEnd,
+  //       plan: "",
+  //     },
+  //     {
+  //       name: "Acme Corp.",
+  //       logo: AudioWaveform,
+  //       plan: "Startup",
+  //     },
+  //     {
+  //       name: "Evil Corp.",
+  //       logo: Command,
+  //       plan: "Free",
+  //     },
+  //   ],
+  //   navMain: [
+  //     {
+  //       title: "Dashboard",
+  //       url: "/home",
+  //       icon: Frame,
+  //       isActive: false,
+  //     },
+     
+     
+  //     {
+  //       title: "Day Book",
+  //       url: "/day-book",
+  //       icon: ShoppingBag,
+  //       isActive: false,
+  //     },
+  //     {
+  //       title: "Ledger",
+  //       url: "/ledger",
+  //       icon: Package,
+  //       isActive: false,
+  //     },
+  //     {
+  //       title: "Trial Balance",
+  //       url: "/trial-balance",
+  //       icon: Package,
+  //       isActive: false,
+  //     },
+    
+     
+  //   ],
+  // };
   const initialData = {
     user: {
       name: `${nameL}`,

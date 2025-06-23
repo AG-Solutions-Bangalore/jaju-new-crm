@@ -282,6 +282,8 @@ const TrialBalanceReport = () => {
         type="date"
         {...form.register("from_date")}
         className="text-xs h-8"
+        value={form.watch("from_date")}
+        onChange={(e) => form.setValue("from_date", e.target.value)}
       />
       {form.formState.errors.from_date && (
         <p className="text-xs text-red-500">
@@ -299,6 +301,8 @@ const TrialBalanceReport = () => {
         type="date"
         {...form.register("to_date")}
         className="text-xs h-8"
+        value={form.watch("to_date")}
+        onChange={(e) => form.setValue("to_date", e.target.value)}
       />
       {form.formState.errors.to_date && (
         <p className="text-xs text-red-500">

@@ -77,7 +77,7 @@ const EstimateList = () => {
       // Define columns for the table
       const columns = [
         {
-          id: "S. No.",
+          id: "Sl No",
           accessorKey: "index",
           header: "Sl No",
           cell: ({ row }) => <div>{row.index + 1}</div>,
@@ -254,9 +254,9 @@ const EstimateList = () => {
               <Button
                 variant="default"
                 className={`ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                // onClick={() => {
-                //   navigate("/estimate/create");
-                // }}
+                onClick={() => {
+                  navigate("/estimate/create");
+                }}
               >
                 <SquarePlus className="h-4 w-4" /> Estimate
               </Button>{" "}

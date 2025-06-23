@@ -60,7 +60,7 @@ const ChangePassword = ({ open, setOpen }) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${BASE_URL}/api/change-password`,
+        `${BASE_URL}/api/web-change-password`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
