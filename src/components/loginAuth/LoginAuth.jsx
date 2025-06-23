@@ -202,7 +202,7 @@ export default function LoginAuth() {
                 </motion.div>
               </div>
             </form>
-            <CardDescription
+            {/* <CardDescription
               className={`flex justify-end mt-4 underline ${ButtonConfig.loginText}`}
             >
               <span
@@ -212,7 +212,7 @@ export default function LoginAuth() {
                 {" "}
                 Forgot Password
               </span>
-            </CardDescription>
+            </CardDescription> */}
           </CardContent>
         </Card>
       </motion.div>

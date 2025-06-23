@@ -17,6 +17,32 @@ export function AppBottombar() {
   const [activeDropdown, setActiveDropdown] = React.useState(null);
   
 
+  // const navItems = [
+  //   {
+  //     title: "Home",
+  //     url: "/home",
+  //     icon: Home,
+  //   },
+   
+  //   {
+  //     title: "Day Book",
+  //     url: "/day-book", 
+  //     icon: ShoppingBag,
+  //   },
+
+  //   {
+  //     title: "Ledger",
+  //     url: "/ledger",
+  //     icon: ShoppingBag,
+  //   },
+  //   {
+  //     title: "Trial Balance",
+  //     url: "/trial-balance",
+  //     icon: ShoppingBag,
+  //   },
+
+   
+  // ];
   const navItems = [
     {
       title: "Home",

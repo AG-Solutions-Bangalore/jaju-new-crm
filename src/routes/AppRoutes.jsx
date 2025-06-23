@@ -25,6 +25,11 @@ import PurchaseTilesView from "@/app/purchaseTiles/PurchaseTilesView";
 import SalesView from "@/app/sales/SalesView";
 import EditDayBook from "@/app/dayBook/EditDayBook";
 import AddDayBook from "@/app/dayBook/AddDayBook";
+import EstimateAdd from "@/app/estimate/EstimateAdd";
+import ProductAdd from "@/app/product/ProductAdd";
+import ProductEdit from "@/app/product/ProductEdit";
+import PurchaseGraniteAdd from "@/app/purchaseGranite/PurchaseGraniteAdd";
+import PurchaseGraniteEdit from "@/app/purchaseGranite/PurchaseGraniteEdit";
 
 function AppRoutes() {
   return (
@@ -42,12 +47,17 @@ function AppRoutes() {
           <Route path="/add-daybook" element={<AddDayBook />} />
           <Route path="/home" element={<Home />} />
           <Route path="/estimate" element={<EstimateList />} />
+          <Route path="/estimate/create" element={<EstimateAdd />} />
           <Route path="/estimate/view/:id" element={<EstimateView />} />
           <Route path="/day-book" element={<DayBookReport />} />
           <Route path="/ledger" element={<LedgerReport />} />
           <Route path="/trial-balance" element={<TrialBalanceReport />} />
           <Route path="/product" element={<ProductList />} />
+          <Route path="/product/create" element={<ProductAdd />} />
+          <Route path="/product/edit/:id" element={<ProductEdit />} />
           <Route path="/purchase-granite" element={<PurchaseGraniteList />} />
+          <Route path="/purchase-granite/create" element={<PurchaseGraniteAdd />} />
+          <Route path="/purchase-granite/edit/:id" element={<PurchaseGraniteEdit />} />
           <Route path="/purchase-granite/view/:id" element={<PurchaseGraniteView />} />
           <Route path="/purchase-tiles" element={<PurchaseTilesList />} />
           <Route path="/purchase-tiles/view/:id" element={<PurchaseTilesView />} />

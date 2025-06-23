@@ -45,6 +45,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import ProductAdd from "./ProductAdd";
+import ProductEdit from "./ProductEdit";
 
 
 const ProductList = () => {
@@ -76,7 +78,7 @@ const ProductList = () => {
       // Define columns for the table
       const columns = [
         {
-          id: "S. No.",
+          id: "Sl No",
           accessorKey: "index",
           header: "Sl No",
           cell: ({ row }) => <div>{row.index + 1}</div>,
@@ -127,15 +129,9 @@ const ProductList = () => {
                    <TooltipProvider>
                      <Tooltip>
                        <TooltipTrigger asChild>
-                         <Button
-                           variant="ghost"
-                           size="icon"
-                           onClick={() => {
-                            navigateToProductEdit(navigate, productId)
-                           }}
-                         >
-                           <Edit />
-                         </Button>
+                        
+                           <ProductEdit productId={productId} />
+                    
                        </TooltipTrigger>
                        <TooltipContent>
                          <p>Edit Product</p>
@@ -259,15 +255,7 @@ const ProductList = () => {
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                variant="default"
-                className={`ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                // onClick={() => {
-                //   navigate("/product/create");
-                // }}
-              >
-                <SquarePlus className="h-4 w-4" /> Product
-              </Button>{" "}
+              <ProductAdd/>
             </div>
           </div>
           {/* table  */}

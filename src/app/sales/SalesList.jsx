@@ -78,7 +78,7 @@ const SalesList = () => {
       // Define columns for the table
       const columns = [
         {
-          id: "S. No.",
+          id: "Sl No",
           accessorKey: "index",
           header: "Sl No",
           cell: ({ row }) => <div>{row.index + 1}</div>,

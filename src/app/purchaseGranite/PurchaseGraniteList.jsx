@@ -78,7 +78,7 @@ const PurchaseGraniteList = () => {
       // Define columns for the table
       const columns = [
         {
-          id: "S. No.",
+          id: "Sl No",
           accessorKey: "index",
           header: "Sl No",
           cell: ({ row }) => <div>{row.index + 1}</div>,
@@ -133,9 +133,10 @@ const PurchaseGraniteList = () => {
                          <Button
                            variant="ghost"
                            size="icon"
-                           onClick={() => {
-                            navigateTOPurchaseGraniteEdit(navigate, purchaseGranitetId)
-                           }}
+                          //  onClick={() => {
+                          //   navigateTOPurchaseGraniteEdit(navigate, purchaseGranitetId)
+                          //  }}
+                          onClick={() => navigate(`/purchase-granite/edit/${purchaseGranitetId}`)}
                          >
                            <Edit />
                          </Button>
@@ -286,9 +287,9 @@ const PurchaseGraniteList = () => {
               <Button
                 variant="default"
                 className={`ml-2 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                // onClick={() => {
-                //   navigate("/purchase-granite/create");
-                // }}
+                onClick={() => {
+                  navigate("/purchase-granite/create");
+                }}
               >
                 <SquarePlus className="h-4 w-4" /> Purchase Granite
               </Button>{" "}
