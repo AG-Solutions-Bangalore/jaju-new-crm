@@ -30,6 +30,10 @@ import ProductAdd from "@/app/product/ProductAdd";
 import ProductEdit from "@/app/product/ProductEdit";
 import PurchaseGraniteAdd from "@/app/purchaseGranite/PurchaseGraniteAdd";
 import PurchaseGraniteEdit from "@/app/purchaseGranite/PurchaseGraniteEdit";
+import PurchaseTilesAdd from "@/app/purchaseTiles/PurchaseTilesAdd";
+import PurchaseTilesEdit from "@/app/purchaseTiles/PurchaseTilesEdit";
+import SalesAdd from "@/app/sales/SalesAdd";
+import SalesEdit from "@/app/sales/SalesEdit";
 
 function AppRoutes() {
   return (
@@ -60,9 +64,13 @@ function AppRoutes() {
           <Route path="/purchase-granite/edit/:id" element={<PurchaseGraniteEdit />} />
           <Route path="/purchase-granite/view/:id" element={<PurchaseGraniteView />} />
           <Route path="/purchase-tiles" element={<PurchaseTilesList />} />
+          <Route path="/purchase-tiles/create" element={<PurchaseTilesAdd />} />
+          <Route path="/purchase-tiles/edit/:id" element={<PurchaseTilesEdit />} />
           <Route path="/purchase-tiles/view/:id" element={<PurchaseTilesView />} />
           <Route path="/sales" element={<SalesList />} />
+          <Route path="/sales/create" element={<SalesAdd />} />
           <Route path="/sales/view/:id" element={<SalesView />} />
+          <Route path="/sales/edit/:id" element={<SalesEdit />} />
           <Route path="/stocks" element={<StocksReport />} />
          
         </Route>

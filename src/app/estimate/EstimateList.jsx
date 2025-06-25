@@ -29,6 +29,7 @@ import axios from "axios";
 import {
   ChevronDown,
   Edit,
+  Eye,
   Search,
   SquarePlus,
   Trash2
@@ -74,6 +75,16 @@ const EstimateList = () => {
     
       const navigate = useNavigate();
     
+      const [currentPage, setCurrentPage] = useState(0);
+      const itemsPerPage = 10;
+      
+      const filteredEstimates = estimate?.filter((est) => {
+        if (!searchQuery) return true;
+        return (
+          est.estimate_customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          est.estimate_no?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }) || [];
       // Define columns for the table
       const columns = [
         {
@@ -202,11 +213,140 @@ const EstimateList = () => {
   return (
     <Page>
        <div className="w-full p-0 md:p-4 grid grid-cols-1">
-         <div className="sm:hidden">
-          <p>
-            mobile estimate
-          </p>
-         </div>
+       <div className="sm:hidden">
+  {/* Sticky Header */}
+  <div className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}>
+    <div className="flex flex-col gap-2">
+      {/* Title + Add Button */}
+      <div className="flex justify-between items-center px-2 py-2">
+        <h1 className="text-base font-bold text-gray-800">
+          Estimate List
+        </h1>
+        <Button
+          size="sm"
+          className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+          onClick={() => navigate("/estimate/create")}
+        >
+          <SquarePlus className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {/* Search Input */}
+      <div className="relative px-2 pb-2">
+        <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-500" />
+        <Input
+          placeholder="Search estimates..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(0);
+          }}
+          className="pl-9 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-xs h-8"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* Estimate Cards - Compact Version */}
+  <div className="space-y-2 p-2 max-h-[calc(100vh-180px)] overflow-y-auto">
+    {filteredEstimates
+      .slice(
+        currentPage * itemsPerPage,
+        currentPage * itemsPerPage + itemsPerPage
+      )
+      .map((estimate, index) => (
+        <Card key={estimate.id} className="p-2">
+          <div 
+            className="flex justify-between items-center cursor-pointer"
+            // onClick={() => navigate(`/estimate/view/${estimate.id}`)}
+          >
+            <div className="font-medium text-gray-900 text-sm">
+              {currentPage * itemsPerPage + index + 1}. {estimate.estimate_customer}
+            </div>
+            <div className="flex space-x-1">
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/estimate/view/${estimate.id}`)
+                }}
+                className="h-6 w-6 text-blue-600 hover:text-blue-800"
+              >
+                <Eye className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+          
+          <div 
+            className="grid grid-cols-3 gap-1 mt-1 text-xs"
+            // onClick={() => navigate(`/estimate/view/${estimate.id}`)}
+          >
+            <div>
+              <div className="text-gray-500">Date</div>
+              <div className="">{moment(estimate.estimate_date).format("DD-MMM-YY")}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Estimate No</div>
+              <div>{estimate.estimate_no}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Items</div>
+              <div>{estimate.estimate_no_of_count}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Gross</div>
+              <div>{estimate.estimate_gross}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Advance</div>
+              <div>{estimate.estimate_advance}</div>
+            </div>
+            <div>
+              <div className="text-gray-500">Balance</div>
+              <div>{estimate.estimate_balance}</div>
+            </div>
+          </div>
+        </Card>
+      ))}
+
+    {filteredEstimates.length === 0 && (
+      <div className="text-center py-4 text-gray-500 text-sm">
+        No estimate records found
+      </div>
+    )}
+  </div>
+
+  {/* Pagination Controls */}
+  <div className="sticky bottom-0 bg-white border-t p-2 flex justify-between items-center">
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+      disabled={currentPage === 0}
+      className="h-8 text-xs px-3"
+    >
+      Prev
+    </Button>
+    <span className="text-xs text-gray-600">
+      Page {currentPage + 1} of {Math.ceil(filteredEstimates.length / itemsPerPage) || 1}
+    </span>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setCurrentPage((prev) => 
+        Math.min(prev + 1, Math.ceil(filteredEstimates.length / itemsPerPage) - 1)
+      )}
+      disabled={
+        currentPage >= Math.ceil(filteredEstimates.length / itemsPerPage) - 1 ||
+        filteredEstimates.length <= itemsPerPage
+      }
+      className="h-8 text-xs px-3"
+    >
+      Next
+    </Button>
+  </div>
+</div>
  
          <div className="hidden sm:block">
          <div className="flex text-left text-2xl text-gray-800 font-[400]">
