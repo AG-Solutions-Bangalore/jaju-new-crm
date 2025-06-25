@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import moment from "moment";
 import { Trash2, Plus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
 
 import {
   Select as SelectShadcn,
@@ -25,28 +26,24 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
-import Loader from "@/components/loader/Loader";
 
 const formSchema = z.object({
   purchase_date: z.string(),
   purchase_year: z.string(),
   purchase_type: z.string(),
-  purchase_item_type: z.string().min(1, "Item type is required"),
+  purchase_estimate_ref: z.string().min(1, "Estimate Ref is required"),
   purchase_supplier: z.string().min(1, "Supplier is required"),
   purchase_bill_no: z.string().min(1, "Bill number is required"),
-  purchase_amount: z.string().min(1, "Total Amount is required"),
-  purchase_other: z.string().min(1, "Other Amount is required"),
-  purchase_estimate_ref: z.string(),
+  purchase_amount: z.string().min(1, "Other Amount is required"),
+  purchase_other: z.string().min(1, "Total Amount is required"),
+
   purchase_no_of_count: z.string(),
 });
 
-const PurchaseGraniteEdit = () => {
-  const { id } = useParams();
+const PurchaseTilesAdd = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
-    const [isLoadingItems, setIsLoadingItems] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -57,164 +54,79 @@ const PurchaseGraniteEdit = () => {
       return response.data.year?.current_year;
     },
   });
-
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       purchase_date: moment().format("YYYY-MM-DD"),
       purchase_year: currentYear,
-      purchase_type: "Granites",
-      purchase_item_type: "",
+      purchase_type: "Tiles",
       purchase_supplier: "",
       purchase_bill_no: "",
-      purchase_amount: "",
-      purchase_other: "",
-      purchase_estimate_ref: "",
+      purchase_amount: "0",
+      purchase_other: "0",
+  
       purchase_no_of_count: "1",
+      purchase_estimate_ref: "",
+   
+     
+    
     },
   });
-
   const [itemEntries, setItemEntries] = useState([
     {
-      id: "",
       purchase_sub_item: "",
-      purchase_sub_qnty: "",
-      purchase_sub_qnty_sqr: "",
-      purchase_sub_rate: "",
-      purchase_sub_amount: "",
+      purchase_sub_qnty: "0",
+      purchase_sub_qnty_sqr: "0",  
+      purchase_sub_rate: "0",
+      purchase_sub_amount: "0",
     },
   ]);
 
  
-  const { 
-    data: purchaseByid, 
-    isLoading, 
-    isError, 
-    refetch 
-  } = useQuery({
-    queryKey: ["purchaseByid", id],
+
+  const { data: estimateNo = [] } = useQuery({
+    queryKey: ["estimateNo"],
     queryFn: async () => {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-purchase-by-id/${id}`,
+        `${BASE_URL}/api/web-fetch-estimate`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      return response.data;
-    },
-    enabled: !!id,
-    staleTime: 0,
-    cacheTime: 0,
-  });
-
-  const { data: productTypeGroup = [] } = useQuery({
-    queryKey: ["productTypeGroup"],
-    queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-type-group`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      return response.data.product_type_group || [];
+      return response.data.estimate_no || [];
     },
   });
 
-  const { data: product = [], refetch: refetchProducts } = useQuery({
-    queryKey: ["product", form.watch("purchase_item_type")],
-    queryFn: async () => {
-      setIsLoadingItems(true);
-      const itemType = form.watch("purchase_item_type") || 
-                      (purchaseByid?.purchase?.purchase_item_type || "");
-      if (!itemType) return [];
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-types/${itemType}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setIsLoadingItems(false);
-      return response.data.product_type || [];
-    },
-    enabled: !!form.watch("purchase_item_type") || !!purchaseByid?.purchase?.purchase_item_type,
-  });
 
-
-    useEffect(() => {
-      if (purchaseByid ) {
-          const { purchase: pId, purchaseSub: pSub } = purchaseByid;
-        const  formValues ={
-            purchase_date: moment(pId.purchase_date).format("YYYY-MM-DD"),
-            purchase_year: pId.purchase_year || currentYear,
-            purchase_type: pId.purchase_type || "Granites",
-            purchase_item_type: pId.purchase_item_type || "",
-            purchase_supplier: pId.purchase_supplier || "",
-            purchase_bill_no: pId.purchase_bill_no || "",
-            purchase_amount: pId.purchase_amount?.toString() || "",
-            purchase_other: pId.purchase_other?.toString() || "",
-            purchase_estimate_ref: pId.purchase_estimate_ref || "",
-            purchase_no_of_count: pId.purchase_no_of_count?.toString() || "1",
-          }
-          form.reset(formValues);
-          
-          if (pSub && pSub.length > 0) {
-              const mappedData = pSub.map((sub) => ({
-                  id: sub.id || "",
-                  purchase_sub_item: sub.purchase_sub_item || "",
-                  purchase_sub_qnty: sub.purchase_sub_qnty?.toString() || "",
-                  purchase_sub_qnty_sqr: sub.purchase_sub_qnty_sqr?.toString() || "",
-                  purchase_sub_rate: sub.purchase_sub_rate?.toString() || "",
-                  purchase_sub_amount: sub.purchase_sub_amount?.toString() || "",
-                }));
-                setItemEntries(mappedData);
-              }else{
-                  setItemEntries([
-                      {
-                        id: "",
-                        purchase_sub_item: "",
-                        purchase_sub_qnty: "",
-                        purchase_sub_qnty_sqr: "",
-                        purchase_sub_rate: "",
-                        purchase_sub_amount: "",
-                      },
-                    ]);
-              }
-            
-      }
-    }, [purchaseByid]);
-
+  
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
     updatedEntries[index][field] = value;
-    setItemEntries(updatedEntries);
-
-    if (
-      (field === "purchase_sub_qnty_sqr" || field === "purchase_sub_rate") &&
-      updatedEntries[index].purchase_sub_qnty_sqr &&
-      updatedEntries[index].purchase_sub_rate
-    ) {
-      updatedEntries[index].purchase_sub_amount = (
-        parseFloat(updatedEntries[index].purchase_sub_qnty_sqr || 0) *
-        parseFloat(updatedEntries[index].purchase_sub_rate || 0)
-      ).toString();
-      setItemEntries([...updatedEntries]);
+  
+   
+    if (field === "purchase_sub_qnty" || field === "purchase_sub_rate") {
+      const quantity = parseFloat(updatedEntries[index].purchase_sub_qnty) || 0;
+      const rate = parseFloat(updatedEntries[index].purchase_sub_rate) || 0;
+      updatedEntries[index].purchase_sub_amount = (quantity * rate).toString();
     }
-
+  
+    setItemEntries(updatedEntries);
+  
+   
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
       0
     );
     const otherTotal = parseFloat(form.watch("purchase_other") || 0);
-
     const newTotal = itemsTotal + otherTotal;
     form.setValue("purchase_amount", newTotal.toString());
   };
-
+  
   const handleOtherChange = (value) => {
+   
     form.setValue("purchase_other", value);
+  
     
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
@@ -223,10 +135,35 @@ const PurchaseGraniteEdit = () => {
     const newTotal = itemsTotal + parseFloat(value || 0);
     form.setValue("purchase_amount", newTotal.toString());
   };
+  const addItemEntry = () => {
+    setItemEntries([
+      ...itemEntries,
+      {
+        purchase_sub_item: "",
+        purchase_sub_qnty: "",
+        purchase_sub_qnty_sqr: "",
+        purchase_sub_rate: "",
+        purchase_sub_amount: "",
+      },
+    ]);
+    form.setValue("purchase_no_of_count", (itemEntries.length + 1).toString());
+  };
 
+  const removeItemEntry = (index) => {
+    const updatedEntries = [...itemEntries];
+    updatedEntries.splice(index, 1);
+    setItemEntries(updatedEntries);
+    form.setValue("purchase_no_of_count", updatedEntries.length.toString());
 
-
-
+    
+    const itemsTotal = updatedEntries.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0
+    );
+    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    const newTotal = itemsTotal + otherTotal;
+    form.setValue("purchase_amount", newTotal.toString());
+  };
 
   const handleKeyDown = (event) => {
     if (
@@ -243,11 +180,11 @@ const PurchaseGraniteEdit = () => {
     event.preventDefault();
   };
 
-  const updatePurchaseMutation = useMutation({
+  const createPurchaseMutation = useMutation({
     mutationFn: async (payload) => {
       const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `${BASE_URL}/api/web-update-purchase/${id}`,
+      const response = await axios.post(
+        `${BASE_URL}/api/web-create-purchase`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -260,12 +197,12 @@ const PurchaseGraniteEdit = () => {
         title: "Success",
         description: data.msg,
       });
-      navigate("/purchase-granite");
+      navigate("/purchase-tiles");
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to update purchase",
+        description: error.response?.data?.message || "Failed to create purchase",
         variant: "destructive",
       });
     },
@@ -276,7 +213,7 @@ const PurchaseGraniteEdit = () => {
       date: !data.purchase_date ? "Date is required" : "",
       supplier: !data.purchase_supplier ? "Supplier is required" : "",
       billNo: !data.purchase_bill_no ? "Bill number is required" : "",
-      itemType: !data.purchase_item_type ? "Item type is required" : "",
+      estimateNo: !data.purchase_estimate_ref ? "Estimate No is required" : "",
       otherAmount: !data.purchase_other ? "Other Amount is required" : "",
       totalAmount: !data.purchase_amount ? "Total Amount is required" : "",
     };
@@ -288,11 +225,7 @@ const PurchaseGraniteEdit = () => {
         : isNaN(entry.purchase_sub_qnty)
         ? "Quantity must be a number"
         : "",
-      qntySqr: !entry.purchase_sub_qnty_sqr
-        ? "required"
-        : isNaN(entry.purchase_sub_qnty_sqr)
-        ? "Quantity (sqr) must be a number"
-        : "",
+     
       rate: !entry.purchase_sub_rate
         ? "required"
         : isNaN(entry.purchase_sub_rate)
@@ -359,20 +292,20 @@ const PurchaseGraniteEdit = () => {
                       {formErrors.billNo && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                            Bill No
+                            Ref Bill No
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.billNo}
                           </td>
                         </tr>
                       )}
-                      {formErrors.itemType && (
+                      {formErrors.estimateNo && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                            Item Type
+                        Estimate No
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                            {formErrors.itemType}
+                            {formErrors.estimateNo}
                           </td>
                         </tr>
                       )}
@@ -418,9 +351,7 @@ const PurchaseGraniteEdit = () => {
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty (pcs)
                         </th>
-                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                          Qty (sqr)
-                        </th>
+                       
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Rate
                         </th>
@@ -443,9 +374,7 @@ const PurchaseGraniteEdit = () => {
                               <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
                                 {error.qnty}
                               </td>
-                              <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
-                                {error.qntySqr}
-                              </td>
+                              
                               <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
                                 {error.rate}
                               </td>
@@ -466,6 +395,7 @@ const PurchaseGraniteEdit = () => {
       return;
     }
 
+
     await onSubmit(formData);
   };
 
@@ -478,11 +408,11 @@ const PurchaseGraniteEdit = () => {
         purchase_sub_data: itemEntries,
       };
       
-      updatePurchaseMutation.mutate(payload);
+      createPurchaseMutation.mutate(payload);
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to update purchase",
+        description: error.message || "Failed to create purchase",
         variant: "destructive",
       });
     } finally {
@@ -491,41 +421,13 @@ const PurchaseGraniteEdit = () => {
   };
 
   const handleCancel = () => {
-    navigate("/purchase-granite");
+    navigate("/purchase-tiles");
   };
-  
-  if (isLoading  || productTypeGroup.length == 0) {
-    return (
-      <Page>
-        <div className="flex justify-center items-center h-full">
-          <Loader />
-        </div>
-      </Page>
-    );
-  }
-  
-  if (isError) {
-    return (
-      <Page>
-        <Card className="w-full max-w-md mx-auto mt-10">
-          <CardHeader>
-            <CardTitle className="text-destructive">
-              Error Fetching Purchase
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => refetch()} variant="outline">
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </Page>
-    );
-  }
+
   return (
     <Page>
       <div className="w-full p-0 md:p-0">
-      <div className="sm:hidden">
+        <div className="sm:hidden">
           {/* Mobile View */}
           <div className="sticky top-0 z-10 border border-gray-200 rounded-lg bg-blue-50 shadow-sm p-2 mb-2">
             <div className="flex justify-between items-center mb-2">
@@ -534,7 +436,7 @@ const PurchaseGraniteEdit = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Edit Purchase Granite</h1>
+                <h1 className="text-base font-bold">Add Purchase Tiles</h1>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -578,7 +480,7 @@ const PurchaseGraniteEdit = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="purchase_bill_no">Bill No <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_bill_no">Ref Bill No <span className="text-xs text-red-400 ">*</span></Label>
                     <Input
                       id="purchase_bill_no"
                       {...form.register("purchase_bill_no")}
@@ -587,27 +489,27 @@ const PurchaseGraniteEdit = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="purchase_item_type">Item Type <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_estimate_ref">Estimate Ref <span className="text-xs text-red-400 ">*</span></Label>
                     <SelectShadcn
-                      id="purchase_item_type"
-                      value={form.watch("purchase_item_type")}
+                      id="purchase_estimate_ref"
+                      value={form.watch("purchase_estimate_ref")}
                       onValueChange={(value) => {
-                        form.setValue("purchase_item_type", value);
-                        refetchProducts();
+                        form.setValue("purchase_estimate_ref", value);
+                        // refetchProducts();
                       }}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select item type..." />
+                        <SelectValue placeholder="Select estimate ref..." />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
+                          <SelectLabel>Estimate Ref</SelectLabel>
+                          {estimateNo.map((type) => (
                             <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
+                              key={type.estimate_ref}
+                              value={type.estimate_ref}
                             >
-                              {type.product_type_group}
+                              {type.estimate_ref}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -651,43 +553,25 @@ const PurchaseGraniteEdit = () => {
                     className="bg-gray-50 p-2 rounded-md border border-gray-200 mb-2"
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
-                      <div className="col-span-12">
+                      <div className="col-span-11">
                         <div className="mb-1">
-                        {isLoadingItems ? ( 
-            <div className="text-center text-gray-500">Loading...</div>
-          ) : (
-                          <SelectShadcn
-                            value={entry.purchase_sub_item}
-                            onValueChange={(value) =>
-                              handleItemChange(
-                                index,
-                                "purchase_sub_item",
-                                value
-                              )
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select item...">
-                                {entry.purchase_sub_item || "Select item"}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Items</SelectLabel>
-                                {product.map((item) => (
-                                  <SelectItem
-                                    key={item.product_type}
-                                    value={item.product_type}
-                                  >
-                                    {item.product_type}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </SelectShadcn>
-          )}
+                        <Input
+                              type="text"
+                              value={entry.purchase_sub_item}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "purchase_sub_item",
+                                  e.target.value
+                                )
+                              }
+                             
+                              className="h-8 text-sm"
+                              placeholder="Items"
+                            />
+                        
                         </div>
-                        <div className="grid grid-cols-3 gap-1">
+                        <div className="grid grid-cols-2 gap-1">
                           <div>
                             <Input
                               type="tel"
@@ -704,22 +588,7 @@ const PurchaseGraniteEdit = () => {
                               placeholder="Qnty (pcs)"
                             />
                           </div>
-                          <div>
-                            <Input
-                              type="tel"
-                              value={entry.purchase_sub_qnty_sqr}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "purchase_sub_qnty_sqr",
-                                  e.target.value
-                                )
-                              }
-                              onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
-                              placeholder="Qnty (sqr)"
-                            />
-                          </div>
+                         
                           <div>
                             <Input
                               type="tel"
@@ -748,11 +617,31 @@ const PurchaseGraniteEdit = () => {
                           />
                         </div>
                       </div>
-                  
+                      <div className="col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItemEntry(index)}
+                          disabled={itemEntries.length <= 1}
+                          className="h-7 w-7 hover:bg-gray-200 text-red-500"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
-               
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addItemEntry}
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 text-xs h-8"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Item
+                </Button>
               </div>
 
               {/* Action Buttons */}
@@ -770,7 +659,7 @@ const PurchaseGraniteEdit = () => {
                   disabled={isSubmitting}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-xs h-9"
                 >
-                  {isSubmitting ? "Updating..." : "Update"}
+                  {isSubmitting ? "Saving..." : "Save"}
                 </Button>
               </div>
             </form>
@@ -791,7 +680,7 @@ const PurchaseGraniteEdit = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Edit Purchase Granite</CardTitle>
+                  <CardTitle>Add Purchase Tiles</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -819,7 +708,7 @@ const PurchaseGraniteEdit = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_bill_no">Bill No <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_bill_no">Ref Bill No <span className="text-xs text-red-400 ">*</span></Label>
                     <Input
                       id="purchase_bill_no"
                       {...form.register("purchase_bill_no")}
@@ -828,27 +717,27 @@ const PurchaseGraniteEdit = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_item_type">Item Type <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_estimate_ref">Estimate Ref<span className="text-xs text-red-400 ">*</span></Label>
                     <SelectShadcn
-                      id="purchase_item_type"
-                      value={form.watch("purchase_item_type")}
+                      id="purchase_estimate_ref"
+                      value={form.watch("purchase_estimate_ref")}
                       onValueChange={(value) => {
-                        form.setValue("purchase_item_type", value);
-                        refetchProducts();
+                        form.setValue("purchase_estimate_ref", value);
+                        // refetchProducts();
                       }}
                     >
                       <SelectTrigger className="w-full bg-white">
-                        <SelectValue placeholder="Select item type..." />
+                        <SelectValue placeholder="Select estimate ref..." />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
+                          <SelectLabel>Estimate Ref</SelectLabel>
+                          {estimateNo.map((type) => (
                             <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
+                              key={type.estimate_ref}
+                              value={type.estimate_ref}
                             >
-                              {type.product_type_group}
+                              {type.estimate_ref}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -891,8 +780,8 @@ const PurchaseGraniteEdit = () => {
                       <thead>
                         <tr className="border-b">
                           <th className="text-left p-2 font-medium text-sm">Item <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Qnty (pcs) <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Qnty (sqr) <span className="text-xs text-red-400 ">*</span></th>
+                          <th className="text-left p-2 font-medium text-sm">Qnty <span className="text-xs text-red-400 ">*</span></th>
+                       
                           <th className="text-left p-2 font-medium text-sm">Rate <span className="text-xs text-red-400 ">*</span></th>
                           <th className="text-left p-2 font-medium text-sm">Amount</th>
                           <th className="text-left p-2 font-medium text-sm"></th>
@@ -902,37 +791,21 @@ const PurchaseGraniteEdit = () => {
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
-                            {isLoadingItems ? ( 
-            <div className="text-center text-gray-500">Loading...</div>
-          ) : (
-                              <SelectShadcn
+                            <Input
+                                type="text"
                                 value={entry.purchase_sub_item}
-                                onValueChange={(value) =>
+                                onChange={(e) =>
                                   handleItemChange(
                                     index,
                                     "purchase_sub_item",
-                                    value
+                                    e.target.value
                                   )
                                 }
-                              >
-                                <SelectTrigger className="w-[8rem]">
-                                  <SelectValue placeholder="Select item" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Items</SelectLabel>
-                                    {product.map((item) => (
-                                      <SelectItem
-                                        key={item.product_type}
-                                        value={item.product_type}
-                                      >
-                                        {item.product_type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </SelectShadcn>
-          )}
+                              
+                                className="h-9"
+                                placeholder="Items"
+                              />
+                             
                             </td>
                             <td className="p-2">
                               <Input
@@ -950,22 +823,7 @@ const PurchaseGraniteEdit = () => {
                                 placeholder="0"
                               />
                             </td>
-                            <td className="p-2">
-                              <Input
-                                type="tel"
-                                value={entry.purchase_sub_qnty_sqr}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "purchase_sub_qnty_sqr",
-                                    e.target.value
-                                  )
-                                }
-                                onKeyDown={handleKeyDown}
-                                className="h-9"
-                                placeholder="0"
-                              />
-                            </td>
+                         
                             <td className="p-2">
                               <Input
                                 type="tel"
@@ -986,20 +844,41 @@ const PurchaseGraniteEdit = () => {
                               <Input
                                 type="tel"
                                 value={entry.purchase_sub_amount}
-                               
-                                className="h-9 "
+                                disabled
+                                className="h-9 bg-gray-100"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
                               />
                             </td>
-                           
+                            <td className="p-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItemEntry(index)}
+                                disabled={itemEntries.length <= 1}
+                                className="h-9 w-9 text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
 
-                 
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addItemEntry}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
@@ -1017,7 +896,7 @@ const PurchaseGraniteEdit = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Updating..." : "Update Purchase"}
+                    {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </form>
@@ -1029,4 +908,4 @@ const PurchaseGraniteEdit = () => {
   );
 };
 
-export default PurchaseGraniteEdit;
+export default PurchaseTilesAdd;

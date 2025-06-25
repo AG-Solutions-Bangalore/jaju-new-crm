@@ -75,6 +75,16 @@ const ProductList = () => {
     
       const navigate = useNavigate();
     
+      const [currentPage, setCurrentPage] = useState(0);
+      const itemsPerPage = 10;
+      
+      const filteredProducts = productType?.filter((product) => {
+        if (!searchQuery) return true;
+        return (
+          product.product_type_group?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.product_type?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }) || [];
       // Define columns for the table
       const columns = [
         {
@@ -206,11 +216,104 @@ const ProductList = () => {
   return (
     <Page>
        <div className="w-full p-0 md:p-4 grid grid-cols-1">
-         <div className="sm:hidden">
-          <p>
-            mobile product
-          </p>
-         </div>
+       <div className="sm:hidden">
+  {/* Sticky Header */}
+  <div className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}>
+    <div className="flex flex-col gap-2">
+      {/* Title + Add Button */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-base font-bold text-gray-800 px-2">
+          Product List
+        </h1>
+        <ProductAdd className="mr-2" />
+      </div>
+
+      {/* Search Input */}
+      <div className="relative px-2 pb-2">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+        <Input
+          placeholder="Search Product..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(0); // Reset to first page when searching
+          }}
+          className="pl-10 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-sm h-9"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* Product Cards */}
+  <div className="space-y-2 p-2 max-h-[calc(100vh-180px)] overflow-y-auto">
+    {filteredProducts
+      .slice(
+        currentPage * itemsPerPage,
+        currentPage * itemsPerPage + itemsPerPage
+      )
+      .map((product, index) => (
+        <Card key={product.id} className="p-3">
+          <div className="flex justify-between items-start">
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-gray-900 truncate">
+                {currentPage * itemsPerPage + index + 1}. {product.product_type_group} - {product.product_type}
+              </div>
+              <div className="mt-1">
+                <span
+                  className={`px-2 py-0.5 rounded text-xs ${
+                    product.product_type_status === "Active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {product.product_type_status}
+                </span>
+              </div>
+            </div>
+            <div className="flex-shrink-0 ml-2">
+              <ProductEdit productId={product.id} />
+            </div>
+          </div>
+        </Card>
+      ))}
+
+    {filteredProducts.length === 0 && (
+      <div className="text-center py-4 text-gray-500">
+        No products found
+      </div>
+    )}
+  </div>
+
+  {/* Pagination Controls */}
+  <div className="sticky bottom-0 bg-white border-t p-2 flex justify-between items-center">
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+      disabled={currentPage === 0}
+      className="h-8 text-xs"
+    >
+      Previous
+    </Button>
+    <span className="text-xs text-gray-600">
+      Page {currentPage + 1} of {Math.ceil(filteredProducts.length / itemsPerPage) || 1}
+    </span>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setCurrentPage((prev) => 
+        Math.min(prev + 1, Math.ceil(filteredProducts.length / itemsPerPage) - 1)
+      )}
+      disabled={
+        currentPage >= Math.ceil(filteredProducts.length / itemsPerPage) - 1 ||
+        filteredProducts.length <= itemsPerPage
+      }
+      className="h-8 text-xs"
+    >
+      Next
+    </Button>
+  </div>
+</div>
  
          <div className="hidden sm:block">
          <div className="flex text-left text-2xl text-gray-800 font-[400]">

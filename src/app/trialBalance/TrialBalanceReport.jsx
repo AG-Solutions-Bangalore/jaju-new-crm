@@ -337,7 +337,7 @@ const TrialBalanceReport = () => {
               
                         {/* Mobile Results */}
                         {searchParams && (
-                          <div ref={tableRef} className="p-2">
+                          <div  className="p-2">
                             {isLoading ? (
                               <div className="flex justify-center items-center h-64">
                                 <Loader2 className="h-8 w-8 animate-spin" />
