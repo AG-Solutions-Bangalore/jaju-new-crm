@@ -52,29 +52,29 @@ export function NavMain({ items }) {
 
   return (
     <SidebarGroup>
-        <SidebarGroupLabel>Home</SidebarGroupLabel>
+      <SidebarGroupLabel>Home</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const hasSubItems = item.items && item.items.length > 0;
           const isParentActive = hasSubItems 
-            ? item.items.some((subItem) => subItem.url === location.pathname)
-            : location.pathname === item.url;
+            ? item.items.some(subItem => location.pathname.startsWith(subItem.url))
+            : location.pathname.startsWith(item.url);
 
           if (!hasSubItems) {
-          
             return (
               <SidebarMenuItem key={item.title}>
                 <Link to={item.url} onClick={handleLinkClick}>
                   <motion.div variants={buttonVariants} whileHover="hover">
-                    <SidebarMenuButton tooltip={item.title}>
-                      {item.icon && <item.icon />}
-                      <span
-                        className={`transition-colors duration-200 ${
-                          isParentActive
-                            ? "text-blue-500"
-                            : "hover:text-blue-500"
-                        }`}
-                      >
+                    <SidebarMenuButton 
+                      tooltip={item.title}
+                      className={`rounded-md transition-colors duration-200 ${
+                        location.pathname.startsWith(item.url)
+                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200"
+                          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {item.icon && <item.icon className="w-5 h-5" />}
+                      <span className="ml-2">
                         {item.title}
                       </span>
                     </SidebarMenuButton>
@@ -84,7 +84,6 @@ export function NavMain({ items }) {
             );
           }
 
-         
           return (
             <Collapsible
               key={item.title}
@@ -95,15 +94,16 @@ export function NavMain({ items }) {
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                   <motion.div variants={buttonVariants} whileHover="hover">
-                    <SidebarMenuButton tooltip={item.title}>
-                      {item.icon && <item.icon />}
-                      <span
-                        className={`transition-colors duration-200 ${
-                          isParentActive
-                            ? "text-blue-500"
-                            : "hover:text-blue-500"
-                        }`}
-                      >
+                    <SidebarMenuButton 
+                      tooltip={item.title}
+                      className={`rounded-md transition-colors duration-200 ${
+                        isParentActive
+                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200"
+                          : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {item.icon && <item.icon className="w-5 h-5" />}
+                      <span className="ml-2">
                         {item.title}
                       </span>
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -114,25 +114,25 @@ export function NavMain({ items }) {
                   as={motion.div}
                   variants={itemVariants}
                   initial="closed"
-                  animate={isParentActive ? "open " : "closed"}
+                  animate={isParentActive ? "open" : "closed"}
                 >
-                  <SidebarMenuSub className="border-l border-blue-500">
+                  <SidebarMenuSub className="border-l border-blue-200 dark:border-blue-800 ml-4 pl-2">
                     {item.items?.map((subItem) => {
-                      const isSubItemActive = location.pathname === subItem.url;
+                      const isSubItemActive = location.pathname.startsWith(subItem.url);
                       return (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
                             <Link to={subItem.url} onClick={handleLinkClick}>
-                              <motion.span
-                                className={`transition-colors duration-200 ${
-                                  isSubItemActive
-                                    ? "text-blue-500 "
-                                    : "hover:text-blue-500"
-                                }`}
+                              <motion.div 
                                 whileHover={{ scale: 1.05 }}
+                                className={`px-3 py-2 rounded-md transition-colors duration-200 ${
+                                  isSubItemActive
+                                    ? "bg-blue-100 text-blue-600 w-full  rounded-xl dark:bg-blue-900 dark:text-blue-200"
+                                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                }`}
                               >
                                 {subItem.title}
-                              </motion.span>
+                              </motion.div>
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

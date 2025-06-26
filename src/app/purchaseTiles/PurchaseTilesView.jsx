@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Loader from "@/components/loader/Loader";
+import { FaRegFilePdf } from "react-icons/fa";
 
 const PurchaseTilesView = () => {
   const { toast } = useToast();
@@ -133,7 +134,7 @@ const PurchaseTilesView = () => {
                   size="sm"
                   onClick={handleDownloadPDF}
                 >
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FaRegFilePdf className="mr-2 h-4 w-4" />
                   PDF
                 </Button>
                 <ReactToPrint

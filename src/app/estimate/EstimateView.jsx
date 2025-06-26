@@ -28,6 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Loader from "@/components/loader/Loader";
+import { FaRegFilePdf } from "react-icons/fa";
 
 const EstimateView = () => {
   const { toast } = useToast();
@@ -112,7 +113,12 @@ const EstimateView = () => {
 
   return (
     <Page>
-      <div className="max-w-full mx-auto">
+      <div className="w-full p-0 md:p-0">
+
+      {/* <div className="sm:hidden">
+ mobile view estimate
+</div>
+        <div className="hidden sm:block"> */}
         <Card className="shadow-sm">
           <CardHeader>
             <div className="flex flex-row items-center justify-between">
@@ -133,7 +139,7 @@ const EstimateView = () => {
                   size="sm"
                   onClick={handleDownloadPDF}
                 >
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FaRegFilePdf className="mr-2 h-4 w-4" />
                   PDF
                 </Button>
                 <ReactToPrint
@@ -264,7 +270,8 @@ const EstimateView = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      {/* </div> */}
     </Page>
   );
 };

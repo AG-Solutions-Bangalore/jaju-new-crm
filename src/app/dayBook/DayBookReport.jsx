@@ -30,6 +30,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import Loader from "@/components/loader/Loader";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
 
 const DayBookReport = () => {
   const tableRef = useRef(null);
@@ -205,19 +206,19 @@ const DayBookReport = () => {
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                     onClick={handleDownload}
                   >
-                    <FileDown className="h-3 w-3" />
+                    <FaRegFileWord className="h-4 w-4" />
                   </button>
                   <button
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                     onClick={handleSavePDF}
                   >
-                    <FileText className="h-3 w-3" />
+                    <FaRegFilePdf className="h-4 w-4" />
                   </button>
                   <button
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                    onClick={handlePrintPdf}
                   >
-                    <Printer className="h-3 w-3" />
+                    <Printer className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -359,7 +360,8 @@ const DayBookReport = () => {
     
             <div className="hidden sm:block">
             <Card className="shadow-sm">
-          <CardHeader className="">
+              
+          {/* <CardHeader className="">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between sm:gap-2">
               <div className="flex flex-col space-y-2">
                 <CardTitle className="text-lg flex flex-row items-center gap-2">
@@ -408,7 +410,67 @@ const DayBookReport = () => {
                 
               </div>
             </div>
-          </CardHeader>
+          </CardHeader> */}
+          <CardHeader className={`p-4 ${ButtonConfig.cardheaderColor} rounded-t-lg shadow-sm mb-4`}>
+  <div className="flex flex-col gap-2">
+   
+    <div className="flex justify-between items-center">
+      <div className="flex flex-col">
+        <CardTitle className="text-lg font-bold text-gray-800">
+          Day Book Report
+        </CardTitle>
+        {dayBookData && (
+          <span className="text-blue-800 text-xs">
+            {formatDisplayDate(date)}
+          </span>
+        )}
+      </div>
+      <div className="flex gap-1">
+        <Button
+          size="sm"
+          className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+          onClick={handleDownload}
+        >
+          <FaRegFileWord className="h-3 w-3" />
+          CSV
+        </Button>
+        <Button
+          size="sm"
+          className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+          onClick={handleSavePDF}
+        >
+          <FaRegFilePdf className="h-3 w-3" />
+          PDF
+        </Button>
+        <Button
+          size="sm"
+          className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+          onClick={handlePrintPdf}
+        >
+          <Printer className="h-3 w-3" />
+          Print
+        </Button>
+      </div>
+    </div>
+
+ 
+    <div className="bg-white p-2 rounded-md shadow-xs">
+      <div className="flex items-center space-x-2">
+        <Label htmlFor="report-date" className="text-sm">
+          Date:
+        </Label>
+        <Input
+          id="report-date"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="h-8 text-sm"
+        />
+      </div>
+    </div>
+  </div>
+</CardHeader>
+
 
           <CardContent>
           {isLoading && (
