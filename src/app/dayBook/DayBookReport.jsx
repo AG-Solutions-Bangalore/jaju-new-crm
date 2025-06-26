@@ -264,7 +264,7 @@ const DayBookReport = () => {
               
               {/* Credit Section */}
               <div className="mb-4">
-                <div className="text-sm font-medium bg-blue-50 p-1 text-center border">
+                <div className="text-sm font-medium bg-green-50 p-1 text-center border">
                   Credit Transactions
                 </div>
                 <table className="w-full border-collapse text-xs">
@@ -280,7 +280,7 @@ const DayBookReport = () => {
                       dayBookData.received.map((item, index) => (
                         <tr
                           key={`credit-${index}`}
-                          className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                          className={index % 2 === 0 ? 'bg-white' : 'bg-green-50'}
                         >
                           <td className="border p-1 text-center">{index + 1}</td>
                           <td className="border p-1 text-left">{item.received_about}</td>
@@ -295,7 +295,7 @@ const DayBookReport = () => {
                       </tr>
                     )}
                     {dayBookData?.total_received_amount && (
-                      <tr className="bg-blue-50 font-medium">
+                      <tr className="bg-green-50 font-medium">
                         <td colSpan={2} className="border p-1 text-center">
                           Total
                         </td>
@@ -310,7 +310,7 @@ const DayBookReport = () => {
 
               {/* Debit Section */}
               <div className="mb-4">
-                <div className="text-sm font-medium bg-blue-50 p-1 text-center border">
+                <div className="text-sm font-medium bg-red-50 p-1 text-center border">
                   Debit Transactions
                 </div>
                 <table className="w-full border-collapse text-xs">
@@ -326,7 +326,7 @@ const DayBookReport = () => {
                       dayBookData.payment.map((item, index) => (
                         <tr
                           key={`debit-${index}`}
-                          className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                          className={index % 2 === 0 ? 'bg-white' : 'bg-red-50'}
                         >
                           <td className="border p-1 text-center">{index + 1}</td>
                           <td className="border p-1 text-left">{item.payment_about}</td>
@@ -341,7 +341,7 @@ const DayBookReport = () => {
                       </tr>
                     )}
                     {dayBookData?.total_payment_amount && (
-                      <tr className="bg-blue-50 font-medium">
+                      <tr className="bg-red-50 font-medium">
                         <td colSpan={2} className="border p-1 text-center">
                           Total
                         </td>
@@ -435,8 +435,8 @@ const DayBookReport = () => {
                 <div className="flex-1">
                   <Table className="border">
                     <TableHeader>
-                      <TableRow className="bg-gray-100 hover:bg-gray-100">
-                        <TableHead colSpan={3} className="text-center bg-blue-50">
+                      <TableRow className="bg-green-100 hover:bg-green-100">
+                        <TableHead colSpan={3} className="text-center text-black bg-green-50">
                           Credit Transactions
                         </TableHead>
                       </TableRow>
@@ -451,7 +451,7 @@ const DayBookReport = () => {
                         dayBookData.received.map((item, index) => (
                           <TableRow
                             key={`credit-${index}`}
-                            className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                            className={index % 2 === 0 ? 'bg-white' : 'bg-green-50/30'}
                           >
                             <TableCell className="text-center border-r">{index + 1}</TableCell>
                             <TableCell className="text-left border-r">{item.received_about}</TableCell>
@@ -466,7 +466,7 @@ const DayBookReport = () => {
                         </TableRow>
                       )}
                       {dayBookData?.total_received_amount && (
-                        <TableRow className="bg-blue-50/30 font-medium">
+                        <TableRow className="bg-green-50/30 font-medium">
                           <TableCell colSpan={2} className="text-center border-r">
                             Total
                           </TableCell>
@@ -483,8 +483,8 @@ const DayBookReport = () => {
                 <div className="flex-1">
                   <Table className="border">
                     <TableHeader>
-                      <TableRow className="bg-gray-100 hover:bg-gray-100">
-                        <TableHead colSpan={3} className="text-center bg-blue-50">
+                      <TableRow className="bg-red-100 hover:bg-red-100">
+                        <TableHead colSpan={3} className="text-center text-black bg-red-50">
                           Debit Transactions
                         </TableHead>
                       </TableRow>
@@ -499,7 +499,7 @@ const DayBookReport = () => {
                         dayBookData.payment.map((item, index) => (
                           <TableRow
                             key={`debit-${index}`}
-                            className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                            className={index % 2 === 0 ? 'bg-white' : 'bg-red-50/30'}
                           >
                             <TableCell className="text-center border-r">{index + 1}</TableCell>
                             <TableCell className="text-left border-r">{item.payment_about}</TableCell>
@@ -514,7 +514,7 @@ const DayBookReport = () => {
                         </TableRow>
                       )}
                       {dayBookData?.total_payment_amount && (
-                        <TableRow className="bg-blue-50/30 font-medium">
+                        <TableRow className="bg-red-50/30 font-medium">
                           <TableCell colSpan={2} className="text-center border-r">
                             Total
                           </TableCell>

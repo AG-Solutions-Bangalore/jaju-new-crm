@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
+import Loader from "@/components/loader/Loader";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -48,12 +49,13 @@ const formSchema = z.object({
   sales_balance: z.string(),
 });
 
-const SalesAdd = () => {
-  
+const EstimateSalesAdd = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
- 
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -73,9 +75,7 @@ const SalesAdd = () => {
       sales_address: "",
       sales_mobile: "",
 
-
       sales_item_type: "",
-
 
       sales_tax: "",
       sales_tempo: "",
@@ -85,23 +85,42 @@ const SalesAdd = () => {
       sales_gross: "",
       sales_advance: "",
       sales_balance: "",
-
-
     },
   });
   const [itemEntries, setItemEntries] = useState([
     {
-      sales_sub_type: "",
-      sales_sub_item: "",
-      sales_sub_qnty: "",
-      sales_sub_qnty_sqr: "",
-      sales_sub_rate: "",
-      sales_sub_amount: "",
+      id: "",
+      estimate_sub_type: "",
+      estimate_sub_item: "",
+      estimate_sub_qnty: "",
+      estimate_sub_qnty_sqr: "",
+      estimate_sub_rate: "",
+      estimate_sub_amount: "",
       sales_sub_item_original: "",
     },
   ]);
 
- 
+  const {
+    data: salesId,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["salesId", id],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${BASE_URL}/api/web-fetch-estimate-by-id/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    enabled: !!id,
+    staleTime: 0,
+    cacheTime: 0,
+  });
 
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
@@ -117,13 +136,10 @@ const SalesAdd = () => {
     },
   });
 
- 
-
-
-
   const { data: product = [], refetch: refetchProducts } = useQuery({
     queryKey: ["product", form.watch("sales_item_type")],
     queryFn: async () => {
+      setIsLoadingItems(true);
       if (!form.watch("sales_item_type")) return [];
       const token = localStorage.getItem("token");
       const response = await axios.get(
@@ -134,29 +150,70 @@ const SalesAdd = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      setIsLoadingItems(false);
       return response.data.product_type || [];
     },
     enabled: !!form.watch("sales_item_type"),
   });
+
+  useEffect(() => {
+    if (salesId) {
+      const { estimate: sId, estimateSub: sSub } = salesId;
+      const formValues = {
+        sales_date: moment(sId.estimate_date).format("YYYY-MM-DD"),
+        sales_year: sId.estimate_year || currentYear,
+        sales_item_type: sId.estimate_item_type || "Granites",
+        sales_customer: sId.estimate_customer || "",
+        sales_address: sId.estimate_address || "",
+        sales_mobile: sId.estimate_mobile || "",
+        sales_other: sId.estimate_other?.toString() || "",
+        sales_tempo: sId.estimate_tempo?.toString() || "",
+        sales_tax: sId.estimate_tax?.toString() || "",
+        sales_gross: sId.estimate_gross?.toString() || "",
+        sales_loading: sId.estimate_loading || "",
+        sales_unloading: sId.estimate_unloading || "",
+        sales_advance: sId.estimate_advance || "",
+        sales_balance: sId.estimate_balance || "",
+        sales_no_of_count: sId.estimate_no_of_count?.toString() || "1",
+      };
+      form.reset(formValues);
+
+      if (sSub && sSub.length > 0) {
+        const mappedData = sSub.map((sub) => ({
+          id: sub.id || "",
+          estimate_sub_type: sub.estimate_sub_type || "",
+          estimate_sub_item: sub.estimate_sub_item || "",
+         
+          estimate_sub_qnty: sub.estimate_sub_qnty?.toString() || "",
+          estimate_sub_qnty_sqr: sub.estimate_sub_qnty_sqr?.toString() || "",
+          estimate_sub_rate: sub.estimate_sub_rate?.toString() || "",
+          estimate_sub_amount: sub.estimate_sub_amount?.toString() || "",
+        }));
+        setItemEntries(mappedData);
+      }
+      setIsInitialLoading(false);
+    }
+  }, [salesId]);
+
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
     updatedEntries[index][field] = value;
     setItemEntries(updatedEntries);
 
     if (
-      (field === "sales_sub_qnty_sqr" || field === "sales_sub_rate") &&
-      updatedEntries[index].sales_sub_qnty_sqr &&
-      updatedEntries[index].sales_sub_rate
+      (field === "estimate_sub_qnty_sqr" || field === "estimate_sub_rate") &&
+      updatedEntries[index].estimate_sub_qnty_sqr &&
+      updatedEntries[index].estimate_sub_rate
     ) {
-      updatedEntries[index].sales_sub_amount = (
-        parseFloat(updatedEntries[index].sales_sub_qnty_sqr || 0) *
-        parseFloat(updatedEntries[index].sales_sub_rate || 0)
+      updatedEntries[index].estimate_sub_amount = (
+        parseFloat(updatedEntries[index].estimate_sub_qnty_sqr || 0) *
+        parseFloat(updatedEntries[index].estimate_sub_rate || 0)
       ).toString();
       setItemEntries([...updatedEntries]);
     }
 
     const itemsTotal = updatedEntries.reduce(
-      (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
+      (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
       0
     );
     const chargesTotal =
@@ -169,8 +226,7 @@ const SalesAdd = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -178,7 +234,7 @@ const SalesAdd = () => {
     form.setValue(field, value);
 
     const itemsTotal = itemEntries.reduce(
-      (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
+      (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
       0
     );
     const chargesTotal =
@@ -191,8 +247,7 @@ const SalesAdd = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -207,12 +262,12 @@ const SalesAdd = () => {
     setItemEntries([
       ...itemEntries,
       {
-        sales_sub_type: "",
-        sales_sub_item: "",
-        sales_sub_qnty: "",
-        sales_sub_qnty_sqr: "",
-        sales_sub_rate: "",
-        sales_sub_amount: "",
+        estimate_sub_type: "",
+        estimate_sub_item: "",
+        estimate_sub_qnty: "",
+        estimate_sub_qnty_sqr: "",
+        estimate_sub_rate: "",
+        estimate_sub_amount: "",
         sales_sub_item_original: "",
       },
     ]);
@@ -224,7 +279,7 @@ const SalesAdd = () => {
     setItemEntries(updatedEntries);
 
     const itemsTotal = updatedEntries.reduce(
-      (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
+      (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
       0
     );
     const chargesTotal =
@@ -237,8 +292,7 @@ const SalesAdd = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -256,11 +310,11 @@ const SalesAdd = () => {
 
     event.preventDefault();
   };
-  const createSalesMutation = useMutation({
+  const createEstimateSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${BASE_URL}/api/web-create-sales-direct`,
+        `${BASE_URL}/api/web-create-sales`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -278,8 +332,7 @@ const SalesAdd = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to create sales",
+        description: error.response?.data?.message || "Failed to update sales",
         variant: "destructive",
       });
     },
@@ -292,29 +345,29 @@ const SalesAdd = () => {
     };
 
     const itemErrors = itemEntries.map((entry, index) => ({
-      type: !entry.sales_sub_type ? "required" : "",
+      type: !entry.estimate_sub_type ? "required" : "",
       originalItem: !entry.sales_sub_item_original ? "required" : "",
-      item: !entry.sales_sub_item ? "required" : "",
-      qnty: !entry.sales_sub_qnty
+      item: !entry.estimate_sub_item ? "required" : "",
+      qnty: !entry.estimate_sub_qnty
         ? "required"
-        : isNaN(entry.sales_sub_qnty)
+        : isNaN(entry.estimate_sub_qnty)
         ? "Quantity must be a number"
         : "",
-      qntySqr: !entry.sales_sub_qnty_sqr
+      qntySqr: !entry.estimate_sub_qnty_sqr
         ? "required"
-        : isNaN(entry.sales_sub_qnty_sqr)
+        : isNaN(entry.estimate_sub_qnty_sqr)
         ? "Quantity (sqr) must be a number"
         : "",
-      rate: !entry.sales_sub_rate
+      rate: !entry.estimate_sub_rate
         ? "required"
-        : isNaN(entry.sales_sub_rate)
+        : isNaN(entry.estimate_sub_rate)
         ? "Rate must be a number"
         : "",
     }));
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || err.originalItem
+      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || originalItem
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -476,7 +529,6 @@ const SalesAdd = () => {
       return;
     }
 
-    
     await onSubmit(formData);
   };
 
@@ -487,14 +539,14 @@ const SalesAdd = () => {
         sales_year: currentYear,
         sales_no_of_count: itemEntries.length,
         sales_sub_data: itemEntries,
+        sales_estimate_ref: id,
       };
 
-      
-      createSalesMutation.mutate(payload);
+      createEstimateSalesMutation.mutate(payload);
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create sales",
+        description: error.message || "Failed to update sales",
         variant: "destructive",
       });
     } finally {
@@ -503,8 +555,37 @@ const SalesAdd = () => {
   };
 
   const handleCancel = () => {
-    navigate("/sales");
+    navigate("/estimate");
   };
+
+  if (isFetching || productTypeGroup.length == 0) {
+    return (
+      <Page>
+        <div className="flex justify-center items-center h-full">
+          <Loader />
+        </div>
+      </Page>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Page>
+        <Card className="w-full max-w-md mx-auto mt-10">
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Error Fetching Estimate Sales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -518,9 +599,8 @@ const SalesAdd = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Add Sales</h1>
+                <h1 className="text-base font-bold">Add Estimate Sales</h1>
               </button>
-             
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-green-50 border border-green-100 rounded-md p-2">
@@ -619,6 +699,9 @@ const SalesAdd = () => {
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium">Items</h3>
                 </div>
+               
+            
+
                 {itemEntries.map((entry, index) => (
                   <div
                     key={index}
@@ -628,14 +711,22 @@ const SalesAdd = () => {
                       <div className="col-span-11">
                         <div className="grid grid-cols-2 gap-1 mb-1">
                           <div className="col-span-1">
-                            <SelectShadcn
-                              value={entry.sales_sub_type}
-                              onValueChange={(value) =>
+                            {/* <Input
+                              value={entry.estimate_sub_type}
+                              onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "sales_sub_type",
-                                  value
+                                  "estimate_sub_type",
+                                  e.target.value
                                 )
+                              }
+                              className="h-8 text-sm"
+                              placeholder="Types"
+                            /> */}
+                            <SelectShadcn
+                              value={entry.estimate_sub_type}
+                              onValueChange={(value) =>
+                                handleItemChange(index, "estimate_sub_type", value)
                               }
                             >
                               <SelectTrigger className="w-full">
@@ -658,11 +749,11 @@ const SalesAdd = () => {
                           </div>
                           <div className="col-span-1">
                             <Input
-                              value={entry.sales_sub_item}
+                              value={entry.estimate_sub_item}
                               onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "sales_sub_item",
+                                  "estimate_sub_item",
                                   e.target.value
                                 )
                               }
@@ -674,42 +765,46 @@ const SalesAdd = () => {
 
                         <div className="grid grid-cols-3 gap-1">
                           <div>
-                            <SelectShadcn
-                              value={entry.sales_sub_item_original}
-                              onValueChange={(value) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_item_original",
-                                  value
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select Original Item..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectLabel>Original Items</SelectLabel>
-                                  {product.map((item) => (
-                                    <SelectItem
-                                      key={item.product_type}
-                                      value={item.product_type}
-                                    >
-                                      {item.product_type}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </SelectShadcn>
+                            {isLoadingItems ? (
+                                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
+                            ) : (
+                              <SelectShadcn
+                                value={entry.sales_sub_item_original}
+                                onValueChange={(value) =>
+                                  handleItemChange(
+                                    index,
+                                    "sales_sub_item_original",
+                                    value
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select Original Item..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Original Items</SelectLabel>
+                                    {product.map((item) => (
+                                      <SelectItem
+                                        key={item.product_type}
+                                        value={item.product_type}
+                                      >
+                                        {item.product_type}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </SelectShadcn>
+                            )}
                           </div>
                           <div>
                             <Input
                               type="tel"
-                              value={entry.sales_sub_qnty}
+                              value={entry.estimate_sub_qnty}
                               onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "sales_sub_qnty",
+                                  "estimate_sub_qnty",
                                   e.target.value
                                 )
                               }
@@ -721,11 +816,11 @@ const SalesAdd = () => {
                           <div>
                             <Input
                               type="tel"
-                              value={entry.sales_sub_qnty_sqr}
+                              value={entry.estimate_sub_qnty_sqr}
                               onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "sales_sub_qnty_sqr",
+                                  "estimate_sub_qnty_sqr",
                                   e.target.value
                                 )
                               }
@@ -739,11 +834,11 @@ const SalesAdd = () => {
                           <div>
                             <Input
                               type="tel"
-                              value={entry.sales_sub_rate}
+                              value={entry.estimate_sub_rate}
                               onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "sales_sub_rate",
+                                  "estimate_sub_rate",
                                   e.target.value
                                 )
                               }
@@ -755,7 +850,7 @@ const SalesAdd = () => {
                           <div>
                             <Input
                               type="tel"
-                              value={entry.sales_sub_amount}
+                              value={entry.estimate_sub_amount}
                               disabled
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm bg-gray-100"
@@ -779,6 +874,9 @@ const SalesAdd = () => {
                     </div>
                   </div>
                 ))}
+
+
+
                 <Button
                   type="button"
                   variant="outline"
@@ -789,7 +887,8 @@ const SalesAdd = () => {
                   <Plus className="h-3 w-3 mr-1" />
                   Add Item
                 </Button>
-              </div>
+              
+              </div> 
 
               {/* Charges */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
@@ -926,9 +1025,8 @@ const SalesAdd = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Sales</CardTitle>
+                  <CardTitle>Add Estimate Sales</CardTitle>
                 </div>
-               
               </div>
             </CardHeader>
 
@@ -1055,15 +1153,32 @@ const SalesAdd = () => {
                         </tr>
                       </thead>
                       <tbody>
+
+
+
+
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
+                              {/* <Input
+                                value={entry.estimate_sub_type}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    index,
+                                    "estimate_sub_type",
+                                    e.target.value
+                                  )
+                                }
+                                className="h-9"
+                                placeholder="Types"
+                              /> */}
+
                               <SelectShadcn
-                                value={entry.sales_sub_type}
+                                value={entry.estimate_sub_type}
                                 onValueChange={(value) =>
                                   handleItemChange(
                                     index,
-                                    "sales_sub_type",
+                                    "estimate_sub_type",
                                     value
                                   )
                                 }
@@ -1088,11 +1203,11 @@ const SalesAdd = () => {
                             </td>
                             <td className="p-2">
                               <Input
-                                value={entry.sales_sub_item}
+                                value={entry.estimate_sub_item}
                                 onChange={(e) =>
                                   handleItemChange(
                                     index,
-                                    "sales_sub_item",
+                                    "estimate_sub_item",
                                     e.target.value
                                   )
                                 }
@@ -1102,43 +1217,47 @@ const SalesAdd = () => {
                             </td>
 
                             <td className="p-2">
-                              <SelectShadcn
-                                value={entry.sales_sub_item_original}
-                                onValueChange={(value) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_item_original",
-                                    value
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-[8rem]">
-                                  <SelectValue placeholder="Select Original Item" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Original Items</SelectLabel>
-                                    {product.map((item) => (
-                                      <SelectItem
-                                        key={item.product_type}
-                                        value={item.product_type}
-                                      >
-                                        {item.product_type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </SelectShadcn>
+                              {isLoadingItems ? (
+                                                  <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
+                              ) : (
+                                <SelectShadcn
+                                  value={entry.sales_sub_item_original}
+                                  onValueChange={(value) =>
+                                    handleItemChange(
+                                      index,
+                                      "sales_sub_item_original",
+                                      value
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-[8rem]">
+                                    <SelectValue placeholder="Select Original Item" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Original Items</SelectLabel>
+                                      {product.map((item) => (
+                                        <SelectItem
+                                          key={item.product_type}
+                                          value={item.product_type}
+                                        >
+                                          {item.product_type}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </SelectShadcn>
+                              )}
                             </td>
 
                             <td className="p-2">
                               <Input
                                 type="tel"
-                                value={entry.sales_sub_qnty}
+                                value={entry.estimate_sub_qnty}
                                 onChange={(e) =>
                                   handleItemChange(
                                     index,
-                                    "sales_sub_qnty",
+                                    "estimate_sub_qnty",
                                     e.target.value
                                   )
                                 }
@@ -1150,11 +1269,11 @@ const SalesAdd = () => {
                             <td className="p-2">
                               <Input
                                 type="tel"
-                                value={entry.sales_sub_qnty_sqr}
+                                value={entry.estimate_sub_qnty_sqr}
                                 onChange={(e) =>
                                   handleItemChange(
                                     index,
-                                    "sales_sub_qnty_sqr",
+                                    "estimate_sub_qnty_sqr",
                                     e.target.value
                                   )
                                 }
@@ -1166,11 +1285,11 @@ const SalesAdd = () => {
                             <td className="p-2">
                               <Input
                                 type="tel"
-                                value={entry.sales_sub_rate}
+                                value={entry.estimate_sub_rate}
                                 onChange={(e) =>
                                   handleItemChange(
                                     index,
-                                    "sales_sub_rate",
+                                    "estimate_sub_rate",
                                     e.target.value
                                   )
                                 }
@@ -1182,7 +1301,7 @@ const SalesAdd = () => {
                             <td className="p-2">
                               <Input
                                 type="tel"
-                                value={entry.sales_sub_amount}
+                                value={entry.estimate_sub_amount}
                                 disabled
                                 className="h-9 bg-gray-100"
                                 placeholder="0"
@@ -1261,10 +1380,7 @@ const SalesAdd = () => {
                           type="tel"
                           {...form.register("sales_loading")}
                           onChange={(e) =>
-                            handleChargeChange(
-                              "sales_loading",
-                              e.target.value
-                            )
+                            handleChargeChange("sales_loading", e.target.value)
                           }
                           onKeyDown={handleKeyDown}
                           placeholder="0"
@@ -1373,4 +1489,4 @@ const SalesAdd = () => {
   );
 };
 
-export default SalesAdd;
+export default EstimateSalesAdd;

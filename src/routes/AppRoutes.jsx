@@ -34,6 +34,7 @@ import PurchaseTilesAdd from "@/app/purchaseTiles/PurchaseTilesAdd";
 import PurchaseTilesEdit from "@/app/purchaseTiles/PurchaseTilesEdit";
 import SalesAdd from "@/app/sales/SalesAdd";
 import SalesEdit from "@/app/sales/SalesEdit";
+import EstimateSalesAdd from "@/app/sales/EstimateSalesAdd";
 
 function AppRoutes() {
   return (
@@ -69,6 +70,7 @@ function AppRoutes() {
           <Route path="/purchase-tiles/view/:id" element={<PurchaseTilesView />} />
           <Route path="/sales" element={<SalesList />} />
           <Route path="/sales/create" element={<SalesAdd />} />
+          <Route path="/sales/estimate-create/:id" element={<EstimateSalesAdd />} />
           <Route path="/sales/view/:id" element={<SalesView />} />
           <Route path="/sales/edit/:id" element={<SalesEdit />} />
           <Route path="/stocks" element={<StocksReport />} />

@@ -45,7 +45,7 @@ const PurchaseGraniteEdit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(false);
     const [isLoadingItems, setIsLoadingItems] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -88,7 +88,7 @@ const PurchaseGraniteEdit = () => {
  
   const { 
     data: purchaseByid, 
-    isLoading, 
+    isFetching, 
     isError, 
     refetch 
   } = useQuery({
@@ -170,18 +170,8 @@ const PurchaseGraniteEdit = () => {
                   purchase_sub_amount: sub.purchase_sub_amount?.toString() || "",
                 }));
                 setItemEntries(mappedData);
-              }else{
-                  setItemEntries([
-                      {
-                        id: "",
-                        purchase_sub_item: "",
-                        purchase_sub_qnty: "",
-                        purchase_sub_qnty_sqr: "",
-                        purchase_sub_rate: "",
-                        purchase_sub_amount: "",
-                      },
-                    ]);
               }
+              setIsInitialLoading(false);
             
       }
     }, [purchaseByid]);
@@ -494,7 +484,7 @@ const PurchaseGraniteEdit = () => {
     navigate("/purchase-granite");
   };
   
-  if (isLoading  || productTypeGroup.length == 0) {
+  if (isFetching  || productTypeGroup.length == 0) {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">
@@ -654,7 +644,7 @@ const PurchaseGraniteEdit = () => {
                       <div className="col-span-12">
                         <div className="mb-1">
                         {isLoadingItems ? ( 
-            <div className="text-center text-gray-500">Loading...</div>
+      <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
           ) : (
                           <SelectShadcn
                             value={entry.purchase_sub_item}
@@ -903,7 +893,7 @@ const PurchaseGraniteEdit = () => {
                           <tr key={index} className="border-b">
                             <td className="p-2">
                             {isLoadingItems ? ( 
-            <div className="text-center text-gray-500">Loading...</div>
+            <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
           ) : (
                               <SelectShadcn
                                 value={entry.purchase_sub_item}

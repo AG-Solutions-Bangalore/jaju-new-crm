@@ -32,7 +32,7 @@ import {
   Eye,
   Search,
   SquarePlus,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -50,306 +50,372 @@ import moment from "moment";
 import StatusToggle from "@/components/toggle/StatusToggle";
 
 const EstimateList = () => {
-     const {
-        data: estimate,
-        isLoading,
-        isError,
-        refetch,
-      } = useQuery({
-        queryKey: ["estimate"],
-        queryFn: async () => {
-          const token = localStorage.getItem("token");
-          const response = await axios.get(`${ESTIMATE_LIST}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          return response.data.estimate;
-        },
+  const {
+    data: estimate,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["estimate"],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${ESTIMATE_LIST}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-     
-      // State for table management
-      const [sorting, setSorting] = useState([]);
-      const [columnFilters, setColumnFilters] = useState([]);
-      const [columnVisibility, setColumnVisibility] = useState({});
-      const [rowSelection, setRowSelection] = useState({});
-      const [searchQuery, setSearchQuery] = useState("");
-    
-      const navigate = useNavigate();
-    
-      const [currentPage, setCurrentPage] = useState(0);
-      const itemsPerPage = 10;
-      
-      const filteredEstimates = estimate?.filter((est) => {
-        if (!searchQuery) return true;
-        return (
-          est.estimate_customer?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          est.estimate_no?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }) || [];
-      // Define columns for the table
-      const columns = [
-        {
-          id: "Sl No",
-          accessorKey: "index",
-          header: "Sl No",
-          cell: ({ row }) => <div>{row.index + 1}</div>,
-        },
-        
-        {
-          accessorKey: "estimate_date",
-          id:"Estimate Date",
-          header: "Estimate Date",
-          cell: ({ row }) => {
-            const date = row.getValue("Estimate Date");
-            const estimateId = row.original.id
-            
+      return response.data.estimate;
+    },
+  });
+
+  // State for table management
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const navigate = useNavigate();
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
+
+  const filteredEstimates =
+    estimate?.filter((est) => {
+      if (!searchQuery) return true;
       return (
-        <div
+        est.estimate_customer
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        est.estimate_no?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }) || [];
+  // Define columns for the table
+  const columns = [
+    {
+      id: "Sl No",
+      accessorKey: "index",
+      header: "Sl No",
+      cell: ({ row }) => <div>{row.index + 1}</div>,
+    },
+
+    {
+      accessorKey: "estimate_date",
+      id: "Estimate Date",
+      header: "Estimate Date",
+      cell: ({ row }) => {
+        const date = row.getValue("Estimate Date");
+        const estimateId = row.original.id;
+
+        return (
+          <div
             // onClick={() => {
             //   navigateTOEstimateView(navigate, estimateId)
             //                          }}
             onClick={() => navigate(`/estimate/view/${estimateId}`)}
-          className="cursor-pointer text-blue-600 hover:underline" 
-        >
-          {moment(date).format("DD-MMM-YYYY")}
-        </div>
-      );
-          },
-        },
-        {
-          accessorKey: "estimate_no",
-          id:"Estimate No",
-          header: "Estimate No",
-          cell: ({ row }) => <div>{row.getValue("Estimate No")}</div>,
-        },
-        {
-          accessorKey: "estimate_customer",
-          id:"Customer",
-          header: "Customer",
-          cell: ({ row }) => <div>{row.getValue("Customer")}</div>,
-        },
-        {
-          accessorKey: "estimate_no_of_count",
-          id:"No Of Items",
-          header: "No Of Items",
-          cell: ({ row }) => <div>{row.getValue("No Of Items")}</div>,
-        },
-        {
-          accessorKey: "estimate_gross",
-          id:"Gross",
-          header: "Gross",
-          cell: ({ row }) => <div>{row.getValue("Gross")}</div>,
-        },
-        {
-          accessorKey: "estimate_advance",
-          id:"Advance",
-          header: "Advance",
-          cell: ({ row }) => <div>{row.getValue("Advance")}</div>,
-        },
-        {
-          accessorKey: "estimate_balance",
-          id:"Balance",
-          header: "Balance",
-          cell: ({ row }) => <div>{row.getValue("Balance")}</div>,
-        },
-      ];
-    
-    
-      // Create the table instance
-      const table = useReactTable({
-        data: estimate || [],
-        columns,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
-        state: {
-          sorting,
-          columnFilters,
-          columnVisibility,
-          rowSelection,
-        },
-        initialState: {
-          pagination: {
-            pageSize: 7,
-          },
-        },
-      });
-    
-      // Render loading state
-      if (isLoading) {
-        return (
-          <Page>
-            <div className="flex justify-center items-center h-full">
-              <Loader />
+            className="cursor-pointer text-blue-600 hover:underline"
+          >
+            {moment(date).format("DD-MMM-YYYY")}
+          </div>
+        );
+      },
+    },
+    // {
+    //   accessorKey: "estimate_no",
+    //   id: "Estimate No",
+    //   header: "Estimate No",
+    //   cell: ({ row }) => <div>{row.getValue("Estimate No")}</div>,
+    // },
+    {
+      accessorKey: "estimate_no",
+      id: "Estimate No",
+      header: "Estimate No",
+      cell: ({ row }) => {
+        const value = row.getValue("Estimate No");
+        const estimateStatus = row.original.estimate_status;
+        const id = row.original.id;
+        const userType = localStorage.getItem("userType");
+
+        if (userType === "1") {
+          return <div>{value}</div>;
+        } else if (userType === "2" && estimateStatus === "Estimate") {
+          return (
+            <div>
+              <span
+                className="text-blue-600 hover:underline cursor-pointer"
+                onClick={() => navigate(`/sales/estimate-create/${id}`)}
+              >
+                {value}
+              </span>
             </div>
-          </Page>
-        );
-      }
-    
-      // Render error state
-      if (isError) {
-        return (
-          <Page>
-            <Card className="w-full max-w-md mx-auto mt-10">
-              <CardHeader>
-                <CardTitle className="text-destructive">
-                  Error Fetching purchase
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => refetch()} variant="outline">
-                  Try Again
-                </Button>
-              </CardContent>
-            </Card>
-          </Page>
-        );
-      }
-    
+          );
+        } else {
+          return <div>{value}</div>;
+        }
+      },
+    },
+
+    {
+      accessorKey: "estimate_customer",
+      id: "Customer",
+      header: "Customer",
+      cell: ({ row }) => <div>{row.getValue("Customer")}</div>,
+    },
+    {
+      accessorKey: "estimate_no_of_count",
+      id: "No Of Items",
+      header: "No Of Items",
+      cell: ({ row }) => <div>{row.getValue("No Of Items")}</div>,
+    },
+    {
+      accessorKey: "estimate_gross",
+      id: "Gross",
+      header: "Gross",
+      cell: ({ row }) => <div>{row.getValue("Gross")}</div>,
+    },
+    {
+      accessorKey: "estimate_advance",
+      id: "Advance",
+      header: "Advance",
+      cell: ({ row }) => <div>{row.getValue("Advance")}</div>,
+    },
+    {
+      accessorKey: "estimate_balance",
+      id: "Balance",
+      header: "Balance",
+      cell: ({ row }) => <div>{row.getValue("Balance")}</div>,
+    },
+  ];
+
+  // Create the table instance
+  const table = useReactTable({
+    data: estimate || [],
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 7,
+      },
+    },
+  });
+
+  // Render loading state
+  if (isLoading) {
+    return (
+      <Page>
+        <div className="flex justify-center items-center h-full">
+          <Loader />
+        </div>
+      </Page>
+    );
+  }
+
+  // Render error state
+  if (isError) {
+    return (
+      <Page>
+        <Card className="w-full max-w-md mx-auto mt-10">
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Error Fetching purchase
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </Page>
+    );
+  }
+
   return (
     <Page>
-       <div className="w-full p-0 md:p-4 grid grid-cols-1">
-       <div className="sm:hidden">
-  {/* Sticky Header */}
-  <div className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}>
-    <div className="flex flex-col gap-2">
-      {/* Title + Add Button */}
-      <div className="flex justify-between items-center px-2 py-2">
-        <h1 className="text-base font-bold text-gray-800">
-          Estimate List
-        </h1>
-        <Button
-          size="sm"
-          className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-          onClick={() => navigate("/estimate/create")}
-        >
-          <SquarePlus className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      {/* Search Input */}
-      <div className="relative px-2 pb-2">
-        <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-500" />
-        <Input
-          placeholder="Search estimates..."
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setCurrentPage(0);
-          }}
-          className="pl-9 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-xs h-8"
-        />
-      </div>
-    </div>
-  </div>
-
-  {/* Estimate Cards - Compact Version */}
-  <div className="space-y-2 p-2 max-h-[calc(100vh-180px)] overflow-y-auto">
-    {filteredEstimates
-      .slice(
-        currentPage * itemsPerPage,
-        currentPage * itemsPerPage + itemsPerPage
-      )
-      .map((estimate, index) => (
-        <Card key={estimate.id} className="p-2">
-          <div 
-            className="flex justify-between items-center cursor-pointer"
-            // onClick={() => navigate(`/estimate/view/${estimate.id}`)}
+      <div className="w-full p-0 md:p-4 grid grid-cols-1">
+        <div className="sm:hidden">
+          {/* Sticky Header */}
+          <div
+            className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}
           >
-            <div className="font-medium text-gray-900 text-sm">
-              {currentPage * itemsPerPage + index + 1}. {estimate.estimate_customer}
-            </div>
-            <div className="flex space-x-1">
-              <Button
-                variant="ghost"
-                size="iconSm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/estimate/view/${estimate.id}`)
-                }}
-                className="h-6 w-6 text-blue-600 hover:text-blue-800"
-              >
-                <Eye className="h-3 w-3" />
-              </Button>
+            <div className="flex flex-col gap-2">
+              {/* Title + Add Button */}
+              <div className="flex justify-between items-center px-2 py-2">
+                <h1 className="text-base font-bold text-gray-800">
+                  Estimate List
+                </h1>
+                <Button
+                  size="sm"
+                  className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                  onClick={() => navigate("/estimate/create")}
+                >
+                  <SquarePlus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative px-2 pb-2">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-500" />
+                <Input
+                  placeholder="Search estimates..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(0);
+                  }}
+                  className="pl-9 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-xs h-8"
+                />
+              </div>
             </div>
           </div>
-          
-          <div 
-            className="grid grid-cols-3 gap-1 mt-1 text-xs"
-            // onClick={() => navigate(`/estimate/view/${estimate.id}`)}
-          >
-            <div>
-              <div className="text-gray-500">Date</div>
-              <div className="">{moment(estimate.estimate_date).format("DD-MMM-YY")}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Estimate No</div>
-              <div>{estimate.estimate_no}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Items</div>
-              <div>{estimate.estimate_no_of_count}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Gross</div>
-              <div>{estimate.estimate_gross}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Advance</div>
-              <div>{estimate.estimate_advance}</div>
-            </div>
-            <div>
-              <div className="text-gray-500">Balance</div>
-              <div>{estimate.estimate_balance}</div>
-            </div>
+
+          {/* Estimate Cards - Compact Version */}
+          <div className="space-y-2 p-2 max-h-[calc(100vh-180px)] overflow-y-auto">
+            {filteredEstimates
+              .slice(
+                currentPage * itemsPerPage,
+                currentPage * itemsPerPage + itemsPerPage
+              )
+              .map((estimate, index) => (
+                <Card key={estimate.id} className="p-2">
+                  <div
+                    className="flex justify-between items-center cursor-pointer"
+                    // onClick={() => navigate(`/estimate/view/${estimate.id}`)}
+                  >
+                    <div className="font-medium text-gray-900 text-sm">
+                      {currentPage * itemsPerPage + index + 1}.{" "}
+                      {estimate.estimate_customer}
+                    </div>
+                    <div className="flex space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="iconSm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/estimate/view/${estimate.id}`);
+                        }}
+                        className="h-6 w-6 text-blue-600 hover:text-blue-800"
+                      >
+                        <Eye className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div
+                    className="grid grid-cols-3 gap-1 mt-1 text-xs"
+                    // onClick={() => navigate(`/estimate/view/${estimate.id}`)}
+                  >
+                    <div>
+                      <div className="text-gray-500">Date</div>
+                      <div className="">
+                        {moment(estimate.estimate_date).format("DD-MMM-YY")}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Estimate No</div>
+                      <div>
+                        {(() => {
+                          const userType = localStorage.getItem("userType");
+                          if (userType === "1") {
+                            return estimate.estimate_no;
+                          } else if (
+                            userType === "2" &&
+                            estimate.estimate_status === "Estimate"
+                          ) {
+                            return (
+                              <span
+                                className="text-blue-600 hover:underline cursor-pointer"
+                                onClick={() =>
+                                  navigate(`/sales/estimate-create/${estimate.id}`)
+                                }
+                              >
+                                {estimate.estimate_no}
+                              </span>
+                            );
+                          } else {
+                            return estimate.estimate_no;
+                          }
+                        })()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Items</div>
+                      <div>{estimate.estimate_no_of_count}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Gross</div>
+                      <div>{estimate.estimate_gross}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Advance</div>
+                      <div>{estimate.estimate_advance}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Balance</div>
+                      <div>{estimate.estimate_balance}</div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+
+            {filteredEstimates.length === 0 && (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                No estimate records found
+              </div>
+            )}
           </div>
-        </Card>
-      ))}
 
-    {filteredEstimates.length === 0 && (
-      <div className="text-center py-4 text-gray-500 text-sm">
-        No estimate records found
-      </div>
-    )}
-  </div>
+          {/* Pagination Controls */}
+          <div className="sticky bottom-0 bg-white border-t p-2 flex justify-between items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+              disabled={currentPage === 0}
+              className="h-8 text-xs px-3"
+            >
+              Prev
+            </Button>
+            <span className="text-xs text-gray-600">
+              Page {currentPage + 1} of{" "}
+              {Math.ceil(filteredEstimates.length / itemsPerPage) || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) =>
+                  Math.min(
+                    prev + 1,
+                    Math.ceil(filteredEstimates.length / itemsPerPage) - 1
+                  )
+                )
+              }
+              disabled={
+                currentPage >=
+                  Math.ceil(filteredEstimates.length / itemsPerPage) - 1 ||
+                filteredEstimates.length <= itemsPerPage
+              }
+              className="h-8 text-xs px-3"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
 
-  {/* Pagination Controls */}
-  <div className="sticky bottom-0 bg-white border-t p-2 flex justify-between items-center">
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-      disabled={currentPage === 0}
-      className="h-8 text-xs px-3"
-    >
-      Prev
-    </Button>
-    <span className="text-xs text-gray-600">
-      Page {currentPage + 1} of {Math.ceil(filteredEstimates.length / itemsPerPage) || 1}
-    </span>
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setCurrentPage((prev) => 
-        Math.min(prev + 1, Math.ceil(filteredEstimates.length / itemsPerPage) - 1)
-      )}
-      disabled={
-        currentPage >= Math.ceil(filteredEstimates.length / itemsPerPage) - 1 ||
-        filteredEstimates.length <= itemsPerPage
-      }
-      className="h-8 text-xs px-3"
-    >
-      Next
-    </Button>
-  </div>
-</div>
- 
-         <div className="hidden sm:block">
-         <div className="flex text-left text-2xl text-gray-800 font-[400]">
+        <div className="hidden sm:block">
+          <div className="flex text-left text-2xl text-gray-800 font-[400]">
             Estimate List
           </div>
 
@@ -417,9 +483,9 @@ const EstimateList = () => {
                           {header.isPlaceholder
                             ? null
                             : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                         </TableHead>
                       );
                     })}
@@ -481,11 +547,10 @@ const EstimateList = () => {
               </Button>
             </div>
           </div>
-         </div>
-       </div>
-      
-     </Page>
-  )
-}
+        </div>
+      </div>
+    </Page>
+  );
+};
 
-export default EstimateList
+export default EstimateList;

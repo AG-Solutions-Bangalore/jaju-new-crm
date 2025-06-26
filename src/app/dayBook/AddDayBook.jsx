@@ -458,7 +458,7 @@ const AddDayBook = () => {
               {receivedEntries.map((entry, index) => (
                 <div
                   key={index}
-                  className="bg-white p-2 rounded-md border border-green-100 mb-2"
+                  className="bg-white p-2 rounded-md border border-green-100 "
                 >
                   <div className="grid grid-cols-12 gap-1 items-center">
                     <div className="col-span-11">
@@ -567,7 +567,7 @@ const AddDayBook = () => {
               {paymentEntries.map((entry, index) => (
                 <div
                   key={index}
-                  className="bg-white p-2 rounded-md border border-red-100 mb-2"
+                  className="bg-white p-2 rounded-md border border-red-100 "
                 >
                   <div className="grid grid-cols-12 gap-1 items-center">
                     <div className="col-span-11">
@@ -802,7 +802,7 @@ const AddDayBook = () => {
                     {receivedEntries.map((entry, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-1 md:grid-cols-12 gap-1 mb-1 items-end bg-white p-1 rounded-md border border-green-100"
+                        className="grid grid-cols-1 md:grid-cols-12 gap-1  items-end bg-white p-1 rounded-md border border-green-100"
                       >
                         <div className="md:col-span-6">
                           <Select
@@ -900,7 +900,7 @@ const AddDayBook = () => {
                     {paymentEntries.map((entry, index) => (
                       <div
                         key={index}
-                        className="grid grid-cols-1 md:grid-cols-12 gap-1 mb-1 items-end bg-white p-1 rounded-md border border-red-100"
+                        className="grid grid-cols-1 md:grid-cols-12 gap-1  items-end bg-white p-1 rounded-md border border-red-100"
                       >
                         <div className="md:col-span-6">
                           <Select

@@ -43,6 +43,7 @@ import BASE_URL from "@/config/BaseUrl";
 import html2pdf from "html2pdf.js";
 import Select from "react-select";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { getFirstDayOfMonth } from "@/utils/getFirstDayOfMonth";
 const formSchema = z.object({
   account_name: z.string().min(1, "Account name is required"),
   from_date: z.string().min(1, "From date is required"),
@@ -126,7 +127,7 @@ const LedgerReport = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       account_name: "",
-      from_date: getTodayDate(),
+      from_date: getFirstDayOfMonth(),
       to_date: getTodayDate(),
     },
   });
@@ -481,7 +482,7 @@ const LedgerReport = () => {
 
                   {/* Debit Section */}
                   <div className="mb-4">
-                    <div className="text-xs font-medium bg-blue-50 p-1 text-center border">
+                    <div className="text-xs font-medium bg-red-50 p-1 text-center border">
                       Debit Transactions
                     </div>
                     <table className="w-full border-collapse text-xs">
@@ -497,7 +498,7 @@ const LedgerReport = () => {
                             <tr
                               key={`debit-${index}`}
                               className={
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                index % 2 === 0 ? "bg-white" : "bg-red-50"
                               }
                             >
                               <td className="border p-1 text-center">
@@ -518,7 +519,7 @@ const LedgerReport = () => {
                             </td>
                           </tr>
                         )}
-                        <tr className="bg-blue-50 font-medium">
+                        <tr className="bg-red-50 font-medium">
                           <td className="border p-1 text-center">Total</td>
                           <td className="border p-1 text-center">
                             {calculateTotalPayment()}
@@ -530,7 +531,7 @@ const LedgerReport = () => {
 
                   {/* Credit Section */}
                   <div className="mb-4">
-                    <div className="text-xs font-medium bg-blue-50 p-1 text-center border">
+                    <div className="text-xs font-medium bg-green-50 p-1 text-center border">
                       Credit Transactions
                     </div>
                     <table className="w-full border-collapse text-xs">
@@ -546,7 +547,7 @@ const LedgerReport = () => {
                             <tr
                               key={`credit-${index}`}
                               className={
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                index % 2 === 0 ? "bg-white" : "bg-green-50"
                               }
                             >
                               <td className="border p-1 text-center">
@@ -569,7 +570,7 @@ const LedgerReport = () => {
                             </td>
                           </tr>
                         )}
-                        <tr className="bg-blue-50 font-medium">
+                        <tr className="bg-green-50 font-medium">
                           <td className="border p-1 text-center">Total</td>
                           <td className="border p-1 text-center">
                             {calculateTotalReceived()}
@@ -750,10 +751,10 @@ const LedgerReport = () => {
                       <div className="flex-1">
                         <Table className="border">
                           <TableHeader>
-                            <TableRow className="bg-gray-100 hover:bg-gray-100">
+                            <TableRow className="bg-red-100 hover:bg-red-100">
                               <TableHead
                                 colSpan={2}
-                                className="text-center bg-blue-50"
+                                className="text-center text-black bg-red-50"
                               >
                                 Debit Transactions
                               </TableHead>
@@ -775,7 +776,7 @@ const LedgerReport = () => {
                                   className={
                                     index % 2 === 0
                                       ? "bg-white"
-                                      : "bg-gray-50/30"
+                                      : "bg-red-50/30"
                                   }
                                 >
                                   <TableCell className="text-center border-r">
@@ -798,7 +799,7 @@ const LedgerReport = () => {
                                 </TableCell>
                               </TableRow>
                             )}
-                            <TableRow className="bg-blue-50/30 font-medium">
+                            <TableRow className="bg-red-50/30 font-medium">
                               <TableCell className="text-center border-r">
                                 Total
                               </TableCell>
@@ -814,10 +815,10 @@ const LedgerReport = () => {
                       <div className="flex-1">
                         <Table className="border">
                           <TableHeader>
-                            <TableRow className="bg-gray-100 hover:bg-gray-100">
+                            <TableRow className="bg-green-100 hover:bg-green-100">
                               <TableHead
                                 colSpan={2}
-                                className="text-center bg-blue-50"
+                                className="text-center text-black bg-green-50"
                               >
                                 Credit Transactions
                               </TableHead>
@@ -839,7 +840,7 @@ const LedgerReport = () => {
                                   className={
                                     index % 2 === 0
                                       ? "bg-white"
-                                      : "bg-gray-50/30"
+                                      : "bg-green-50/30"
                                   }
                                 >
                                   <TableCell className="text-center border-r">
@@ -862,7 +863,7 @@ const LedgerReport = () => {
                                 </TableCell>
                               </TableRow>
                             )}
-                            <TableRow className="bg-blue-50/30 font-medium">
+                            <TableRow className="bg-green-50/30 font-medium">
                               <TableCell className="text-center border-r">
                                 Total
                               </TableCell>
