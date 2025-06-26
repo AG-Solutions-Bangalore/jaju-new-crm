@@ -1,20 +1,21 @@
 import * as React from "react";
 import {
   AudioWaveform,
-  BadgeIndianRupee,
-  Blocks,
+  
   Command,
-  File,
-  Frame,
+
   GalleryVerticalEnd,
-  Map,
-  NotebookText,
-  Package,
-  ReceiptText,
-  Settings,
-  Settings2,
-  ShoppingBag,
-  TicketPlus,
+
+  LayoutDashboard,  
+    FileText,        
+    BookOpen,       
+    Book,          
+    Scale,            
+    Box,            
+    Mountain,        
+    SquareStack,     
+    ShoppingCart,    
+    Warehouse,  
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -114,103 +115,65 @@ export function AppSidebar({ ...props }) {
       {
         title: "Dashboard",
         url: "/home",
-        icon: Frame,
+        icon: LayoutDashboard,
         isActive: false,
       },
-      // {
-      //   title: "Master",
-      //   url: "#",
-      //   isActive: false,
-      //   icon: Settings2,
-      //   items: [
-      //     {
-      //       title: "Category",
-      //       url: "/master/category",
-      //     },
-      //     {
-      //       title: "Item",
-      //       url: "/master/item",
-      //     },
-      //     {
-      //       title: "Buyer",
-      //       url: "/master/buyer",
-      //     },
-      //   ],
-      // },
+     
       {
         title: "Estimate",
         url: "/estimate",
-        icon: ShoppingBag,
+        icon: FileText,
         isActive: false,
       },
       {
         title: "Day Book",
         url: "/day-book",
-        icon: ShoppingBag,
+        icon: BookOpen,
         isActive: false,
       },
       {
         title: "Ledger",
         url: "/ledger",
-        icon: Package,
+        icon: Book,
         isActive: false,
       },
       {
         title: "Trial Balance",
         url: "/trial-balance",
-        icon: Package,
+        icon: Scale,
         isActive: false,
       },
       {
         title: "Product",
         url: "/product",
-        icon: Package,
+        icon: Box,
         isActive: false,
       },
       {
         title: "Purchase Granite",
         url: "/purchase-granite",
-        icon: Package,
+        icon: Mountain,
         isActive: false,
       },
       {
         title: "Purchase Tiles",
         url: "/purchase-tiles",
-        icon: Package,
+        icon: SquareStack,
         isActive: false,
       },
       {
         title: "Sales",
         url: "/sales",
-        icon: Package,
+        icon: ShoppingCart,
         isActive: false,
       },
       {
         title: "Stocks",
         url: "/stocks",
-        icon: Package,
+        icon: Warehouse,
         isActive: false,
       },
-      // {
-      //   title: "Report",
-      //   url: "#",
-      //   isActive: false,
-      //   icon: File,
-      //   items: [
-      //     {
-      //       title: "Stock",
-      //       url: "/report/stock",
-      //     },
-      //     {
-      //       title: "Buyer",
-      //       url: "/report/buyer",
-      //     },
-      //     {
-      //       title: "Single Item Stock",
-      //       url: "/report/single-item-stock",
-      //     },
-      //   ],
-      // },
+     
     ],
   };
 

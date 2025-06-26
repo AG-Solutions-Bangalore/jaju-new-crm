@@ -59,7 +59,7 @@ export default function ForgotPassword() {
     try {
       console.log("Submitting forgot password request...");
 
-      const res = await axios.post(`${BASE_URL}/api/forgot-password`, formData);
+      const res = await axios.post(`${BASE_URL}/api/web-send-password?username=${username}&email=${email}`, formData);
 
       if (res.status === 200) {
         const response = res.data;
@@ -122,7 +122,7 @@ export default function ForgotPassword() {
             <CardTitle
               className={`text-2xl text-center${ButtonConfig.loginText}`}
             >
-              <img src={logo} alt="logo" className="w-[200px] mx-auto" />
+              {/* <img src={logo} alt="logo" className="w-[200px] mx-auto" /> */}
               Forgot Password
             </CardTitle>
           </CardHeader>
@@ -150,7 +150,7 @@ export default function ForgotPassword() {
                       value={username}
                       onChange={(e) => setUserName(e.target.value)}
                       required
-                      className="bg-gray-800 text-white placeholder-gray-400 border-white"
+                     
                     />
                   </motion.div>
                 </div>
@@ -174,7 +174,7 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-gray-800 text-white placeholder-gray-400 border-white"
+                     
                     />
                   </motion.div>
                 </div>

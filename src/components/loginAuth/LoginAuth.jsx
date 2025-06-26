@@ -86,7 +86,7 @@ export default function LoginAuth() {
         toast.error("Login Failed: Unexpected response.");
       }
     } catch (error) {
-      console.error("❌ Login Error:", error.response?.data || error.message);
+      console.error("❌ Login Error:", error.response?.data.message || error.message);
 
       toast({
         variant: "destructive",
@@ -148,7 +148,7 @@ export default function LoginAuth() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-gray-100  placeholder-gray-400 border-white"
+                
                     />
                   </motion.div>
                 </div>
@@ -171,7 +171,7 @@ export default function LoginAuth() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="bg-gray-100  placeholder-gray-400 border-white"
+                   
                     />
                   </motion.div>
                 </div>
@@ -202,7 +202,7 @@ export default function LoginAuth() {
                 </motion.div>
               </div>
             </form>
-            {/* <CardDescription
+            <CardDescription
               className={`flex justify-end mt-4 underline ${ButtonConfig.loginText}`}
             >
               <span
@@ -212,7 +212,7 @@ export default function LoginAuth() {
                 {" "}
                 Forgot Password
               </span>
-            </CardDescription> */}
+            </CardDescription>
           </CardContent>
         </Card>
       </motion.div>
