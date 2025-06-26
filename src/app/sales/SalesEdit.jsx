@@ -51,7 +51,7 @@ const SalesEdit = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
      const [isLoadingItems, setIsLoadingItems] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -103,7 +103,7 @@ const SalesEdit = () => {
 
   const { 
     data: salesId, 
-    isLoading, 
+    isFetching, 
     isError, 
     refetch 
   } = useQuery({
@@ -196,21 +196,8 @@ const SalesEdit = () => {
                    
                   }));
                   setItemEntries(mappedData);
-                }else{
-                    setItemEntries([
-                        {
-                            id: "",
-      sales_sub_type: "",
-      sales_sub_item: "",
-      sales_sub_qnty: "",
-      sales_sub_qnty_sqr: "",
-      sales_sub_rate: "",
-      sales_sub_amount: "",
-      sales_sub_item_original: "",
-                        },
-                      ]);
                 }
-               
+                setIsInitialLoading(false);  
           
         }
       }, [salesId]);
@@ -335,7 +322,7 @@ const SalesEdit = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       type: !entry.sales_sub_type ? "required" : "",
-      type: !entry.sales_sub_item_original ? "required" : "",
+      originalItem: !entry.sales_sub_item_original ? "required" : "",
       item: !entry.sales_sub_item ? "required" : "",
       qnty: !entry.sales_sub_qnty
         ? "required"
@@ -356,7 +343,7 @@ const SalesEdit = () => {
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate
+      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || err.originalItem
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -549,7 +536,7 @@ const SalesEdit = () => {
   };
 
 
-   if (isLoading  || productTypeGroup.length == 0) {
+   if (isFetching  || productTypeGroup.length == 0) {
       return (
         <Page>
           <div className="flex justify-center items-center h-full">
@@ -733,7 +720,7 @@ const SalesEdit = () => {
                         <div className="grid grid-cols-3 gap-1">
                           <div>
                           {isLoadingItems ? ( 
-            <div className="text-center text-sm text-gray-500">Loading...</div>
+          <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
           ) : (
                             <SelectShadcn
                               value={entry.sales_sub_item_original}
@@ -1131,7 +1118,7 @@ const SalesEdit = () => {
 
                             <td className="p-2">
                             {isLoadingItems ? ( 
-            <div className="text-center text-sm text-gray-500">Loading...</div>
+ <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
           ) : ( 
                               <SelectShadcn
                                 value={entry.sales_sub_item_original}

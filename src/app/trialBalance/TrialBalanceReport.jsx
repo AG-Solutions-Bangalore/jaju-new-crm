@@ -353,7 +353,7 @@ const TrialBalanceReport = () => {
               
                                 {/* Debit Section */}
                                 <div className="mb-4">
-                                  <div className="text-xs font-medium bg-blue-50 p-1 text-center border">
+                                  <div className="text-xs font-medium bg-red-50 p-1 text-center border">
                                     Debit Transactions
                                   </div>
                                   <table className="w-full border-collapse text-xs">
@@ -368,7 +368,7 @@ const TrialBalanceReport = () => {
                                         negativeValues.map((item, index) => (
                                           <tr
                                             key={`debit-${index}`}
-                                            className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                            className={index % 2 === 0 ? 'bg-white' : 'bg-red-50'}
                                           >
                                             <td className="border p-1 text-left">
                                               {item.payment_about}
@@ -385,7 +385,7 @@ const TrialBalanceReport = () => {
                                           </td>
                                         </tr>
                                       )}
-                                      <tr className="bg-blue-50 font-medium">
+                                      <tr className="bg-red-50 font-medium">
                                         <td className="border p-1 text-left">Total</td>
                                         <td className="border p-1 text-right">
                                           {(negativeSum * -1)}
@@ -397,7 +397,7 @@ const TrialBalanceReport = () => {
               
                                 {/* Credit Section */}
                                 <div className="mb-4">
-                                  <div className="text-xs font-medium bg-blue-50 p-1 text-center border">
+                                  <div className="text-xs font-medium bg-green-50 p-1 text-center border">
                                     Credit Transactions
                                   </div>
                                   <table className="w-full border-collapse text-xs">
@@ -412,7 +412,7 @@ const TrialBalanceReport = () => {
                                         positiveValues.map((item, index) => (
                                           <tr
                                             key={`credit-${index}`}
-                                            className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                            className={index % 2 === 0 ? 'bg-white' : 'bg-green-50'}
                                           >
                                             <td className="border p-1 text-left">
                                               {item.payment_about}
@@ -429,7 +429,7 @@ const TrialBalanceReport = () => {
                                           </td>
                                         </tr>
                                       )}
-                                      <tr className="bg-blue-50 font-medium">
+                                      <tr className="bg-green-50 font-medium">
                                         <td className="border p-1 text-left">Total</td>
                                         <td className="border p-1 text-right">
                                           {positiveSum}
@@ -553,8 +553,8 @@ const TrialBalanceReport = () => {
                     <div className="flex-1">
                       <Table className="border">
                         <TableHeader>
-                          <TableRow className="bg-gray-100 hover:bg-gray-100">
-                            <TableHead colSpan={2} className="text-center bg-blue-50">
+                          <TableRow className="bg-red-100 hover:bg-red-100">
+                            <TableHead colSpan={2} className="text-center text-black bg-red-50">
                               Debit Transactions
                             </TableHead>
                           </TableRow>
@@ -568,7 +568,7 @@ const TrialBalanceReport = () => {
                             negativeValues.map((item, index) => (
                               <TableRow
                                 key={`debit-${index}`}
-                                className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                                className={index % 2 === 0 ? 'bg-white' : 'bg-red-50/30'}
                               >
                                 <TableCell className="text-left border-r">
                                   {item.payment_about}
@@ -586,7 +586,7 @@ const TrialBalanceReport = () => {
                               </TableCell>
                             </TableRow>
                           )}
-                          <TableRow className="bg-blue-50/30 font-medium">
+                          <TableRow className="bg-red-50/30 font-medium">
                             <TableCell className="text-left border-r">Total</TableCell>
                             <TableCell className="text-right">
                               {(negativeSum * -1)}
@@ -601,8 +601,8 @@ const TrialBalanceReport = () => {
                     <div className="flex-1">
                       <Table className="border">
                         <TableHeader>
-                          <TableRow className="bg-gray-100 hover:bg-gray-100">
-                            <TableHead colSpan={2} className="text-center bg-blue-50">
+                          <TableRow className="bg-green-100 hover:bg-green-100">
+                            <TableHead colSpan={2} className="text-center text-black bg-green-50">
                               Credit Transactions
                             </TableHead>
                           </TableRow>
@@ -616,7 +616,7 @@ const TrialBalanceReport = () => {
                             positiveValues.map((item, index) => (
                               <TableRow
                                 key={`credit-${index}`}
-                                className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                                className={index % 2 === 0 ? 'bg-white' : 'bg-green-50/30'}
                               >
                                 <TableCell className="text-left border-r">
                                   {item.payment_about}
@@ -634,7 +634,7 @@ const TrialBalanceReport = () => {
                               </TableCell>
                             </TableRow>
                           )}
-                          <TableRow className="bg-blue-50/30 font-medium">
+                          <TableRow className="bg-green-50/30 font-medium">
                             <TableCell className="text-left border-r">Total</TableCell>
                             <TableCell className="text-right">
                               {positiveSum}

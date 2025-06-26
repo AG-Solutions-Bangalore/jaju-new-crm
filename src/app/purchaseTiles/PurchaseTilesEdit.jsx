@@ -88,7 +88,7 @@ const PurchaseTilesEdit = () => {
  
   const { 
     data: purchaseByid, 
-    isLoading, 
+    isFetching, 
     isError, 
     refetch 
   } = useQuery({
@@ -484,7 +484,7 @@ const PurchaseTilesEdit = () => {
     navigate("/purchase-tiles");
   };
   
-  if (isLoading  ) {
+  if (isFetching || estimateSub.length == 0  ) {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">

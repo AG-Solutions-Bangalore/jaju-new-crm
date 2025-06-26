@@ -191,15 +191,17 @@ const StocksReport = () => {
           >
             <FileText className="h-3 w-3" />
           </button>
-          <button
-            className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
-            onClick={() => ReactToPrint({
-              content: () => tableRef.current,
-              documentTitle: 'Stock-Report'
-            })}
-          >
-            <Printer className="h-3 w-3" />
-          </button>
+        
+          <ReactToPrint
+                      trigger={() => (
+                        <button   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}>
+                          <Printer className=" h-3 w-3" />
+                      
+                        </button>
+                      )}
+                      content={() => tableRef.current}
+                      documentTitle="Stock-Report"
+                    />
         </div>
       </div>
 
@@ -270,7 +272,7 @@ const StocksReport = () => {
 
   {/* Mobile Results */}
   {searchParams && (
-    <div className="p-2" ref={tableRef}>
+    <div className="p-2" >
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin" />
