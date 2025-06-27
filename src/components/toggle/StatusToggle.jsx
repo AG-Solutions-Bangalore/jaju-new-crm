@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import Cookies from "js-cookie";
 
 const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
   const [status, setStatus] = useState(initialStatus);
@@ -31,7 +32,7 @@ const StatusToggle = ({ initialStatus, teamId, onStatusChange }) => {
     setIsDialogOpen(false);
     setIsLoading(true);
     const newStatus = status === "Active" ? "Inactive" : "Active";
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
 
     let apiUrl = "";
     if (location.pathname.includes("/purchase")) {

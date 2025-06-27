@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
+import Cookies from "js-cookie";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -68,7 +69,7 @@ const AddEstimate = () => {
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -80,7 +81,7 @@ const AddEstimate = () => {
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
@@ -94,7 +95,7 @@ const AddEstimate = () => {
  
   useEffect(() => {
     const fetchEstimateRef = async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       try {
         const response = await axios.get(
           `${BASE_URL}/api/web-fetch-estimate-latest/2023-24`,
@@ -256,7 +257,7 @@ const AddEstimate = () => {
   };
   const createEstimateMutation = useMutation({
     mutationFn: async (payload) => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-create-estimate`,
         payload,

@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import moment from "moment";
+import Cookies from "js-cookie";
 
 
 const PurchaseTilesList = () => {
@@ -58,7 +59,7 @@ const PurchaseTilesList = () => {
       } = useQuery({
         queryKey: ["purchaseTiles"],
         queryFn: async () => {
-          const token = localStorage.getItem("token");
+          const token = Cookies.get("token");
           const response = await axios.get(`${PURCHASE_TILES_LIST}`, {
             headers: { Authorization: `Bearer ${token}` },
           });

@@ -31,18 +31,19 @@ import Page from "@/app/dashboard/page";
 import Loader from "@/components/loader/Loader";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 const DayBookReport = () => {
   const tableRef = useRef(null);
     const { toast } = useToast();
     const navigate = useNavigate();
     
-    const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
+    const [date, setDate] = useState(moment().format('YYYY-MMM-DD'));
   
     const { data: dayBookData, isLoading, isError, refetch } = useQuery({
       queryKey: ["daybook", date],
       queryFn: async () => {
-        const token = localStorage.getItem("token");
+        const token = Cookies.get("token");
         const response = await axios.post(
           `${BASE_URL}/api/web-fetch-daybook-report`,
           { from_date: date },
@@ -106,7 +107,7 @@ const DayBookReport = () => {
           { from_date: date },
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${Cookies.get("token")}`,
             },
             responseType: "blob",
           }
@@ -133,7 +134,7 @@ const DayBookReport = () => {
     };
   
     const formatDisplayDate = (dateStr) => {
-      return moment(dateStr).format('DD-MM-YYYY');
+      return moment(dateStr).format('DD-MMM-YYYY');
     };
     const handlePrintPdf = useReactToPrint({
       content: () => tableRef.current,

@@ -26,6 +26,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Loader from "@/components/loader/Loader";
+import Cookies from "js-cookie";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -59,7 +60,7 @@ const EstimateSalesAdd = () => {
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -108,7 +109,7 @@ const EstimateSalesAdd = () => {
   } = useQuery({
     queryKey: ["salesId", id],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-estimate-by-id/${id}`,
         {
@@ -125,7 +126,7 @@ const EstimateSalesAdd = () => {
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
@@ -141,7 +142,7 @@ const EstimateSalesAdd = () => {
     queryFn: async () => {
       setIsLoadingItems(true);
       if (!form.watch("sales_item_type")) return [];
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-types/${form.watch(
           "sales_item_type"
@@ -312,7 +313,7 @@ const EstimateSalesAdd = () => {
   };
   const createEstimateSalesMutation = useMutation({
     mutationFn: async (payload) => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-create-sales`,
         payload,

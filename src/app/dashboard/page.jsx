@@ -26,6 +26,8 @@ import { useNavigate } from "react-router-dom";
 import ChangePassword from "../auth/ChangePassword";
 import { useState } from "react";
 import logo from "../../assets/el.png"
+import Cookies from "js-cookie";
+import { Breadcrumbs } from "@/components/new/breadcrumbs";
 
 
 // eslint-disable-next-line react/prop-types
@@ -33,10 +35,10 @@ export default function Page({ children }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  // Get user data from localStorage
-  const nameL = localStorage.getItem("name");
-  const emailL = localStorage.getItem("email");
-  const user_position = localStorage.getItem("user_position");
+  // Get user data from cookies
+  const nameL = Cookies.get("name");
+  const emailL = Cookies.get("email");
+  const user_position = Cookies.get("user_position");
 
   const handleBackClick = (e) => {
     e.preventDefault();
@@ -44,7 +46,9 @@ export default function Page({ children }) {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
+      Cookies.remove(cookie);
+    });
     navigate("/");
   };
 
@@ -75,7 +79,7 @@ export default function Page({ children }) {
 
 
             {/* Breadcrumb visible on all screens */}
-            <Breadcrumb>
+            {/* <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink
@@ -88,7 +92,8 @@ export default function Page({ children }) {
                   </BreadcrumbLink>
                 </BreadcrumbItem>
               </BreadcrumbList>
-            </Breadcrumb>
+            </Breadcrumb> */}
+               <Breadcrumbs onBack={handleBackClick} />
           </div>
         </header>
 

@@ -29,10 +29,11 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavMainUser } from "./nav-main-user";
+import Cookies from "js-cookie";
 
 export function AppSidebar({ ...props }) {
-  const nameL = localStorage.getItem("name");
-  const emailL = localStorage.getItem("email");
+  const nameL = Cookies.get("name");
+  const emailL = Cookies.get("email");
 
   // const initialData = {
   //   user: {
@@ -194,3 +195,6 @@ export function AppSidebar({ ...props }) {
     </Sidebar>
   );
 }
+
+
+//changes 

@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import Page from "../dashboard/page";
 import BASE_URL from "@/config/BaseUrl";
+import Cookies from "js-cookie";
 
 const Home = () => {
   const [date, setDate] = useState(new Date());
@@ -18,7 +19,7 @@ const Home = () => {
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-const token = localStorage.getItem("token")
+const token = Cookies.get("token")
   // Fetch highlighted dates
   const { data: highlightedDates = [] } = useQuery({
     queryKey: ["daybookDates"],

@@ -18,6 +18,7 @@ import { Loader2, SquarePlus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import Cookies from "js-cookie";
 
 
 const ProductAdd = () => {
@@ -55,7 +56,7 @@ const ProductAdd = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-create-product-type`,
         formData,

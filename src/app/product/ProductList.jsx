@@ -47,6 +47,7 @@ import {
 import { ButtonConfig } from "@/config/ButtonConfig";
 import ProductAdd from "./ProductAdd";
 import ProductEdit from "./ProductEdit";
+import Cookies from "js-cookie";
 
 
 const ProductList = () => {
@@ -58,7 +59,7 @@ const ProductList = () => {
       } = useQuery({
         queryKey: ["productType"],
         queryFn: async () => {
-          const token = localStorage.getItem("token");
+          const token = Cookies.get("token");
           const response = await axios.get(`${PRODUCT_LIST}`, {
             headers: { Authorization: `Bearer ${token}` },
           });

@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
+import Cookies from "js-cookie";
 
 const formSchema = z.object({
   payment_date: z.string(),
@@ -115,7 +116,7 @@ const AddDayBook = () => {
   const { data: accountNames = [] } = useQuery({
     queryKey: ["ledgerAccountNames"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-ledger-accountname`,
         {
@@ -130,7 +131,7 @@ const AddDayBook = () => {
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -343,7 +344,7 @@ const AddDayBook = () => {
         payload,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${Cookies.get("token")}`,
           },
         }
       );
