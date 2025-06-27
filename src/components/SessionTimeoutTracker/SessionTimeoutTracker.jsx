@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertTriangle, Clock, Timer } from 'lucide-react';
+import Cookies from 'js-cookie';
 
 const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
   const [showBanner, setShowBanner] = useState(false);
@@ -8,7 +9,7 @@ const SessionTimeoutTracker = ({ expiryTime, onLogout }) => {
   const hasLoggedOut = useRef(false);
 
    const isTokenPresent = () => {
-      return !!localStorage.getItem('token');
+      return !!Cookies.get('token');
     };
   
     const checkExpiry = () => {

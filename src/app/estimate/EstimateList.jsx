@@ -48,6 +48,7 @@ import {
 import { ButtonConfig } from "@/config/ButtonConfig";
 import moment from "moment";
 import StatusToggle from "@/components/toggle/StatusToggle";
+import Cookies from "js-cookie";
 
 const EstimateList = () => {
   const {
@@ -58,7 +59,7 @@ const EstimateList = () => {
   } = useQuery({
     queryKey: ["estimate"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${ESTIMATE_LIST}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -132,7 +133,7 @@ const EstimateList = () => {
         const value = row.getValue("Estimate No");
         const estimateStatus = row.original.estimate_status;
         const id = row.original.id;
-        const userType = localStorage.getItem("userType");
+        const userType = Cookies.get("userType");
 
         if (userType === "1") {
           return <div>{value}</div>;
@@ -326,7 +327,7 @@ const EstimateList = () => {
                       <div className="text-gray-500">Estimate No</div>
                       <div>
                         {(() => {
-                          const userType = localStorage.getItem("userType");
+                          const userType = Cookies.get("userType");
                           if (userType === "1") {
                             return estimate.estimate_no;
                           } else if (

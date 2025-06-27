@@ -18,15 +18,18 @@ import {
 import { useNavigate } from "react-router-dom";
 import ChangePassword from "@/app/auth/ChangePassword";
 import { useState } from "react";
+import Cookies from "js-cookie";
 
 export function NavUser({ user }) {
   const [open, setOpen] = useState(false);
 
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
-  const user_position = localStorage.getItem("email");
+  const user_position = Cookies.get("email");
   const handleLogout = () => {
-    localStorage.clear();
+    ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
+      Cookies.remove(cookie);
+    });
     navigate("/");
   };
 

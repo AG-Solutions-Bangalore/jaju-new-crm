@@ -1,9 +1,10 @@
 import BASE_URL from "@/config/BaseUrl";
 import { useQuery } from "@tanstack/react-query";
+import Cookies from "js-cookie";
 
 export const useCurrentYear = () => {
   const fetchCurrentYear = async () => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (!token) throw new Error("No authentication token found");
 
     const response = await fetch(

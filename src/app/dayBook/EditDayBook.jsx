@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Page from "../dashboard/page";
 import BASE_URL from "@/config/BaseUrl";
 import Loader from "@/components/loader/Loader";
+import Cookies from "js-cookie";
 
 const formSchema = z.object({
   payment_date: z.string(),
@@ -118,7 +119,7 @@ const EditDayBook = () => {
     useQuery({
       queryKey: ["ledgerAccountNames"],
       queryFn: async () => {
-        const token = localStorage.getItem("token");
+        const token = Cookies.get("token");
         const response = await axios.get(
           `${BASE_URL}/api/web-fetch-ledger-accountname`,
           {
@@ -133,7 +134,7 @@ const EditDayBook = () => {
   const { data: currentYear, isLoading: isYearLoading } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -156,7 +157,7 @@ const EditDayBook = () => {
         `${BASE_URL}/api/web-fetch-daybook-paid-by-id-new/${selectedDate}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${Cookies.get("token")}`,
           },
         }
       );
@@ -401,7 +402,7 @@ const EditDayBook = () => {
         payload,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${Cookies.get("token")}`,
           },
         }
       );

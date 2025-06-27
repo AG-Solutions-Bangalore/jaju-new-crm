@@ -2,6 +2,10 @@ import { decryptId, encryptId } from "@/components/common/Encryption";
 import BASE_URL from "@/config/BaseUrl";
 
 import axios from "axios";
+import Cookies from "js-cookie";
+
+const token =Cookies.get("token");
+
 
 // Estimate
 export const ESTIMATE_LIST = `${BASE_URL}/api/web-fetch-estimate-list`;
@@ -133,7 +137,7 @@ export const navigateTOEstimateView = (navigate, salesId) => {
 
 export const fetchPurchaseById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -152,7 +156,7 @@ export const fetchPurchaseById = async (encryptedId) => {
 };
 export const fetchSalesById = async (encryptedId) => {
   try {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
     if (!token) throw new Error("No authentication token found");
 
     const id = decryptId(encryptedId);
@@ -173,7 +177,7 @@ export const fetchSalesById = async (encryptedId) => {
 
 export const updatePurchaseEdit = async (encryptedId, data) => {
   try {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
     if (!token) throw new Error("No authentication token found");
 
     // const id = encryptedId;
@@ -198,7 +202,7 @@ export const updatePurchaseEdit = async (encryptedId, data) => {
 };
 export const updateSalesEdit = async (encryptedId, data) => {
   try {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
     if (!token) throw new Error("No authentication token found");
 
     // const id = encryptedId;

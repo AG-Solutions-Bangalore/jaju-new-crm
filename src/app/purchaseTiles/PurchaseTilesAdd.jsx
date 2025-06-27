@@ -26,6 +26,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
+import Cookies from "js-cookie";
 
 const formSchema = z.object({
   purchase_date: z.string(),
@@ -47,7 +48,7 @@ const PurchaseTilesAdd = () => {
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -87,7 +88,7 @@ const PurchaseTilesAdd = () => {
   const { data: estimateNo = [] } = useQuery({
     queryKey: ["estimateNo"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-estimate`,
         {
@@ -182,7 +183,7 @@ const PurchaseTilesAdd = () => {
 
   const createPurchaseMutation = useMutation({
     mutationFn: async (payload) => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-create-purchase`,
         payload,

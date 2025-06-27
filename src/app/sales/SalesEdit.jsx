@@ -26,6 +26,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Loader from "@/components/loader/Loader";
+import Cookies from "js-cookie";
 
 
 
@@ -56,7 +57,7 @@ const SalesEdit = () => {
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -109,7 +110,7 @@ const SalesEdit = () => {
   } = useQuery({
     queryKey: ["salesId", id],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-sales-by-id/${id}`,
         {
@@ -126,7 +127,7 @@ const SalesEdit = () => {
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
@@ -146,7 +147,7 @@ const SalesEdit = () => {
     queryFn: async () => {
         setIsLoadingItems(true);
       if (!form.watch("sales_item_type")) return [];
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-types/${form.watch(
           "sales_item_type"
@@ -287,7 +288,7 @@ const SalesEdit = () => {
   };
   const updateSalesMutation = useMutation({
     mutationFn: async (payload) => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.put(
         `${BASE_URL}/api/web-update-sales-direct/${id}`,
         payload,

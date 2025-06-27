@@ -12,12 +12,13 @@ import BASE_URL from "@/config/BaseUrl";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import Cookies from "js-cookie";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 const ChangePassword = ({ open, setOpen }) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState();
-  const username = localStorage.getItem("name");
+  const username = Cookies.get("name");
   const [formData, setFormData] = useState({
     name: username,
     currentPassword: "",
@@ -58,7 +59,7 @@ const ChangePassword = ({ open, setOpen }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-change-password`,
         formData,

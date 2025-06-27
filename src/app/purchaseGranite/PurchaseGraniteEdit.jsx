@@ -26,6 +26,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
 import Loader from "@/components/loader/Loader";
+import Cookies from "js-cookie";
 
 const formSchema = z.object({
   purchase_date: z.string(),
@@ -50,7 +51,7 @@ const PurchaseGraniteEdit = () => {
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -94,7 +95,7 @@ const PurchaseGraniteEdit = () => {
   } = useQuery({
     queryKey: ["purchaseByid", id],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-purchase-by-id/${id}`,
         {
@@ -111,7 +112,7 @@ const PurchaseGraniteEdit = () => {
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
@@ -129,7 +130,7 @@ const PurchaseGraniteEdit = () => {
       const itemType = form.watch("purchase_item_type") || 
                       (purchaseByid?.purchase?.purchase_item_type || "");
       if (!itemType) return [];
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-types/${itemType}`,
         {
@@ -235,7 +236,7 @@ const PurchaseGraniteEdit = () => {
 
   const updatePurchaseMutation = useMutation({
     mutationFn: async (payload) => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.put(
         `${BASE_URL}/api/web-update-purchase/${id}`,
         payload,

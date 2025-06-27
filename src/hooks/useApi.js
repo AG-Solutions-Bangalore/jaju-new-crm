@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import BASE_URL from "@/config/BaseUrl";
+import Cookies from "js-cookie";
 
 const STALE_TIME = 5 * 60 * 1000;
 const CACHE_TIME = 30 * 60 * 1000;
@@ -19,7 +20,7 @@ const fetchData = async (endpoint, token) => {
 };
 
 const createQueryConfig = (queryKey, endpoint, options = {}) => {
-  const token = localStorage.getItem("token");
+  const token = Cookies.get("token");
   return {
     queryKey,
     queryFn: () => fetchData(endpoint, token),

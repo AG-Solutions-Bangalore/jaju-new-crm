@@ -46,6 +46,7 @@ import { ButtonConfig } from "@/config/ButtonConfig";
 import { getFirstDayOfMonth } from "@/utils/getFirstDayOfMonth";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
+import Cookies from "js-cookie";
 const formSchema = z.object({
   account_name: z.string().min(1, "Account name is required"),
   from_date: z.string().min(1, "From date is required"),
@@ -138,7 +139,7 @@ const LedgerReport = () => {
   const { data: accountNames = [] } = useQuery({
     queryKey: ["ledgerAccountNames"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-ledger-accountname`,
         {
@@ -155,7 +156,7 @@ const LedgerReport = () => {
     queryFn: async () => {
       if (!searchParams) return { payment: [], received: [] };
 
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-fetch-ledger-report-new`,
         searchParams,
@@ -177,7 +178,7 @@ const LedgerReport = () => {
         searchParams,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${Cookies.get("token")}`,
           },
           responseType: "blob",
         }
@@ -478,8 +479,8 @@ const LedgerReport = () => {
                     Ledger Report - {searchParams.account_name}
                   </div>
                   <div className="text-center text-xs mb-3">
-                    From {moment(searchParams.from_date).format("DD-MM-YYYY")}{" "}
-                    to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+                    From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
+                    to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                   </div>
 
                   {/* Debit Section */}
@@ -730,8 +731,8 @@ const LedgerReport = () => {
                       <span>Report Results</span>
                       {ledgerData && (
                         <span className="text-blue-800 text-xs">
-                          {moment(searchParams.from_date).format("DD-MM-YYYY")}{" "}
-                          to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+                          {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
+                          to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                         </span>
                       )}
                     </CardTitle>
@@ -770,8 +771,8 @@ const LedgerReport = () => {
                       Ledger Report - {searchParams.account_name}
                     </div>
                     <div className="text-center text-sm mb-6">
-                      From {moment(searchParams.from_date).format("DD-MM-YYYY")}{" "}
-                      to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+                      From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
+                      to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4">

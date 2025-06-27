@@ -34,6 +34,7 @@ import BASE_URL from "@/config/BaseUrl";
 import html2pdf from "html2pdf.js";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 const formSchema = z.object({
   from_date: z.string().min(1, "From date is required"),
@@ -60,7 +61,7 @@ const StocksReport = () => {
     queryFn: async () => {
       if (!searchParams) return { stocks: [] };
 
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-fetch-stock-report`,
         searchParams,
@@ -94,7 +95,7 @@ const StocksReport = () => {
         searchParams,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${Cookies.get("token")}`,
           },
           responseType: "blob",
         }
@@ -286,7 +287,7 @@ const StocksReport = () => {
             Stocks Report
           </div>
           <div className="text-center text-xs mb-3">
-            From {moment(searchParams.from_date).format("DD-MM-YYYY")} to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+            From {moment(searchParams.from_date).format("DD-MMM-YYYY")} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
           </div>
 
           <table className="w-full border-collapse text-xs">
@@ -428,7 +429,7 @@ const StocksReport = () => {
                   <CardTitle className="text-lg flex flex-row items-center gap-2">
                     <span>Stock Report Results</span>
                     <span className="text-blue-800 text-xs">
-                      {moment(searchParams.from_date).format("DD-MM-YYYY")} to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+                      {moment(searchParams.from_date).format("DD-MMM-YYYY")} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                     </span>
                   </CardTitle>
                   <div className="flex gap-2">
@@ -468,7 +469,7 @@ const StocksReport = () => {
                     Stocks Report
                   </div>
                   <div className="text-center text-sm mb-6">
-                    From {moment(searchParams.from_date).format("DD-MM-YYYY")} to {moment(searchParams.to_date).format("DD-MM-YYYY")}
+                    From {moment(searchParams.from_date).format("DD-MMM-YYYY")} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                   </div>
 
                   <Table className="border">

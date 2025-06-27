@@ -6,12 +6,13 @@ import SessionTimeoutTracker from "./components/SessionTimeoutTracker/SessionTim
 import DisabledRightClick from "./components/common/DisabledRightClick";
 
 import AppRoutes from "./routes/AppRoutes";
+import Cookies from "js-cookie";
 
 function App() {
   const navigate = useNavigate();
-  const time = localStorage.getItem("token-expire-time");
+  const time = Cookies.get("token-expire-time");
   const handleLogout = () => {
-    localStorage.clear();
+ 
     navigate("/");
   };
   return (

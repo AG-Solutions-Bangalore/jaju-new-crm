@@ -31,6 +31,7 @@ import { Edit, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Cookies from "js-cookie";
 
 const ProductEdit = ({ productId }) => {
   const [open, setOpen] = useState(false);
@@ -48,7 +49,7 @@ const ProductEdit = ({ productId }) => {
   const fetchProductData = async () => {
     setIsFetching(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-type-by-id/${productId}`,
         {
@@ -110,7 +111,7 @@ const ProductEdit = ({ productId }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       const response = await axios.put(
         `${BASE_URL}/api/web-update-product-type/${productId}`,
         formData,

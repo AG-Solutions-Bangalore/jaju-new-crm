@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { ContextPanel } from "@/lib/ContextPanel";
 import BASE_URL from "@/config/BaseUrl";
-import logo from "../../assets/logo.png";
+import Cookies from "js-cookie";
 import { ButtonConfig } from "@/config/ButtonConfig";
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
@@ -49,17 +49,68 @@ export default function LoginAuth() {
     };
   }, [isLoading]);
 
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   setIsLoading(true);
+
+  //   const formData = new FormData();
+  //   formData.append("username", email);
+  //   formData.append("password", password);
+
+  //   try {
+  //     const res = await axios.post(`${BASE_URL}/api/web-login`, formData);
+
+  //     if (res.status === 200) {
+  //       if (!res.data.UserInfo || !res.data.UserInfo.token) {
+  //         console.warn("⚠️ Login failed: Token missing in response");
+  //         toast.error("Login Failed: No token received.");
+  //         setIsLoading(false);
+  //         return;
+  //       }
+
+  //       const { UserInfo } = res.data;
+
+  //       console.log("Saving user details to local storage...");
+  //       localStorage.setItem("token", UserInfo.token);
+  //       localStorage.setItem("id", UserInfo.user.id);
+  //       localStorage.setItem("name", UserInfo.user.name);
+  //       localStorage.setItem("userType", UserInfo.user.user_type_id);
+  //       localStorage.setItem("email", UserInfo.user.email);
+       
+
+  //       const redirectPath = window.innerWidth < 768 ? "/home" : "/home";
+  //       console.log(`✅ Login successful! Redirecting to ${redirectPath}...`);
+  //       navigate(redirectPath);
+  //     } else {
+  //       console.warn("⚠️ Unexpected API response:", res);
+  //       toast.error("Login Failed: Unexpected response.");
+  //     }
+  //   } catch (error) {
+  //     console.error("❌ Login Error:", error.response?.data.message || error.message);
+
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Login Failed",
+  //       description:
+  //         error.response?.data?.message || "Please check your credentials.",
+  //     });
+
+  //     setIsLoading(false);
+  //   }
+  // };
+
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
-
+  
     const formData = new FormData();
     formData.append("username", email);
     formData.append("password", password);
-
+  
     try {
       const res = await axios.post(`${BASE_URL}/api/web-login`, formData);
-
+  
       if (res.status === 200) {
         if (!res.data.UserInfo || !res.data.UserInfo.token) {
           console.warn("⚠️ Login failed: Token missing in response");
@@ -67,17 +118,23 @@ export default function LoginAuth() {
           setIsLoading(false);
           return;
         }
-
+  
         const { UserInfo } = res.data;
-
-        console.log("Saving user details to local storage...");
-        localStorage.setItem("token", UserInfo.token);
-        localStorage.setItem("id", UserInfo.user.id);
-        localStorage.setItem("name", UserInfo.user.name);
-        localStorage.setItem("userType", UserInfo.user.user_type_id);
-        localStorage.setItem("email", UserInfo.user.email);
-       
-
+        const isProduction = window.location.protocol === "https:";
+        
+        const cookieOptions = {
+          expires: 7,
+          secure: isProduction,
+          sameSite: "Strict",
+        };
+  
+        console.log("Saving user details to cookies...");
+        Cookies.set("token", UserInfo.token, cookieOptions);
+        Cookies.set("id", UserInfo.user.id, cookieOptions);
+        Cookies.set("name", UserInfo.user.name, cookieOptions);
+        Cookies.set("userType", UserInfo.user.user_type_id, cookieOptions);
+        Cookies.set("email", UserInfo.user.email, cookieOptions);
+  
         const redirectPath = window.innerWidth < 768 ? "/home" : "/home";
         console.log(`✅ Login successful! Redirecting to ${redirectPath}...`);
         navigate(redirectPath);
@@ -87,14 +144,14 @@ export default function LoginAuth() {
       }
     } catch (error) {
       console.error("❌ Login Error:", error.response?.data.message || error.message);
-
+  
       toast({
         variant: "destructive",
         title: "Login Failed",
         description:
           error.response?.data?.message || "Please check your credentials.",
       });
-
+  
       setIsLoading(false);
     }
   };
