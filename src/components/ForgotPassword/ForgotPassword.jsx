@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import BASE_URL from "@/config/BaseUrl";
 import { motion, AnimatePresence } from "framer-motion";
 import { ContextPanel } from "@/lib/ContextPanel";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/jaju1.png";
 import { ButtonConfig } from "@/config/ButtonConfig";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -122,7 +122,7 @@ export default function ForgotPassword() {
             <CardTitle
               className={`text-2xl text-center${ButtonConfig.loginText}`}
             >
-              {/* <img src={logo} alt="logo" className="w-[200px] mx-auto" /> */}
+              {/* <img src={logo} alt="logo" className=" mx-auto text-black bg-gray-500 rounded-lg shadow-md" /> */}
               Forgot Password
             </CardTitle>
           </CardHeader>

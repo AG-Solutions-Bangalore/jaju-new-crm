@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Cookies from "js-cookie";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { Eye, EyeOff } from "lucide-react";
+import logo from "../../assets/jaju1.png";
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -177,7 +179,7 @@ export default function LoginAuth() {
           className={`w-72 md:w-80 max-w-md ${ButtonConfig.loginBackground} ${ButtonConfig.loginText}`}
         >
           <CardHeader>
-        {  /*  <img src={logo} alt="logo" className="w-[200px] mx-auto" />  */}
+          {/* <img src={logo} alt="logo" className=" mx-auto text-black bg-gray-500 rounded-lg shadow-md" />   */}
             <CardTitle
               className={`text-2xl text-center${ButtonConfig.loginText}`}
             >

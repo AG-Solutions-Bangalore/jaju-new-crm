@@ -149,6 +149,7 @@ const PurchaseGraniteView = () => {
               </button>
             )}
             content={() => tableRef.current}
+            documentTitle="Purchase Granite Report"
           />
         </div>
       </div>
@@ -276,6 +277,7 @@ const PurchaseGraniteView = () => {
                     </Button>
                   )}
                   content={() => tableRef.current}
+                   documentTitle="Purchase Granite Report"
                 />
               </div>
             </div>
