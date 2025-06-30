@@ -27,6 +27,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
 
 const formSchema = z.object({
   purchase_date: z.string(),
@@ -44,6 +45,7 @@ const formSchema = z.object({
 const PurchaseGraniteAdd = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handleKeyDown = useNumericInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -184,20 +186,7 @@ const PurchaseGraniteAdd = () => {
     form.setValue("purchase_amount", newTotal.toString());
   };
 
-  const handleKeyDown = (event) => {
-    if (
-      event.key === 'Backspace' ||
-      event.key === 'Delete' ||
-      event.key === 'Tab' ||
-      event.key === 'Escape' ||
-      event.key === 'Enter' ||
-      (event.key >= '0' && event.key <= '9') ||
-      event.key === '.'
-    ) {
-      return;
-    }
-    event.preventDefault();
-  };
+ 
 
   const createPurchaseMutation = useMutation({
     mutationFn: async (payload) => {
@@ -504,6 +493,7 @@ const PurchaseGraniteAdd = () => {
                       {...form.register("purchase_supplier")}
                       className="mt-1"
                       placeholder="Enter supplier name"
+                      maxLength={50}
                     />
                   </div>
                   <div>
@@ -513,6 +503,7 @@ const PurchaseGraniteAdd = () => {
                       {...form.register("purchase_bill_no")}
                       className="mt-1"
                       placeholder="Enter bill number"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -544,7 +535,7 @@ const PurchaseGraniteAdd = () => {
                     </SelectShadcn>
                   </div>
                   <div>
-                    <Label htmlFor="purchase_other">Other Amount</Label>
+                    <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
                     <Input
                       id="purchase_other"
                       type="tel"
@@ -553,6 +544,7 @@ const PurchaseGraniteAdd = () => {
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                       placeholder="0"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -625,6 +617,7 @@ const PurchaseGraniteAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
+                              maxLength={10}
                             />
                           </div>
                           <div>
@@ -641,6 +634,7 @@ const PurchaseGraniteAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (sqr)"
+                              maxLength={10}
                             />
                           </div>
                           <div>
@@ -657,6 +651,7 @@ const PurchaseGraniteAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
+                              maxLength={10}
                             />
                           </div>
                         </div>
@@ -759,6 +754,7 @@ const PurchaseGraniteAdd = () => {
                       {...form.register("purchase_supplier")}
                       className="bg-white"
                       placeholder="Enter supplier name"
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -768,6 +764,7 @@ const PurchaseGraniteAdd = () => {
                       {...form.register("purchase_bill_no")}
                       className="bg-white"
                       placeholder="Enter bill number"
+                      maxLength={10}
                     />
                   </div>
                   <div className="space-y-2">
@@ -799,7 +796,7 @@ const PurchaseGraniteAdd = () => {
                     </SelectShadcn>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_other">Other Amount</Label>
+                    <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
                     <Input
                       id="purchase_other"
                       type="tel"
@@ -808,6 +805,7 @@ const PurchaseGraniteAdd = () => {
                       onKeyDown={handleKeyDown}
                       className="bg-white"
                       placeholder="0"
+                      maxLength={10}
                     />
                   </div>
                   <div className="space-y-2">
@@ -887,6 +885,7 @@ const PurchaseGraniteAdd = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -903,6 +902,7 @@ const PurchaseGraniteAdd = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -919,6 +919,7 @@ const PurchaseGraniteAdd = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">

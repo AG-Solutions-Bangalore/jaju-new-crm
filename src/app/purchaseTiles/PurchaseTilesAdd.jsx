@@ -27,6 +27,8 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   purchase_date: z.string(),
@@ -35,7 +37,7 @@ const formSchema = z.object({
   purchase_estimate_ref: z.string().min(1, "Estimate Ref is required"),
   purchase_supplier: z.string().min(1, "Supplier is required"),
   purchase_bill_no: z.string().min(1, "Bill number is required"),
-  purchase_amount: z.string().min(1, "Other Amount is required"),
+  purchase_amount: z.string(),
   purchase_other: z.string().min(1, "Total Amount is required"),
 
   purchase_no_of_count: z.string(),
@@ -44,6 +46,7 @@ const formSchema = z.object({
 const PurchaseTilesAdd = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handleKeyDown = useNumericInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -76,9 +79,9 @@ const PurchaseTilesAdd = () => {
   const [itemEntries, setItemEntries] = useState([
     {
       purchase_sub_item: "",
-      purchase_sub_qnty: "0",
+      purchase_sub_qnty: "",
       purchase_sub_qnty_sqr: "0",  
-      purchase_sub_rate: "0",
+      purchase_sub_rate: "",
       purchase_sub_amount: "0",
     },
   ]);
@@ -166,20 +169,7 @@ const PurchaseTilesAdd = () => {
     form.setValue("purchase_amount", newTotal.toString());
   };
 
-  const handleKeyDown = (event) => {
-    if (
-      event.key === 'Backspace' ||
-      event.key === 'Delete' ||
-      event.key === 'Tab' ||
-      event.key === 'Escape' ||
-      event.key === 'Enter' ||
-      (event.key >= '0' && event.key <= '9') ||
-      event.key === '.'
-    ) {
-      return;
-    }
-    event.preventDefault();
-  };
+
 
   const createPurchaseMutation = useMutation({
     mutationFn: async (payload) => {
@@ -214,8 +204,8 @@ const PurchaseTilesAdd = () => {
       date: !data.purchase_date ? "Date is required" : "",
       supplier: !data.purchase_supplier ? "Supplier is required" : "",
       billNo: !data.purchase_bill_no ? "Bill number is required" : "",
-      estimateNo: !data.purchase_estimate_ref ? "Estimate No is required" : "",
-      otherAmount: !data.purchase_other ? "Other Amount is required" : "",
+      estimateNo: !data.purchase_estimate_ref ? "Estimate Ref is required" : "",
+    
       totalAmount: !data.purchase_amount ? "Total Amount is required" : "",
     };
 
@@ -303,23 +293,14 @@ const PurchaseTilesAdd = () => {
                       {formErrors.estimateNo && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                        Estimate No
+                        Estimate Ref
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.estimateNo}
                           </td>
                         </tr>
                       )}
-                      {formErrors.otherAmount && (
-                        <tr className="bg-white hover:bg-gray-50">
-                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                           Other Amount
-                          </td>
-                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                            {formErrors.otherAmount}
-                          </td>
-                        </tr>
-                      )}
+                  
                       {formErrors.totalAmount && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
@@ -350,7 +331,7 @@ const PurchaseTilesAdd = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                          Qty (pcs)
+                          Qty
                         </th>
                        
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
@@ -407,6 +388,7 @@ const PurchaseTilesAdd = () => {
         purchase_year: currentYear,
         purchase_no_of_count: itemEntries.length,
         purchase_sub_data: itemEntries,
+        
       };
       
       createPurchaseMutation.mutate(payload);
@@ -478,6 +460,7 @@ const PurchaseTilesAdd = () => {
                       {...form.register("purchase_supplier")}
                       className="mt-1"
                       placeholder="Enter supplier name"
+                      maxLength={50}
                     />
                   </div>
                   <div>
@@ -487,6 +470,7 @@ const PurchaseTilesAdd = () => {
                       {...form.register("purchase_bill_no")}
                       className="mt-1"
                       placeholder="Enter bill number"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -527,6 +511,7 @@ const PurchaseTilesAdd = () => {
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                       placeholder="0"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -569,6 +554,7 @@ const PurchaseTilesAdd = () => {
                              
                               className="h-8 text-sm"
                               placeholder="Items"
+                              maxLength={20}
                             />
                         
                         </div>
@@ -587,6 +573,7 @@ const PurchaseTilesAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
+                              maxLength={10}
                             />
                           </div>
                          
@@ -601,6 +588,7 @@ const PurchaseTilesAdd = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
@@ -706,6 +694,7 @@ const PurchaseTilesAdd = () => {
                       {...form.register("purchase_supplier")}
                       className="bg-white"
                       placeholder="Enter supplier name"
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -715,6 +704,7 @@ const PurchaseTilesAdd = () => {
                       {...form.register("purchase_bill_no")}
                       className="bg-white"
                       placeholder="Enter bill number"
+                      maxLength={10}
                     />
                   </div>
                   <div className="space-y-2">
@@ -753,7 +743,11 @@ const PurchaseTilesAdd = () => {
                       {...form.register("purchase_other")}
                       onChange={(e) => handleOtherChange(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      className="bg-white"
+                      maxLength={10}
+                      className={cn(
+                        "bg-white",
+                        form.watch("purchase_other") === "0" ? "text-gray-400" : "text-black"
+                      )}
                       placeholder="0"
                     />
                   </div>
@@ -802,9 +796,9 @@ const PurchaseTilesAdd = () => {
                                     e.target.value
                                   )
                                 }
-                              
+                                maxLength={20}
                                 className="h-9"
-                                placeholder="Items"
+                                placeholder="Item Name"
                               />
                              
                             </td>
@@ -821,6 +815,7 @@ const PurchaseTilesAdd = () => {
                                 }
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
+                                maxLength={10}
                                 placeholder="0"
                               />
                             </td>
@@ -838,6 +833,7 @@ const PurchaseTilesAdd = () => {
                                 }
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
+                                maxLength={10}
                                 placeholder="0"
                               />
                             </td>

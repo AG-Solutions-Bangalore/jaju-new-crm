@@ -27,6 +27,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Loader from "@/components/loader/Loader";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -54,6 +55,7 @@ const EstimateSalesAdd = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handleKeyDown = useNumericInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
@@ -102,12 +104,12 @@ const EstimateSalesAdd = () => {
   ]);
 
   const {
-    data: salesId,
+    data: salesEstimateId,
     isFetching,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["salesId", id],
+    queryKey: ["salesEstimateId", id],
     queryFn: async () => {
       const token = Cookies.get("token");
       const response = await axios.get(
@@ -158,8 +160,8 @@ const EstimateSalesAdd = () => {
   });
 
   useEffect(() => {
-    if (salesId) {
-      const { estimate: sId, estimateSub: sSub } = salesId;
+    if (salesEstimateId) {
+      const { estimate: sId, estimateSub: sSub } = salesEstimateId;
       const formValues = {
         sales_date: moment(sId.estimate_date).format("YYYY-MM-DD"),
         sales_year: sId.estimate_year || currentYear,
@@ -194,7 +196,7 @@ const EstimateSalesAdd = () => {
       }
       setIsInitialLoading(false);
     }
-  }, [salesId]);
+  }, [salesEstimateId]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -297,20 +299,7 @@ const EstimateSalesAdd = () => {
     form.setValue("sales_balance", newBalance.toString());
   };
 
-  const handleKeyDown = (event) => {
-    if (
-      event.key === "Backspace" ||
-      event.key === "Delete" ||
-      event.key === "Tab" ||
-      event.key === "Escape" ||
-      event.key === "Enter" ||
-      (event.key >= "0" && event.key <= "9")
-    ) {
-      return;
-    }
 
-    event.preventDefault();
-  };
   const createEstimateSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -368,7 +357,7 @@ const EstimateSalesAdd = () => {
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || originalItem
+      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || err.originalItem
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -476,6 +465,9 @@ const EstimateSalesAdd = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                        Original  Item
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
@@ -492,6 +484,7 @@ const EstimateSalesAdd = () => {
                           (error.type ||
                             error.item ||
                             error.qnty ||
+                            error.originalItem ||
                             error.qntySqr ||
                             error.rate) && (
                             <tr key={i} className="bg-white hover:bg-gray-50">
@@ -501,8 +494,12 @@ const EstimateSalesAdd = () => {
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.type}
                               </td>
+                             
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.item}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                                {error.originalItem}
                               </td>
                               <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
                                 {error.qnty}
@@ -641,6 +638,7 @@ const EstimateSalesAdd = () => {
                       {...form.register("sales_customer")}
                       className="mt-1"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
                   </div>
                   <div>
@@ -661,6 +659,7 @@ const EstimateSalesAdd = () => {
                       {...form.register("sales_address")}
                       className="mt-1"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
                   </div>
                   <div>
@@ -759,7 +758,8 @@ const EstimateSalesAdd = () => {
                                 )
                               }
                               className="h-8 text-sm"
-                              placeholder="Item"
+                              placeholder="Item Name"
+                              maxLength={20}
                             />
                           </div>
                         </div>
@@ -812,6 +812,7 @@ const EstimateSalesAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
+                              maxLength={10}
                             />
                           </div>
                           <div>
@@ -828,6 +829,7 @@ const EstimateSalesAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (sqr)"
+                              maxLength={10}
                             />
                           </div>
                         </div>
@@ -846,6 +848,7 @@ const EstimateSalesAdd = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
+                              maxLength={10}
                             />
                           </div>
                           <div>
@@ -906,6 +909,7 @@ const EstimateSalesAdd = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -919,6 +923,7 @@ const EstimateSalesAdd = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -932,6 +937,7 @@ const EstimateSalesAdd = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -945,6 +951,7 @@ const EstimateSalesAdd = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
                   </div>
                 </div>
@@ -963,6 +970,7 @@ const EstimateSalesAdd = () => {
                       disabled
                       onKeyDown={handleKeyDown}
                       className="mt-1 bg-gray-100"
+                      
                     />
                   </div>
                   <div>
@@ -974,6 +982,7 @@ const EstimateSalesAdd = () => {
                       {...form.register("sales_advance")}
                       onChange={(e) => handleAdvanceChange(e.target.value)}
                       className="mt-1"
+                      maxLength={10}
                     />
                   </div>
                   <div className="col-span-2">
@@ -1057,6 +1066,7 @@ const EstimateSalesAdd = () => {
                       {...form.register("sales_customer")}
                       className="bg-white"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1109,6 +1119,7 @@ const EstimateSalesAdd = () => {
                       {...form.register("sales_address")}
                       className="bg-white"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
                   </div>
                 </div>
@@ -1213,7 +1224,7 @@ const EstimateSalesAdd = () => {
                                   )
                                 }
                                 className="h-9"
-                                placeholder="Item"
+                                placeholder="Item Name"
                               />
                             </td>
 
@@ -1265,6 +1276,7 @@ const EstimateSalesAdd = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1281,6 +1293,7 @@ const EstimateSalesAdd = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1297,6 +1310,7 @@ const EstimateSalesAdd = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1357,6 +1371,7 @@ const EstimateSalesAdd = () => {
                           }
                           onKeyDown={handleKeyDown}
                           placeholder="0"
+                          maxLength={10}
                         />
                       </div>
                       <div className="space-y-2">
@@ -1370,6 +1385,7 @@ const EstimateSalesAdd = () => {
                           }
                           onKeyDown={handleKeyDown}
                           placeholder="0"
+                          maxLength={10}
                         />
                       </div>
                       <div className="space-y-2">
@@ -1385,6 +1401,7 @@ const EstimateSalesAdd = () => {
                           }
                           onKeyDown={handleKeyDown}
                           placeholder="0"
+                          maxLength={10}
                         />
                       </div>
                       {/* <div className="space-y-2">
@@ -1415,6 +1432,7 @@ const EstimateSalesAdd = () => {
                           }
                           onKeyDown={handleKeyDown}
                           placeholder="0"
+                          maxLength={10}
                         />
                       </div>
                     </div>
@@ -1445,6 +1463,7 @@ const EstimateSalesAdd = () => {
                           onChange={(e) => handleAdvanceChange(e.target.value)}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
+                          maxLength={10}
                         />
                       </div>
                       <div className="space-y-2">

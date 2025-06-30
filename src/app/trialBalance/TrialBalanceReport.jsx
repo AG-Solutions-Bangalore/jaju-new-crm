@@ -534,10 +534,10 @@ const TrialBalanceReport = () => {
               <CardHeader className="border-t">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between sm:gap-2">
                   <CardTitle className="text-lg flex flex-row items-center gap-2">
-                    <span>Report Results</span>
+                    {/* <span>Report Results</span>
                     <span className="text-blue-800 text-xs">
                       {} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
-                    </span>
+                    </span> */}
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button

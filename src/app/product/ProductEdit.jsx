@@ -195,26 +195,29 @@ const ProductEdit = ({ productId }) => {
           </div>
         ) : (
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="product_type">Product Type <span className="text-xs text-red-400 ">*</span></Label>
-              <Input
-                id="product_type"
-                name="product_type"
-                value={formData.product_type}
-                onChange={handleInputChange}
-                placeholder="Enter Product Type "
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="product_type_group">Product <span className="text-xs text-red-400 ">*</span></Label>
+             <div className="grid gap-2">
+              <Label htmlFor="product_type_group">Product Type<span className="text-xs text-red-400 ">*</span></Label>
               <Input
                 id="product_type_group"
                 name="product_type_group"
                 value={formData.product_type_group}
                 onChange={handleInputChange}
-                placeholder="Enter Product"
+                placeholder="Enter Product Type"
+                maxLength={50}
               />
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="product_type">Product  <span className="text-xs text-red-400 ">*</span></Label>
+              <Input
+                id="product_type"
+                name="product_type"
+                value={formData.product_type}
+                onChange={handleInputChange}
+                placeholder="Enter Product Name "
+                maxLength={50}
+              />
+            </div>
+           
 
            
             <div className="grid gap-2">
@@ -257,7 +260,7 @@ const ProductEdit = ({ productId }) => {
                 Updating...
               </>
             ) : (
-              "Update Product"
+              "Update"
             )}
           </Button>
         </DialogFooter>

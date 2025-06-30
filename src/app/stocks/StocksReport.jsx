@@ -35,6 +35,7 @@ import html2pdf from "html2pdf.js";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
 import Cookies from "js-cookie";
+import { getFirstDayOfMonth } from "@/utils/getFirstDayOfMonth";
 
 const formSchema = z.object({
   from_date: z.string().min(1, "From date is required"),
@@ -51,7 +52,7 @@ const StocksReport = () => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      from_date: "",
+      from_date: getFirstDayOfMonth(),
       to_date:  getTodayDate(),
     },
   });
@@ -427,10 +428,10 @@ const StocksReport = () => {
               <CardHeader className="border-t">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between sm:gap-2">
                   <CardTitle className="text-lg flex flex-row items-center gap-2">
-                    <span>Stock Report Results</span>
+                    {/* <span>Stock Report Results</span>
                     <span className="text-blue-800 text-xs">
                       {moment(searchParams.from_date).format("DD-MMM-YYYY")} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
-                    </span>
+                    </span> */}
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button
@@ -475,11 +476,11 @@ const StocksReport = () => {
                   <Table className="border">
                     <TableHeader>
                       <TableRow className="bg-gray-100 hover:bg-gray-100">
-                        <TableHead className="text-center border-r">Items Name</TableHead>
-                        <TableHead className="text-center border-r">Open Balance</TableHead>
-                        <TableHead className="text-center border-r">Received</TableHead>
-                        <TableHead className="text-center border-r">Sales</TableHead>
-                        <TableHead className="text-center">Close Balance</TableHead>
+                        <TableHead className="text-center text-black font-bold  border-r">Items Name</TableHead>
+                        <TableHead className="text-center text-black font-bold border-r">Open Balance</TableHead>
+                        <TableHead className="text-center text-black font-bold border-r">Received</TableHead>
+                        <TableHead className="text-center text-black font-bold border-r">Sales</TableHead>
+                        <TableHead className="text-center text-black font-bold">Close Balance</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
