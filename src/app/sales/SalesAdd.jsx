@@ -26,6 +26,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -54,7 +55,7 @@ const SalesAdd = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
- 
+  const handleKeyDown = useNumericInput();
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -243,20 +244,7 @@ const SalesAdd = () => {
     form.setValue("sales_balance", newBalance.toString());
   };
 
-  const handleKeyDown = (event) => {
-    if (
-      event.key === "Backspace" ||
-      event.key === "Delete" ||
-      event.key === "Tab" ||
-      event.key === "Escape" ||
-      event.key === "Enter" ||
-      (event.key >= "0" && event.key <= "9")
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-  };
+ 
   const createSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -423,6 +411,9 @@ const SalesAdd = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                        Original  Item
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
@@ -438,6 +429,7 @@ const SalesAdd = () => {
                         (error, i) =>
                           (error.type ||
                             error.item ||
+                            error.originalItem ||
                             error.qnty ||
                             error.qntySqr ||
                             error.rate) && (
@@ -450,6 +442,9 @@ const SalesAdd = () => {
                               </td>
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.item}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                                {error.originalItem}
                               </td>
                               <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
                                 {error.qnty}
@@ -561,6 +556,7 @@ const SalesAdd = () => {
                       {...form.register("sales_customer")}
                       className="mt-1"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
                   </div>
                   <div>
@@ -581,6 +577,7 @@ const SalesAdd = () => {
                       {...form.register("sales_address")}
                       className="mt-1"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
                   </div>
                   <div>
@@ -667,8 +664,9 @@ const SalesAdd = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={20}
                               className="h-8 text-sm"
-                              placeholder="Item"
+                              placeholder="Item Name"
                             />
                           </div>
                         </div>
@@ -714,6 +712,7 @@ const SalesAdd = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
@@ -730,6 +729,7 @@ const SalesAdd = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (sqr)"
@@ -748,6 +748,7 @@ const SalesAdd = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
@@ -805,6 +806,7 @@ const SalesAdd = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_tax", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -818,6 +820,7 @@ const SalesAdd = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_tempo", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -831,6 +834,7 @@ const SalesAdd = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_loading", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -844,6 +848,7 @@ const SalesAdd = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_other", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -871,6 +876,7 @@ const SalesAdd = () => {
                     <Input
                       id="sales_advance"
                       type="tel"
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       {...form.register("sales_advance")}
                       onChange={(e) => handleAdvanceChange(e.target.value)}
@@ -959,6 +965,7 @@ const SalesAdd = () => {
                       {...form.register("sales_customer")}
                       className="bg-white"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1011,6 +1018,7 @@ const SalesAdd = () => {
                       {...form.register("sales_address")}
                       className="bg-white"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
                   </div>
                 </div>
@@ -1097,8 +1105,9 @@ const SalesAdd = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={20}
                                 className="h-9"
-                                placeholder="Item"
+                                placeholder="Item Name"
                               />
                             </td>
 
@@ -1143,6 +1152,7 @@ const SalesAdd = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -1159,6 +1169,7 @@ const SalesAdd = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -1175,6 +1186,7 @@ const SalesAdd = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -1236,6 +1248,7 @@ const SalesAdd = () => {
                           onChange={(e) =>
                             handleChargeChange("sales_tax", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1249,6 +1262,7 @@ const SalesAdd = () => {
                           onChange={(e) =>
                             handleChargeChange("sales_tempo", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1267,6 +1281,7 @@ const SalesAdd = () => {
                               e.target.value
                             )
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1297,6 +1312,7 @@ const SalesAdd = () => {
                           onChange={(e) =>
                             handleChargeChange("sales_other", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1327,6 +1343,7 @@ const SalesAdd = () => {
                           type="tel"
                           {...form.register("sales_advance")}
                           onChange={(e) => handleAdvanceChange(e.target.value)}
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />

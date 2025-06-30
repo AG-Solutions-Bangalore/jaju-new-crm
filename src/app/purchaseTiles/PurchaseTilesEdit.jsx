@@ -27,6 +27,7 @@ import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
 import Loader from "@/components/loader/Loader";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
 
 const formSchema = z.object({
   purchase_date: z.string(),
@@ -45,6 +46,7 @@ const PurchaseTilesEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handleKeyDown = useNumericInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
     const [isInitialDataLoaded, setIsInitialDataLoaded] = useState(false);
     const [isLoadingItems, setIsLoadingItems] = useState(false);
@@ -227,20 +229,7 @@ const PurchaseTilesEdit = () => {
 
 
 
-  const handleKeyDown = (event) => {
-    if (
-      event.key === 'Backspace' ||
-      event.key === 'Delete' ||
-      event.key === 'Tab' ||
-      event.key === 'Escape' ||
-      event.key === 'Enter' ||
-      (event.key >= '0' && event.key <= '9') ||
-      event.key === '.'
-    ) {
-      return;
-    }
-    event.preventDefault();
-  };
+
 
   const updatePurchaseMutation = useMutation({
     mutationFn: async (payload) => {
@@ -275,8 +264,8 @@ const PurchaseTilesEdit = () => {
       date: !data.purchase_date ? "Date is required" : "",
       supplier: !data.purchase_supplier ? "Supplier is required" : "",
       billNo: !data.purchase_bill_no ? "Bill number is required" : "",
-      estimateNo: !data.purchase_estimate_ref ? "Estimate No is required" : "",
-      otherAmount: !data.purchase_other ? "Other Amount is required" : "",
+      estimateNo: !data.purchase_estimate_ref ? "Estimate Ref is required" : "",
+     
       totalAmount: !data.purchase_amount ? "Total Amount is required" : "",
     };
 
@@ -364,23 +353,14 @@ const PurchaseTilesEdit = () => {
                       {formErrors.estimateNo && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                          Estimate No
+                          Estimate Ref
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.estimateNo}
                           </td>
                         </tr>
                       )}
-                      {formErrors.otherAmount && (
-                        <tr className="bg-white hover:bg-gray-50">
-                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                           Other Amount
-                          </td>
-                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                            {formErrors.otherAmount}
-                          </td>
-                        </tr>
-                      )}
+                     
                       {formErrors.totalAmount && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
@@ -566,6 +546,7 @@ const PurchaseTilesEdit = () => {
                       {...form.register("purchase_supplier")}
                       className="mt-1"
                       placeholder="Enter supplier name"
+                      maxLength={50}
                     />
                   </div>
                   <div>
@@ -575,6 +556,7 @@ const PurchaseTilesEdit = () => {
                       {...form.register("purchase_bill_no")}
                       className="mt-1"
                       placeholder="Enter bill number"
+                      maxLength={10}
                     />
                   </div>
  <div>
@@ -615,6 +597,7 @@ const PurchaseTilesEdit = () => {
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                       placeholder="0"
+                      maxLength={10}
                     />
                   </div>
                   <div>
@@ -654,9 +637,9 @@ const PurchaseTilesEdit = () => {
                                   e.target.value
                                 )
                               }
-                             
+                              maxLength={10}
                               className="h-8 text-sm"
-                              placeholder="Items"
+                              placeholder="Item Name"
                             />
                         
                         </div>
@@ -672,6 +655,7 @@ const PurchaseTilesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
@@ -688,6 +672,7 @@ const PurchaseTilesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (sqr)"
@@ -704,6 +689,7 @@ const PurchaseTilesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
@@ -789,6 +775,7 @@ const PurchaseTilesEdit = () => {
                       {...form.register("purchase_supplier")}
                       className="bg-white"
                       placeholder="Enter supplier name"
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -798,6 +785,7 @@ const PurchaseTilesEdit = () => {
                       {...form.register("purchase_bill_no")}
                       className="bg-white"
                       placeholder="Enter bill number"
+                      maxLength={20}
                     />
                   </div>
                   <div className="space-y-2">
@@ -838,6 +826,7 @@ const PurchaseTilesEdit = () => {
                       onKeyDown={handleKeyDown}
                       className="bg-white"
                       placeholder="0"
+                      maxLength={10}
                     />
                   </div>
                   <div className="space-y-2">
@@ -885,9 +874,9 @@ const PurchaseTilesEdit = () => {
                                     e.target.value
                                   )
                                 }
-                              
+                                maxLength={10}  
                                 className="h-9"
-                                placeholder="Items"
+                                placeholder="Item Name"
                               />
                             </td>
                             <td className="p-2">
@@ -901,6 +890,7 @@ const PurchaseTilesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -918,6 +908,7 @@ const PurchaseTilesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -927,7 +918,8 @@ const PurchaseTilesEdit = () => {
                               <Input
                                 type="tel"
                                 value={entry.purchase_sub_amount}
-                               
+                                maxLength={10}
+                                disabled
                                 className="h-9 "
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}

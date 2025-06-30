@@ -311,12 +311,12 @@ const PurchaseTilesView = () => {
 
               <Table className="border">
                 <TableHeader>
-                  <TableRow className="bg-white ">
-                    <TableHead className="text-center text-black border-r">Sl No</TableHead>
-                    <TableHead className="text-center text-black  border-r">Item Name</TableHead>
-                    <TableHead className="text-center text-black  border-r">Quantity</TableHead>
-                    <TableHead className="text-center text-black  border-r">Rate (₹)</TableHead>
-                    <TableHead className="text-center text-black ">Amount (₹)</TableHead>
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 ">
+                    <TableHead className="text-center text-black font-bold border-r">Sl No</TableHead>
+                    <TableHead className="text-center text-black font-bold  border-r">Item Name</TableHead>
+                    <TableHead className="text-center text-black font-bold  border-r">Quantity</TableHead>
+                    <TableHead className="text-center text-black font-bold  border-r">Rate (₹)</TableHead>
+                    <TableHead className="text-center text-black font-bold ">Amount (₹)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

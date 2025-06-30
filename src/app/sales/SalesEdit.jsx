@@ -27,8 +27,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Loader from "@/components/loader/Loader";
 import Cookies from "js-cookie";
-
-
+import useNumericInput from "@/hooks/useNumericInput";
 
 const formSchema = z.object({
   sales_date: z.string(),
@@ -48,12 +47,13 @@ const formSchema = z.object({
 });
 
 const SalesEdit = () => {
-      const { id } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handleKeyDown = useNumericInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
-     const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -73,9 +73,7 @@ const SalesEdit = () => {
       sales_address: "",
       sales_mobile: "",
 
-
       sales_item_type: "",
-
 
       sales_tax: "",
       sales_tempo: "",
@@ -85,13 +83,11 @@ const SalesEdit = () => {
       sales_gross: "",
       sales_advance: "",
       sales_balance: "",
-
-
     },
   });
   const [itemEntries, setItemEntries] = useState([
     {
-        id: "",
+      id: "",
       sales_sub_type: "",
       sales_sub_item: "",
       sales_sub_qnty: "",
@@ -102,11 +98,11 @@ const SalesEdit = () => {
     },
   ]);
 
-  const { 
-    data: salesId, 
-    isFetching, 
-    isError, 
-    refetch 
+  const {
+    data: salesId,
+    isFetching,
+    isError,
+    refetch,
   } = useQuery({
     queryKey: ["salesId", id],
     queryFn: async () => {
@@ -138,15 +134,11 @@ const SalesEdit = () => {
     },
   });
 
- 
-
-
-
   const { data: product = [], refetch: refetchProducts } = useQuery({
     queryKey: ["product", form.watch("sales_item_type")],
     queryFn: async () => {
-        setIsLoadingItems(true);
-      if (!form.watch("sales_item_type")) return [];
+      setIsLoadingItems(true);
+
       const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-types/${form.watch(
@@ -159,50 +151,53 @@ const SalesEdit = () => {
       setIsLoadingItems(false);
       return response.data.product_type || [];
     },
-    enabled: !!form.watch("sales_item_type"),
+    enabled: !!form.watch("sales_item_type") && !!salesId?.sales,
+    staleTime: 60 * 1000 
   });
 
-   useEffect(() => {
-        if (salesId ) {
-            const { sales: sId, salesSub: sSub } = salesId;
-          const  formValues ={
-            sales_date: moment(sId.sales_date).format("YYYY-MM-DD"),
-            sales_year: sId.sales_year || currentYear,
-            sales_item_type: sId.sales_item_type || "Granites",
-            sales_customer: sId.sales_customer || "",
-            sales_address: sId.sales_address || "",
-            sales_mobile: sId.sales_mobile || "",
-            sales_other: sId.sales_other?.toString() || "",
-            sales_tempo: sId.sales_tempo?.toString() || "",
-            sales_tax: sId.sales_tax?.toString() || "",
-            sales_gross: sId.sales_gross?.toString() || "",
-            sales_loading: sId.sales_loading || "",
-            sales_unloading: sId.sales_unloading || "",
-            sales_advance: sId.sales_advance || "",
-            sales_balance: sId.sales_balance || "",
-            sales_no_of_count: sId.sales_no_of_count?.toString() || "1",
-            }
-            form.reset(formValues);
-            
-            if (sSub && sSub.length > 0) {
-                const mappedData = sSub.map((sub) => ({
-                    id: sub.id || "",
-                    sales_sub_type: sub.sales_sub_type || "",
-                    sales_sub_item: sub.sales_sub_item || "",
-                    sales_sub_item_original: sub.sales_sub_item_original || "",
-                    sales_sub_qnty: sub.sales_sub_qnty?.toString() || "",
-                    sales_sub_qnty_sqr: sub.sales_sub_qnty_sqr?.toString() || "",
-                    sales_sub_rate: sub.sales_sub_rate?.toString() || "",
-                    sales_sub_amount: sub.sales_sub_amount?.toString() || "",
-                   
-                  }));
-                  setItemEntries(mappedData);
-                }
-                setIsInitialLoading(false);  
-          
+  useEffect(() => {
+    if (salesId?.sales && salesId?.salesSub) {
+      setIsInitialLoading(true);
+      
+      const { sales, salesSub } = salesId;
+      
+      
+      form.reset({
+       sales_date: moment(sales.sales_date).format("YYYY-MM-DD"),
+              sales_year: sales.sales_year || currentYear,
+              sales_item_type: sales.sales_item_type || "Granites",
+              sales_customer: sales.sales_customer || "",
+              sales_address: sales.sales_address || "",
+              sales_mobile: sales.sales_mobile || "",
+              sales_other: sales.sales_other?.toString() || "",
+              sales_tempo: sales.sales_tempo?.toString() || "",
+              sales_tax: sales.sales_tax?.toString() || "",
+              sales_gross: sales.sales_gross?.toString() || "",
+              sales_loading: sales.sales_loading || "",
+              sales_unloading: sales.sales_unloading || "",
+              sales_advance: sales.sales_advance || "",
+              sales_balance: sales.sales_balance || "",
+              sales_no_of_count: sales.sales_no_of_count?.toString() || "1",
+      });
+  
+    
+      // setTimeout(() => {
+        if (salesSub?.length > 0) {
+          setItemEntries(salesSub.map((sub) => ({
+            id: sub.id || "",
+            sales_sub_type: sub.sales_sub_type || "",
+            sales_sub_item: sub.sales_sub_item || "",
+            sales_sub_item_original: sub.sales_sub_item_original || "",
+            sales_sub_qnty: sub.sales_sub_qnty?.toString() || "",
+            sales_sub_qnty_sqr: sub.sales_sub_qnty_sqr?.toString() || "",
+            sales_sub_rate: sub.sales_sub_rate?.toString() || "",
+            sales_sub_amount: sub.sales_sub_amount?.toString() || "",
+          })));
         }
-      }, [salesId]);
-
+        setIsInitialLoading(false);
+      // }, 100);
+    }
+  }, [salesId, form, currentYear]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -235,8 +230,7 @@ const SalesEdit = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -257,8 +251,7 @@ const SalesEdit = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -269,23 +262,6 @@ const SalesEdit = () => {
     form.setValue("sales_balance", newBalance.toString());
   };
 
- 
-
-
-  const handleKeyDown = (event) => {
-    if (
-      event.key === "Backspace" ||
-      event.key === "Delete" ||
-      event.key === "Tab" ||
-      event.key === "Escape" ||
-      event.key === "Enter" ||
-      (event.key >= "0" && event.key <= "9")
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-  };
   const updateSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -308,8 +284,7 @@ const SalesEdit = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to update sales",
+        description: error.response?.data?.message || "Failed to update sales",
         variant: "destructive",
       });
     },
@@ -344,7 +319,13 @@ const SalesEdit = () => {
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || err.originalItem
+      (err) =>
+        err.type ||
+        err.item ||
+        err.qnty ||
+        err.qntySqr ||
+        err.rate ||
+        err.originalItem
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -452,6 +433,9 @@ const SalesEdit = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                        Original  Item
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
@@ -467,6 +451,7 @@ const SalesEdit = () => {
                         (error, i) =>
                           (error.type ||
                             error.item ||
+                            error.originalItem ||
                             error.qnty ||
                             error.qntySqr ||
                             error.rate) && (
@@ -476,6 +461,9 @@ const SalesEdit = () => {
                               </td>
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.type}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                                {error.item}
                               </td>
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.item}
@@ -506,7 +494,6 @@ const SalesEdit = () => {
       return;
     }
 
-    
     await onSubmit(formData);
   };
 
@@ -519,7 +506,6 @@ const SalesEdit = () => {
         sales_sub_data: itemEntries,
       };
 
-      
       updateSalesMutation.mutate(payload);
     } catch (error) {
       toast({
@@ -536,35 +522,33 @@ const SalesEdit = () => {
     navigate("/sales");
   };
 
-
-   if (isFetching  || productTypeGroup.length == 0) {
-      return (
-        <Page>
-          <div className="flex justify-center items-center h-full">
-            <Loader />
-          </div>
-        </Page>
-      );
-    }
-    
-    if (isError) {
-      return (
-        <Page>
-          <Card className="w-full max-w-md mx-auto mt-10">
-            <CardHeader>
-              <CardTitle className="text-destructive">
-                Error Fetching Sales
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => refetch()} variant="outline">
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        </Page>
-      );
-    }
+  if (isFetching || productTypeGroup.length === 0 || isInitialLoading ) {
+    return (
+      <Page>
+        <div className="flex justify-center items-center h-full">
+          <Loader />
+        </div>
+      </Page>
+    );
+  }
+  if (isError) {
+    return (
+      <Page>
+        <Card className="w-full max-w-md mx-auto mt-10">
+          <CardHeader>
+            <CardTitle className="text-destructive">
+              Error Fetching Sales
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -580,7 +564,6 @@ const SalesEdit = () => {
                 <ArrowLeft className="h-5 w-5 mr-1" />
                 <h1 className="text-base font-bold">Edit Sales</h1>
               </button>
-             
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-green-50 border border-green-100 rounded-md p-2">
@@ -620,6 +603,7 @@ const SalesEdit = () => {
                       {...form.register("sales_customer")}
                       className="mt-1"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
                   </div>
                   <div>
@@ -640,6 +624,7 @@ const SalesEdit = () => {
                       {...form.register("sales_address")}
                       className="mt-1"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
                   </div>
                   <div>
@@ -688,7 +673,6 @@ const SalesEdit = () => {
                       <div className="col-span-12">
                         <div className="grid grid-cols-2 gap-1 mb-1">
                           <div className="col-span-1">
-                         
                             <Input
                               value={entry.sales_sub_type}
                               onChange={(e) =>
@@ -698,6 +682,7 @@ const SalesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={20}
                               className="h-8 text-sm"
                               placeholder="Types"
                             />
@@ -712,45 +697,46 @@ const SalesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={20}
                               className="h-8 text-sm"
-                              placeholder="Item"
+                              placeholder="Item Name"
                             />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-1">
                           <div>
-                          {isLoadingItems ? ( 
-          <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
-          ) : (
-                            <SelectShadcn
-                              value={entry.sales_sub_item_original}
-                              onValueChange={(value) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_item_original",
-                                  value
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select Original Item..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectLabel>Original Items</SelectLabel>
-                                  {product.map((item) => (
-                                    <SelectItem
-                                      key={item.product_type}
-                                      value={item.product_type}
-                                    >
-                                      {item.product_type}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </SelectShadcn>
-          )}
+                            {isLoadingItems || !product.length ? (
+                              <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
+                            ) : (
+                              <SelectShadcn
+                                value={entry.sales_sub_item_original}
+                                onValueChange={(value) =>
+                                  handleItemChange(
+                                    index,
+                                    "sales_sub_item_original",
+                                    value
+                                  )
+                                }
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select Original Item..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>Original Items</SelectLabel>
+                                    {product.map((item) => (
+                                      <SelectItem
+                                        key={item.product_type}
+                                        value={item.product_type}
+                                      >
+                                        {item.product_type}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </SelectShadcn>
+                            )}
                           </div>
                           <div>
                             <Input
@@ -763,6 +749,7 @@ const SalesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
@@ -779,6 +766,7 @@ const SalesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (sqr)"
@@ -797,6 +785,7 @@ const SalesEdit = () => {
                                   e.target.value
                                 )
                               }
+                              maxLength={10}
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
@@ -814,11 +803,9 @@ const SalesEdit = () => {
                           </div>
                         </div>
                       </div>
-                      
                     </div>
                   </div>
                 ))}
-               
               </div>
 
               {/* Charges */}
@@ -834,6 +821,7 @@ const SalesEdit = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_tax", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -860,6 +848,7 @@ const SalesEdit = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_loading", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -873,6 +862,7 @@ const SalesEdit = () => {
                       onChange={(e) =>
                         handleChargeChange("sales_other", e.target.value)
                       }
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       className="mt-1"
                     />
@@ -900,6 +890,7 @@ const SalesEdit = () => {
                     <Input
                       id="sales_advance"
                       type="tel"
+                      maxLength={10}
                       onKeyDown={handleKeyDown}
                       {...form.register("sales_advance")}
                       onChange={(e) => handleAdvanceChange(e.target.value)}
@@ -958,7 +949,6 @@ const SalesEdit = () => {
                   </Button>
                   <CardTitle>Edit Sales</CardTitle>
                 </div>
-               
               </div>
             </CardHeader>
 
@@ -988,6 +978,7 @@ const SalesEdit = () => {
                       {...form.register("sales_customer")}
                       className="bg-white"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1040,6 +1031,7 @@ const SalesEdit = () => {
                       {...form.register("sales_address")}
                       className="bg-white"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
                   </div>
                 </div>
@@ -1081,14 +1073,12 @@ const SalesEdit = () => {
                           <th className="text-left p-2 font-medium text-sm">
                             Amount
                           </th>
-                         
                         </tr>
                       </thead>
                       <tbody>
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
-                             
                               <Input
                                 value={entry.sales_sub_type}
                                 onChange={(e) =>
@@ -1098,6 +1088,7 @@ const SalesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={20}
                                 className="h-9"
                                 placeholder="Types"
                               />
@@ -1112,43 +1103,44 @@ const SalesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={20}
                                 className="h-9"
-                                placeholder="Item"
+                                placeholder="Item Name"
                               />
                             </td>
 
                             <td className="p-2">
-                            {isLoadingItems ? ( 
- <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
-          ) : ( 
-                              <SelectShadcn
-                                value={entry.sales_sub_item_original}
-                                onValueChange={(value) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_item_original",
-                                    value
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-[8rem]">
-                                  <SelectValue placeholder="Select Original Item" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Original Items</SelectLabel>
-                                    {product.map((item) => (
-                                      <SelectItem
-                                        key={item.product_type}
-                                        value={item.product_type}
-                                      >
-                                        {item.product_type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </SelectShadcn>
-          )}
+                              {isLoadingItems || !product.length ? (
+                                <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
+                              ) : (
+                                <SelectShadcn
+                                  value={entry.sales_sub_item_original}
+                                  onValueChange={(value) =>
+                                    handleItemChange(
+                                      index,
+                                      "sales_sub_item_original",
+                                      value
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-[8rem]">
+                                    <SelectValue placeholder="Select Original Item" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>Original Items</SelectLabel>
+                                      {product.map((item) => (
+                                        <SelectItem
+                                          key={item.product_type}
+                                          value={item.product_type}
+                                        >
+                                          {item.product_type}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </SelectShadcn>
+                              )}
                             </td>
 
                             <td className="p-2">
@@ -1162,6 +1154,7 @@ const SalesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -1178,6 +1171,7 @@ const SalesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -1194,6 +1188,7 @@ const SalesEdit = () => {
                                     e.target.value
                                   )
                                 }
+                                maxLength={10}
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
@@ -1209,14 +1204,11 @@ const SalesEdit = () => {
                                 onKeyDown={handleKeyDown}
                               />
                             </td>
-                            
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-
-                
                 </div>
 
                 {/* Charges and Totals */}
@@ -1234,6 +1226,7 @@ const SalesEdit = () => {
                           onChange={(e) =>
                             handleChargeChange("sales_tax", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1247,6 +1240,7 @@ const SalesEdit = () => {
                           onChange={(e) =>
                             handleChargeChange("sales_tempo", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1260,11 +1254,9 @@ const SalesEdit = () => {
                           type="tel"
                           {...form.register("sales_loading")}
                           onChange={(e) =>
-                            handleChargeChange(
-                              "sales_loading",
-                              e.target.value
-                            )
+                            handleChargeChange("sales_loading", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1295,6 +1287,7 @@ const SalesEdit = () => {
                           onChange={(e) =>
                             handleChargeChange("sales_other", e.target.value)
                           }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
@@ -1326,6 +1319,7 @@ const SalesEdit = () => {
                           {...form.register("sales_advance")}
                           onChange={(e) => handleAdvanceChange(e.target.value)}
                           onKeyDown={handleKeyDown}
+                          maxLength={10}
                           placeholder="0"
                         />
                       </div>

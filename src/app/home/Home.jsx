@@ -168,10 +168,10 @@ const token = Cookies.get("token")
               <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
               <span className="text-xs">Day Book Exists</span>
             </div>
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-white border border-gray-300"></div>
               <span className="text-xs">No Entry</span>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>

@@ -26,6 +26,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -52,6 +53,7 @@ const formSchema = z.object({
 const AddEstimate = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handleKeyDown = useNumericInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [estimateRef, setEstimateRef] = useState("");
   const [itemEntries, setItemEntries] = useState([
@@ -65,7 +67,6 @@ const AddEstimate = () => {
     },
   ]);
 
-  
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -77,7 +78,6 @@ const AddEstimate = () => {
     },
   });
 
-  
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
@@ -92,7 +92,6 @@ const AddEstimate = () => {
     },
   });
 
- 
   useEffect(() => {
     const fetchEstimateRef = async () => {
       const token = Cookies.get("token");
@@ -136,7 +135,6 @@ const AddEstimate = () => {
     updatedEntries[index][field] = value;
     setItemEntries(updatedEntries);
 
-
     if (
       (field === "estimate_sub_qnty_sqr" || field === "estimate_sub_rate") &&
       updatedEntries[index].estimate_sub_qnty_sqr &&
@@ -149,7 +147,6 @@ const AddEstimate = () => {
       setItemEntries([...updatedEntries]);
     }
 
- 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
       0
@@ -164,7 +161,6 @@ const AddEstimate = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("estimate_gross", newGross.toString());
 
-   
     const newBalance =
       newGross - parseFloat(form.watch("estimate_advance") || 0);
     form.setValue("estimate_balance", newBalance.toString());
@@ -173,7 +169,6 @@ const AddEstimate = () => {
   const handleChargeChange = (field, value) => {
     form.setValue(field, value);
 
-    
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
       0
@@ -188,7 +183,6 @@ const AddEstimate = () => {
     const newGross = itemsTotal + chargesTotal;
     form.setValue("estimate_gross", newGross.toString());
 
-    
     const newBalance =
       newGross - parseFloat(form.watch("estimate_advance") || 0);
     form.setValue("estimate_balance", newBalance.toString());
@@ -220,7 +214,6 @@ const AddEstimate = () => {
     updatedEntries.splice(index, 1);
     setItemEntries(updatedEntries);
 
-  
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
       0
@@ -240,21 +233,7 @@ const AddEstimate = () => {
     form.setValue("estimate_balance", newBalance.toString());
   };
 
-  const handleKeyDown = (event) => {
-   
-    if (
-      event.key === 'Backspace' ||
-      event.key === 'Delete' ||
-      event.key === 'Tab' ||
-      event.key === 'Escape' ||
-      event.key === 'Enter' ||
-      (event.key >= '0' && event.key <= '9')
-    ) {
-      return; 
-    }
-    
-    event.preventDefault();
-  };
+
   const createEstimateMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -277,21 +256,19 @@ const AddEstimate = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to create estimate",
+        description:
+          error.response?.data?.message || "Failed to create estimate",
         variant: "destructive",
       });
     },
   });
   const validateForm = (data) => {
-  
     const formErrors = {
       date: !data.estimate_date ? "Date is required" : "",
       customer: !data.estimate_customer ? "Customer name is required" : "",
       itemType: !data.estimate_item_type ? "Item type is required" : "",
-      
     };
-  
-   
+
     const itemErrors = itemEntries.map((entry, index) => ({
       type: !entry.estimate_sub_type ? "required" : "",
       item: !entry.estimate_sub_item ? "required" : "",
@@ -311,176 +288,175 @@ const AddEstimate = () => {
         ? "Rate must be a number"
         : "",
     }));
-  
-    const hasFormErrors = Object.values(formErrors).some(err => err);
+
+    const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
       (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate
     );
-  
+
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
   };
-  
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     const formData = form.getValues();
-    const { formErrors, itemErrors, hasFormErrors, hasItemErrors } = validateForm(formData);
-  
+    const { formErrors, itemErrors, hasFormErrors, hasItemErrors } =
+      validateForm(formData);
+
     if (hasFormErrors || hasItemErrors) {
-        toast({
-          title: "Validation Errors",
-          description: (
-            <div className="w-full space-y-3 text-xs max-h-[60vh] overflow-y-auto">
-              {hasFormErrors && (
+      toast({
+        title: "Validation Errors",
+        description: (
+          <div className="w-full space-y-3 text-xs max-h-[60vh] overflow-y-auto">
+            {hasFormErrors && (
+              <div className="w-full">
+                <div className="font-medium mb-2 text-white">Form Errors</div>
                 <div className="w-full">
-                  <div className="font-medium mb-2 text-white">Form Errors</div>
-                  <div className="w-full">
-                    <table className="w-full border-collapse border border-red-200 rounded-md">
-                      <thead>
-                        <tr className="bg-red-50">
-                          <th className="px-2 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Field
-                          </th>
-                          <th className="px-2 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Error
-                          </th>
+                  <table className="w-full border-collapse border border-red-200 rounded-md">
+                    <thead>
+                      <tr className="bg-red-50">
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Field
+                        </th>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Error
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formErrors.date && (
+                        <tr className="bg-white hover:bg-gray-50">
+                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
+                            Date
+                          </td>
+                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                            {formErrors.date}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {formErrors.date && (
-                          <tr className="bg-white hover:bg-gray-50">
-                            <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                              Date
-                            </td>
-                            <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                              {formErrors.date}
-                            </td>
-                          </tr>
-                        )}
-                        {formErrors.customer && (
-                          <tr className="bg-white hover:bg-gray-50">
-                            <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                              Customer
-                            </td>
-                            <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                              {formErrors.customer}
-                            </td>
-                          </tr>
-                        )}
-                        {formErrors.itemType && (
-                          <tr className="bg-white hover:bg-gray-50">
-                            <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                              Item Type
-                            </td>
-                            <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                              {formErrors.itemType}
-                            </td>
-                          </tr>
-                        )}
-                        {formErrors.address && (
-                          <tr className="bg-white hover:bg-gray-50">
-                            <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                              Address
-                            </td>
-                            <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                              {formErrors.address}
-                            </td>
-                          </tr>
-                        )}
-                        {formErrors.mobile && (
-                          <tr className="bg-white hover:bg-gray-50">
-                            <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                              Mobile
-                            </td>
-                            <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                              {formErrors.mobile}
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                      )}
+                      {formErrors.customer && (
+                        <tr className="bg-white hover:bg-gray-50">
+                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
+                            Customer
+                          </td>
+                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                            {formErrors.customer}
+                          </td>
+                        </tr>
+                      )}
+                      {formErrors.itemType && (
+                        <tr className="bg-white hover:bg-gray-50">
+                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
+                            Item Type
+                          </td>
+                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                            {formErrors.itemType}
+                          </td>
+                        </tr>
+                      )}
+                      {formErrors.address && (
+                        <tr className="bg-white hover:bg-gray-50">
+                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
+                            Address
+                          </td>
+                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                            {formErrors.address}
+                          </td>
+                        </tr>
+                      )}
+                      {formErrors.mobile && (
+                        <tr className="bg-white hover:bg-gray-50">
+                          <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
+                            Mobile
+                          </td>
+                          <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                            {formErrors.mobile}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-              
-              {hasItemErrors && (
+              </div>
+            )}
+
+            {hasItemErrors && (
+              <div className="w-full">
+                <div className="font-medium mb-2 text-white">Item Errors</div>
                 <div className="w-full">
-                  <div className="font-medium mb-2 text-white">Item Errors</div>
-                  <div className="w-full">
-                    <table className="w-full border-collapse border border-red-200 rounded-md">
-                      <thead>
-                        <tr className="bg-red-50">
-                          <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200 w-8">
-                            #
-                          </th>
-                          <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Type
-                          </th>
-                          <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Item
-                          </th>
-                          <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Qty
-                          </th>
-                          <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Qty (sqr)
-                          </th>
-                          <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                            Rate
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {itemErrors.map(
-                          (error, i) =>
-                            (error.type ||
-                              error.item ||
-                              error.qnty ||
-                              error.qntySqr ||
-                              error.rate) && (
-                              <tr key={i} className="bg-white hover:bg-gray-50">
-                                <td className="px-1.5 py-1.5 text-center text-gray-600 border-b border-gray-200 font-medium">
-                                  {i + 1}
-                                </td>
-                                <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                                  {error.type}
-                                </td>
-                                <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
-                                  {error.item}
-                                </td>
-                                <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
-                                  {error.qnty}
-                                </td>
-                                <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
-                                  {error.qntySqr}
-                                </td>
-                                <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
-                                  {error.rate}
-                                </td>
-                              </tr>
-                            )
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                  <table className="w-full border-collapse border border-red-200 rounded-md">
+                    <thead>
+                      <tr className="bg-red-50">
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200 w-8">
+                          #
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Type
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Item
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Qty
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Qty (sqr)
+                        </th>
+                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
+                          Rate
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {itemErrors.map(
+                        (error, i) =>
+                          (error.type ||
+                            error.item ||
+                            error.qnty ||
+                            error.qntySqr ||
+                            error.rate) && (
+                            <tr key={i} className="bg-white hover:bg-gray-50">
+                              <td className="px-1.5 py-1.5 text-center text-gray-600 border-b border-gray-200 font-medium">
+                                {i + 1}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                                {error.type}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
+                                {error.item}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
+                                {error.qnty}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
+                                {error.qntySqr}
+                              </td>
+                              <td className="px-1.5 py-1.5 text-red-600 font-mono text-right border-b border-gray-200 break-all">
+                                {error.rate}
+                              </td>
+                            </tr>
+                          )
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </div>
-          ),
-          variant: "destructive",
-          duration: 10000,
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      
-  
+              </div>
+            )}
+          </div>
+        ),
+        variant: "destructive",
+        duration: 10000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     // If validation passes, proceed with API call
     await onSubmit(formData);
   };
-  
+
   const onSubmit = async (data) => {
     try {
       const payload = {
@@ -489,12 +465,10 @@ const AddEstimate = () => {
         estimate_no_of_count: itemEntries.length,
         estimate_sub_data: itemEntries,
       };
-      
+
       // Use the mutation to create the estimate
       createEstimateMutation.mutate(payload);
-      
     } catch (error) {
-    
       toast({
         title: "Error",
         description: error.message || "Failed to create estimate",
@@ -524,7 +498,7 @@ const AddEstimate = () => {
                 <h1 className="text-base font-bold">Add Estimate</h1>
               </button>
               <div className="text-sm font-medium">
-                No: <span className="font-bold">{estimateRef}</span>
+                Ref: <span className="font-bold">{estimateRef}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -544,7 +518,7 @@ const AddEstimate = () => {
           </div>
 
           <div className="mb-14">
-            <form   onSubmit={handleFormSubmit} className="space-y-4">
+            <form onSubmit={handleFormSubmit} className="space-y-4">
               {/* Customer Info */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <h3 className="font-medium mb-3">Customer Information</h3>
@@ -565,8 +539,8 @@ const AddEstimate = () => {
                       {...form.register("estimate_customer")}
                       className="mt-1"
                       placeholder="Enter customer name"
+                      maxLength={50}
                     />
-                  
                   </div>
                   <div>
                     <Label htmlFor="estimate_mobile">Mobile No</Label>
@@ -578,7 +552,6 @@ const AddEstimate = () => {
                       maxLength={10}
                       onKeyDown={handleKeyDown}
                     />
-                   
                   </div>
                   <div>
                     <Label htmlFor="estimate_address">Address</Label>
@@ -587,8 +560,8 @@ const AddEstimate = () => {
                       {...form.register("estimate_address")}
                       className="mt-1"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
-                    
                   </div>
                   <div>
                     <Label htmlFor="estimate_item_type">Item Type</Label>
@@ -617,7 +590,6 @@ const AddEstimate = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  
                   </div>
                 </div>
               </div>
@@ -675,8 +647,8 @@ const AddEstimate = () => {
                                 )
                               }
                               className="h-8 text-sm"
-                              placeholder="Item"
-                              
+                              placeholder="Item Name"
+                              maxLength={20}
                             />
                           </div>
                         </div>
@@ -695,7 +667,7 @@ const AddEstimate = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (pcs)"
-                              
+                              maxLength={10}
                             />
                           </div>
                           <div>
@@ -712,7 +684,7 @@ const AddEstimate = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Qnty (sqr)"
-                              
+                              maxLength={10}
                             />
                           </div>
                           <div>
@@ -729,7 +701,7 @@ const AddEstimate = () => {
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm"
                               placeholder="Rate"
-                              
+                              maxLength={10}
                             />
                           </div>
                         </div>
@@ -786,8 +758,8 @@ const AddEstimate = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
-                   
                   </div>
                   <div>
                     <Label htmlFor="estimate_tempo">Tempo Charges</Label>
@@ -800,8 +772,8 @@ const AddEstimate = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
-                   
                   </div>
                   <div>
                     <Label htmlFor="estimate_loading">Loading Charges</Label>
@@ -814,8 +786,8 @@ const AddEstimate = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
-                  
                   </div>
                   <div>
                     <Label htmlFor="estimate_other">Other Charges</Label>
@@ -828,8 +800,8 @@ const AddEstimate = () => {
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
+                      maxLength={10}
                     />
-                   
                   </div>
                 </div>
               </div>
@@ -858,8 +830,8 @@ const AddEstimate = () => {
                       {...form.register("estimate_advance")}
                       onChange={(e) => handleAdvanceChange(e.target.value)}
                       className="mt-1"
+                      maxLength={10}
                     />
-                  
                   </div>
                   <div className="col-span-2">
                     <Label htmlFor="estimate_balance">Balance</Label>
@@ -914,22 +886,19 @@ const AddEstimate = () => {
                   <CardTitle>Add Estimate</CardTitle>
                 </div>
                 <div className="text-sm font-medium">
-                  Estimate No: <span className="font-bold">{estimateRef}</span>
+                  Estimate Ref: <span className="font-bold">{estimateRef}</span>
                 </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              <form
-               onSubmit={handleFormSubmit} 
-                className="space-y-2"
-              >
+              <form onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
-                  <Label htmlFor="estimate_date">
-  Date <span className="text-xs text-red-400 ">*</span>
-</Label>
+                    <Label htmlFor="estimate_date">
+                      Date <span className="text-xs text-red-400 ">*</span>
+                    </Label>
 
                     <Input
                       id="estimate_date"
@@ -939,14 +908,18 @@ const AddEstimate = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="estimate_customer">Customer Name <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="estimate_customer">
+                      Customer Name{" "}
+                      <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="estimate_customer"
                       {...form.register("estimate_customer")}
                       className="bg-white"
                       placeholder="Enter customer name"
+                 
+                      maxLength={50}
                     />
-                   
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="estimate_mobile">Mobile No</Label>
@@ -958,11 +931,12 @@ const AddEstimate = () => {
                       maxLength={10}
                       onKeyDown={handleKeyDown}
                     />
-                   
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="estimate_item_type">Item Type <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="estimate_item_type">
+                      Item Type <span className="text-xs text-red-400 ">*</span>
+                    </Label>
 
                     <SelectShadcn
                       id="estimate_item_type"
@@ -988,7 +962,6 @@ const AddEstimate = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                    
                   </div>
                   <div className="space-y-2 col-span-2 lg:col-span-4">
                     <Label htmlFor="estimate_address">Address</Label>
@@ -997,8 +970,8 @@ const AddEstimate = () => {
                       {...form.register("estimate_address")}
                       className="bg-white"
                       placeholder="Enter address"
+                      maxLength={200}
                     />
-                   
                   </div>
                 </div>
 
@@ -1012,12 +985,29 @@ const AddEstimate = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm">Type <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Item <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Qnty (pcs) <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Qnty (sqr) <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Rate <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Amount</th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Type{" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Item{" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Qnty (pcs){" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Qnty (sqr){" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Rate{" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Amount
+                          </th>
                           <th className="text-left p-2 font-medium text-sm"></th>
                         </tr>
                       </thead>
@@ -1064,7 +1054,8 @@ const AddEstimate = () => {
                                   )
                                 }
                                 className="h-9"
-                                placeholder="Item"
+                                placeholder="Item Name"
+                                maxLength={20}
                               />
                             </td>
                             <td className="p-2">
@@ -1081,6 +1072,7 @@ const AddEstimate = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1097,6 +1089,7 @@ const AddEstimate = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1113,6 +1106,7 @@ const AddEstimate = () => {
                                 onKeyDown={handleKeyDown}
                                 className="h-9"
                                 placeholder="0"
+                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1123,6 +1117,7 @@ const AddEstimate = () => {
                                 className="h-9 bg-gray-100"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
+                             
                               />
                             </td>
                             <td className="p-2">
@@ -1173,8 +1168,8 @@ const AddEstimate = () => {
                           }
                           onKeyDown={handleKeyDown}
                           placeholder="0"
+                          maxLength={10}
                         />
-                      
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="estimate_tempo">Tempo Charges</Label>
@@ -1186,9 +1181,9 @@ const AddEstimate = () => {
                             handleChargeChange("estimate_tempo", e.target.value)
                           }
                           onKeyDown={handleKeyDown}
-                                 placeholder="0"
+                          placeholder="0"
+                          maxLength={10}
                         />
-                       
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="estimate_loading">
@@ -1205,9 +1200,9 @@ const AddEstimate = () => {
                             )
                           }
                           onKeyDown={handleKeyDown}
-                                 placeholder="0"
+                          placeholder="0"
+                          maxLength={10}
                         />
-                       
                       </div>
                       {/* <div className="space-y-2">
                         <Label htmlFor="estimate_unloading">
@@ -1236,9 +1231,9 @@ const AddEstimate = () => {
                             handleChargeChange("estimate_other", e.target.value)
                           }
                           onKeyDown={handleKeyDown}
-                                 placeholder="0"
+                          placeholder="0"
+                          maxLength={10}
                         />
-                       
                       </div>
                     </div>
                   </div>
@@ -1256,7 +1251,8 @@ const AddEstimate = () => {
                           disabled
                           className="bg-gray-100"
                           onKeyDown={handleKeyDown}
-                                 placeholder="0"
+                          placeholder="0"
+                    
                         />
                       </div>
                       <div className="space-y-2">
@@ -1267,9 +1263,9 @@ const AddEstimate = () => {
                           {...form.register("estimate_advance")}
                           onChange={(e) => handleAdvanceChange(e.target.value)}
                           onKeyDown={handleKeyDown}
-                                 placeholder="0"
+                          placeholder="0"
+                          maxLength={10}
                         />
-                     
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="estimate_balance">Balance</Label>
@@ -1280,7 +1276,8 @@ const AddEstimate = () => {
                           disabled
                           onKeyDown={handleKeyDown}
                           className="bg-gray-100"
-                                 placeholder="0"
+                          placeholder="0"
+                      
                         />
                       </div>
                     </div>

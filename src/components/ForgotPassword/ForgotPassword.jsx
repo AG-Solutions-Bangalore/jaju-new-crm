@@ -150,6 +150,8 @@ export default function ForgotPassword() {
                       value={username}
                       onChange={(e) => setUserName(e.target.value)}
                       required
+                      minLength={1}
+                      maxLength={50}
                      
                     />
                   </motion.div>
@@ -174,6 +176,8 @@ export default function ForgotPassword() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      minLength={1}
+                      maxLength={50}
                      
                     />
                   </motion.div>

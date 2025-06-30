@@ -38,7 +38,7 @@ const DayBookReport = () => {
     const { toast } = useToast();
     const navigate = useNavigate();
     
-    const [date, setDate] = useState(moment().format('YYYY-MMM-DD'));
+    const [date, setDate] = useState(moment().format('YYYY-MM-DD'));
   
     const { data: dayBookData, isLoading, isError, refetch } = useQuery({
       queryKey: ["daybook", date],
@@ -52,7 +52,7 @@ const DayBookReport = () => {
         return response.data;
       },
     });
-   console.log("total_received_amount",dayBookData)
+ 
     const handleSavePDF = () => {
       const input = tableRef.current;
       const options = {
@@ -420,11 +420,11 @@ const DayBookReport = () => {
         <CardTitle className="text-lg font-bold text-gray-800">
           Day Book Report
         </CardTitle>
-        {dayBookData && (
+        {/* {dayBookData && (
           <span className="text-blue-800 text-xs">
             {formatDisplayDate(date)}
           </span>
-        )}
+        )} */}
       </div>
       <div className="flex gap-1">
         <Button

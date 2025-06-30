@@ -17,6 +17,7 @@ import { ContextPanel } from "@/lib/ContextPanel";
 import BASE_URL from "@/config/BaseUrl";
 import Cookies from "js-cookie";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { Eye, EyeOff } from "lucide-react";
 export default function LoginAuth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +25,7 @@ export default function LoginAuth() {
   const [loadingMessage, setLoadingMessage] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-
+  const [showPassword, setShowPassword] = useState(false)
   const loadingMessages = [
     "Setting things up for you...",
     "Checking your credentials...",
@@ -204,34 +205,52 @@ export default function LoginAuth() {
                       placeholder="Enter your username"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
+                      minLength={1}
+                      maxLength={50}
+                      required 
                 
                     />
                   </motion.div>
                 </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="password"
-                    className={`${ButtonConfig.loginText}`}
-                  >
-                    Password
-                  </Label>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="*******"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                   
-                    />
-                  </motion.div>
-                </div>
+              
+
+
+<div className="grid gap-2">
+  <Label
+    htmlFor="password"
+    className={`${ButtonConfig.loginText}`}
+  >
+    Password
+  </Label>
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.3 }}
+  >
+    <div className="relative">
+      <Input
+        id="password"
+        type={showPassword ? "text" : "password"}
+        placeholder="*******"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        minLength={1}
+        maxLength={16}
+        className="pr-10" 
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword((prev) => !prev)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        tabIndex={-1} 
+      >
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  </motion.div>
+</div>
+
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

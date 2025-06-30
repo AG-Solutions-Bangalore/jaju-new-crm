@@ -105,7 +105,7 @@ const ChangePassword = ({ open, setOpen }) => {
         aria-describedby={null}
       >
         <DialogHeader>
-          <DialogTitle>Change Password</DialogTitle>
+          <DialogTitle>Change Password </DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-4">
@@ -116,8 +116,9 @@ const ChangePassword = ({ open, setOpen }) => {
               name="currentPassword"
               value={formData.currentPassword}
               onChange={handleInputChange}
-              placeholder="Enter Current Password "
+              placeholder="Enter Current Password (max-16)"
               type="password"
+              maxLength={16}
             />
           </div>
           <div className="grid gap-2">
@@ -127,8 +128,9 @@ const ChangePassword = ({ open, setOpen }) => {
               name="newPassword"
               value={formData.newPassword}
               onChange={handleInputChange}
-              placeholder="Enter New Password"
+              placeholder="Enter New Password (max-16)"
               type="password"
+              maxLength={16}
             />
           </div>
         </div>
