@@ -33,8 +33,9 @@ import { getTodayDate } from "@/utils/currentDate";
 import BASE_URL from "@/config/BaseUrl";
 import html2pdf from "html2pdf.js";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
+import { FaRegFilePdf, FaRegFileExcel } from "react-icons/fa";
 import Cookies from "js-cookie";
+import { getFirstDayOfMonth } from "@/utils/getFirstDayOfMonth";
 
 const formSchema = z.object({
   from_date: z.string().min(1, "From date is required"),
@@ -50,7 +51,7 @@ const TrialBalanceReport = () => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      from_date: "" ,
+      from_date: getFirstDayOfMonth() ,
       to_date:  getTodayDate(),
     },
   });
@@ -254,7 +255,7 @@ const TrialBalanceReport = () => {
                                   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                                   onClick={handleDownloadCsv}
                                 >
-                                  <FaRegFileWord className="h-4 w-4" />
+                                  <FaRegFileExcel className="h-4 w-4" />
                                 </button>
                                 <button
                                   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
@@ -545,7 +546,7 @@ const TrialBalanceReport = () => {
                       size="sm"
                       onClick={handleDownloadCsv}
                     >
-                      <FaRegFileWord className="mr-2 h-4 w-4" />
+                      <FaRegFileExcel className="mr-2 h-4 w-4" />
                       CSV
                     </Button>
                     <Button

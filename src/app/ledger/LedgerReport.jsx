@@ -45,7 +45,7 @@ import Select from "react-select";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { getFirstDayOfMonth } from "@/utils/getFirstDayOfMonth";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
+import { FaRegFilePdf, FaRegFileExcel } from "react-icons/fa";
 import Cookies from "js-cookie";
 const formSchema = z.object({
   account_name: z.string().min(1, "Account name is required"),
@@ -351,7 +351,7 @@ const LedgerReport = () => {
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                     onClick={handleDownloadCsv}
                   >
-                    <FaRegFileWord className="h-4 w-4" />
+                    <FaRegFileExcel className="h-4 w-4" />
                   </button>
                   <button
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
@@ -742,7 +742,7 @@ const LedgerReport = () => {
                         size="sm"
                         onClick={handleDownloadCsv}
                       >
-                        <FaRegFileWord className="mr-2 h-4 w-4" />
+                        <FaRegFileExcel className="mr-2 h-4 w-4" />
                         CSV
                       </Button>
                       <Button

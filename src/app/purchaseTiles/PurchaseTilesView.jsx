@@ -149,6 +149,7 @@ const PurchaseTilesView = () => {
               </button>
             )}
             content={() => tableRef.current}
+             documentTitle="Purchase Tiles Report"
           />
         </div>
       </div>
@@ -276,6 +277,7 @@ const PurchaseTilesView = () => {
                     </Button>
                   )}
                   content={() => tableRef.current}
+                  documentTitle="Purchase Tiles Report"
                 />
               </div>
             </div>

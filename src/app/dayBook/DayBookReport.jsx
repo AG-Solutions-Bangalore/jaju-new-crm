@@ -30,7 +30,7 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "@/app/dashboard/page";
 import Loader from "@/components/loader/Loader";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { FaRegFilePdf, FaRegFileWord } from "react-icons/fa";
+import { FaRegFileExcel, FaRegFilePdf } from "react-icons/fa";
 import Cookies from "js-cookie";
 
 const DayBookReport = () => {
@@ -207,7 +207,7 @@ const DayBookReport = () => {
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                     onClick={handleDownload}
                   >
-                    <FaRegFileWord className="h-4 w-4" />
+                    <FaRegFileExcel className="h-4 w-4" />
                   </button>
                   <button
                     className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
@@ -432,7 +432,7 @@ const DayBookReport = () => {
           className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
           onClick={handleDownload}
         >
-          <FaRegFileWord className="h-3 w-3" />
+          <FaRegFileExcel className="h-3 w-3" />
           CSV
         </Button>
         <Button

@@ -148,6 +148,8 @@ const EstimateView = () => {
                       </button>
                     )}
                     content={() => tableRef.current}
+                     documentTitle="Estimate Report"
+                    
                   />
                 </div>
               </div>
@@ -327,6 +329,7 @@ const EstimateView = () => {
                       </Button>
                     )}
                     content={() => tableRef.current}
+                     documentTitle="Estimate Report"
                   />
                 </div>
               </div>

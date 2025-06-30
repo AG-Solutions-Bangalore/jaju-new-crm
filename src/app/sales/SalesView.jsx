@@ -149,6 +149,7 @@ const SalesView = () => {
               </button>
             )}
             content={() => tableRef.current}
+             documentTitle="Sales Report"
           />
         </div>
       </div>
@@ -319,6 +320,7 @@ const SalesView = () => {
                     </Button>
                   )}
                   content={() => tableRef.current}
+                   documentTitle="Sales Report"
                 />
               </div>
             </div>
