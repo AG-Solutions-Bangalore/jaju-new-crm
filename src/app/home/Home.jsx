@@ -19,6 +19,7 @@ const Home = () => {
   const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [initialLoad, setInitialLoad] = useState(true);
 const token = Cookies.get("token")
   // Fetch highlighted dates
   const { data: highlightedDates = [] } = useQuery({
@@ -41,7 +42,21 @@ const token = Cookies.get("token")
       }
     },
   });
-
+  useEffect(() => {
+    if (highlightedDates.length > 0 && initialLoad) {
+      // Find the most recent date with daybook entry
+      const sortedDates = highlightedDates
+        .map(date => new Date(date))
+        .sort((a, b) => b - a); // Sort in descending order (most recent first)
+      
+      if (sortedDates.length > 0) {
+        const latestDate = sortedDates[0];
+        setCurrentMonth(latestDate.getMonth());
+        setCurrentYear(latestDate.getFullYear());
+      }
+      setInitialLoad(false);
+    }
+  }, [highlightedDates, initialLoad]);
   const isDateHighlighted = (date) => {
     const formattedDate = moment(date).format("YYYY-MM-DD");
     return highlightedDates.includes(formattedDate);
@@ -75,14 +90,21 @@ const token = Cookies.get("token")
       setCurrentMonth(currentMonth + 1);
     }
   };
-
+  const hasEntriesInCurrentMonth = () => {
+    return highlightedDates.some(dateString => {
+      const date = new Date(dateString);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    });
+  };
   const renderCalendar = () => {
     const monthNames = ["January", "February", "March", "April", "May", "June", 
       "July", "August", "September", "October", "November", "December"];
     
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-    
+    // ------
+    const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+    // ----
     const days = [];
     
     // Empty cells for days before the first of the month
@@ -164,14 +186,27 @@ const token = Cookies.get("token")
         <CardContent>
           {renderCalendar()}
           <div className="mt-4 flex items-center justify-center gap-4">
-            <div className="flex items-center gap-1">
+            {hasEntriesInCurrentMonth() ?
+            (
+<>
+<div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
               <span className="text-xs">Day Book Exists</span>
             </div>
-            {/* <div className="flex items-center gap-1">
+</>
+
+            ):(
+
+              <>
+               <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-white border border-gray-300"></div>
               <span className="text-xs">No Entry</span>
-            </div> */}
+            </div>
+              </>
+            )
+          }
+           
+           
           </div>
         </CardContent>
       </Card>

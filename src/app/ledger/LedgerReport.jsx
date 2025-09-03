@@ -154,7 +154,12 @@ const LedgerReport = () => {
   const { data: ledgerData, isLoading } = useQuery({
     queryKey: ["ledgerReport", searchParams],
     queryFn: async () => {
-      if (!searchParams) return { payment: [], received: [] };
+      if (!searchParams) return {
+        payment: [],
+        received: [],
+        opening_balance: 0,
+        closing_balance: 0
+      };
 
       const token = Cookies.get("token");
       const response = await axios.post(
@@ -478,11 +483,14 @@ const LedgerReport = () => {
                   <div className="text-center font-semibold text-sm mb-2">
                     Ledger Report - {searchParams.account_name}
                   </div>
-                  <div className="text-center text-xs mb-3">
+                  <div className="text-center text-xs mb-1">
                     From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
                     to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                   </div>
-
+                
+                <div className="text-center  text-xs mb-2">
+                Opening Balance = ₹ {ledgerData?.opening_balance || 0}
+                  </div>
                   {/* Debit Section */}
                   <div className="mb-4">
                     <div className="text-xs font-medium bg-red-50 p-1 text-center border">
@@ -584,14 +592,15 @@ const LedgerReport = () => {
                   </div>
 
                   <div className="text-center text-xs font-medium mb-4">
-                    Balance (
+                    {/* Balance (
                     {calculateTotalReceived() - calculateTotalPayment() >= 0
                       ? " to be paid "
                       : " to be received "}
                     ) = ₹
                     {Math.abs(
                       calculateTotalReceived() - calculateTotalPayment()
-                    )}
+                    )} */}
+                    Closing Balance = ₹ {ledgerData?.closing_balance}
                   </div>
                 </>
               )}
@@ -610,7 +619,7 @@ const LedgerReport = () => {
           <p className="text-md text-gray-500 truncate">
             {searchParams.account_name || "All Accounts"}
           </p>
-        )}
+        )} 
       </div>
 
     
@@ -770,9 +779,12 @@ const LedgerReport = () => {
                     <div className="text-center mb-4 font-semibold">
                       Ledger Report - {searchParams.account_name}
                     </div>
-                    <div className="text-center text-sm mb-6">
+                    <div className="text-center text-sm mb-2">
                       From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
                       to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
+                    </div>
+                    <div className="text-center text-sm mb-6">
+                    Opening Balance = ₹ {ledgerData?.opening_balance || 0}
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4">
@@ -906,14 +918,21 @@ const LedgerReport = () => {
                     </div>
 
                     <div className="mt-6 text-center font-medium">
-                      Balance (
+                  Closing Balance = ₹ {ledgerData?.closing_balance}
+                  {/* (
                       {calculateTotalReceived() - calculateTotalPayment() >= 0
                         ? " to be paid "
                         : " to be received "}
-                      ) = ₹
-                      {Math.abs(
+                      )  */}
+                      
+                  
+                      
+                      {/* {Math.abs(
                         calculateTotalReceived() - calculateTotalPayment()
-                      )}
+                      )} */}
+
+
+
                     </div>
                   </div>
                 </CardContent>

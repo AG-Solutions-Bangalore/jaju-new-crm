@@ -47,11 +47,12 @@ const TrialBalanceReport = () => {
   const tableRef = useRef(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState(null);
+  const [hideZeroEntries,setHideZeroEntries]= useState(false)
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      from_date: getFirstDayOfMonth() ,
+      from_date: '2025-04-01',
       to_date:  getTodayDate(),
     },
   });
@@ -219,7 +220,14 @@ const TrialBalanceReport = () => {
       });
   };
 
-  const positiveValues = trialBalanceData?.payment?.filter(
+  const filteredPayments = trialBalanceData?.payment?.filter(item=>{
+    if(hideZeroEntries){
+      return parseFloat(item.balance) !== 0
+    }
+    return true
+  }) || []
+
+  const positiveValues = filteredPayments.filter(
     (item) => !item.balance.toString().startsWith("-")
   ) || [];
 
@@ -228,7 +236,7 @@ const TrialBalanceReport = () => {
     0
   );
 
-  const negativeValues = trialBalanceData?.payment?.filter((item) =>
+  const negativeValues = filteredPayments.filter((item) =>
     item.balance.toString().startsWith("-")
   ) || [];
 
@@ -251,6 +259,12 @@ const TrialBalanceReport = () => {
                                 Trial Balance Report
                               </h1>
                               <div className="flex gap-[2px]">
+                                <button
+                                  className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-1 rounded-b-md`}
+                                  onClick={() => setHideZeroEntries(!hideZeroEntries)}
+                                >
+                                   {hideZeroEntries ? "Show 0" : "Hide 0 "}
+                                </button>
                                 <button
                                   className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
                                   onClick={handleDownloadCsv}
@@ -278,7 +292,7 @@ const TrialBalanceReport = () => {
   <div className="grid grid-cols-2 gap-2 mb-2">
     <div className="space-y-1">
       <Label htmlFor="from_date_mobile" className="text-xs">
-        From Date
+        From Date 
       </Label>
       <Input
         id="from_date_mobile"
@@ -539,6 +553,17 @@ const TrialBalanceReport = () => {
                     <span className="text-blue-800 text-xs">
                       {} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                     </span> */}
+
+
+
+<Button
+                      variant="outline"
+                      size="sm"
+                      className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
+                      onClick={() => setHideZeroEntries(!hideZeroEntries)}
+                    >
+             {hideZeroEntries ? "Show 0 value enteries" : "Hide 0 value enteries"}
+                    </Button>
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button

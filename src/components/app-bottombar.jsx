@@ -17,32 +17,6 @@ export function AppBottombar() {
   const [activeDropdown, setActiveDropdown] = React.useState(null);
   
 
-  // const navItems = [
-  //   {
-  //     title: "Home",
-  //     url: "/home",
-  //     icon: Home,
-  //   },
-   
-  //   {
-  //     title: "Day Book",
-  //     url: "/day-book", 
-  //     icon: ShoppingBag,
-  //   },
-
-  //   {
-  //     title: "Ledger",
-  //     url: "/ledger",
-  //     icon: ShoppingBag,
-  //   },
-  //   {
-  //     title: "Trial Balance",
-  //     url: "/trial-balance",
-  //     icon: ShoppingBag,
-  //   },
-
-   
-  // ];
   const navItems = [
     {
       title: "Home",
@@ -51,61 +25,87 @@ export function AppBottombar() {
     },
    
     {
-      title: "Estimate",
-      url: "/estimate", 
-      icon: ShoppingBag,
-    },
-    {
-      title: "Purchase",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "Purchase Granite",
-          url: "/purchase-granite",
-        },
-        {
-          title: "Purchase Tiles",
-          url: "/purchase-tiles",
-        },
-      
-      ],
-    },
-    {
-      title: "Product",
-      url: "/product",
-      icon: ShoppingBag,
-    },
-    {
-      title: "Sales",
-      url: "/sales",
+      title: "Day Book",
+      url: "/day-book", 
       icon: ShoppingBag,
     },
 
     {
-      title: "Report",
-      url: "#",
-      icon: File,
-      items: [
-        {
-          title: "Day Book",
-          url: "/day-book",
-        },
-        {
-          title: "Ledger",
-          url: "/ledger",
-        },
-        {
-          title: "Trial Balance",
-          url: "/trial-balance",
-        },
-        {
-          title: "Stocks",
-          url: "/stocks",
-        },
-      ],
+      title: "Ledger",
+      url: "/ledger",
+      icon: ShoppingBag,
     },
+    {
+      title: "Trial Balance",
+      url: "/trial-balance",
+      icon: ShoppingBag,
+    },
+
+   
   ];
+  // const navItems = [
+  //   {
+  //     title: "Home",
+  //     url: "/home",
+  //     icon: Home,
+  //   },
+   
+  //   {
+  //     title: "Estimate",
+  //     url: "/estimate", 
+  //     icon: ShoppingBag,
+  //   },
+  //   {
+  //     title: "Purchase",
+  //     url: "#",
+  //     icon: Settings2,
+  //     items: [
+  //       {
+  //         title: "Purchase Granite",
+  //         url: "/purchase-granite",
+  //       },
+  //       {
+  //         title: "Purchase Tiles",
+  //         url: "/purchase-tiles",
+  //       },
+      
+  //     ],
+  //   },
+  //   {
+  //     title: "Product",
+  //     url: "/product",
+  //     icon: ShoppingBag,
+  //   },
+  //   {
+  //     title: "Sales",
+  //     url: "/sales",
+  //     icon: ShoppingBag,
+  //   },
+
+  //   {
+  //     title: "Report",
+  //     url: "#",
+  //     icon: File,
+  //     items: [
+  //       {
+  //         title: "Day Book",
+  //         url: "/day-book",
+  //       },
+  //       {
+  //         title: "Ledger",
+  //         url: "/ledger",
+  //       },
+  //       {
+  //         title: "Trial Balance",
+  //         url: "/trial-balance",
+  //       },
+  //       {
+  //         title: "Stocks",
+  //         url: "/stocks",
+  //       },
+  //     ],
+  //   },
+  // ];
 
   // show only first 5 items in bottom navigation
   const mobileNavItems = navItems.slice(0, 6);
