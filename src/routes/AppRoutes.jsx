@@ -35,6 +35,7 @@ import PurchaseTilesEdit from "@/app/purchaseTiles/PurchaseTilesEdit";
 import SalesAdd from "@/app/sales/SalesAdd";
 import SalesEdit from "@/app/sales/SalesEdit";
 import EstimateSalesAdd from "@/app/sales/EstimateSalesAdd";
+import ChangeLedger from "@/app/changeLedger/ChangeLedger";
 
 function AppRoutes() {
   return (
@@ -56,6 +57,7 @@ function AppRoutes() {
           <Route path="/estimate/view/:id" element={<EstimateView />} />
           <Route path="/day-book" element={<DayBookReport />} />
           <Route path="/ledger" element={<LedgerReport />} />
+          <Route path="/change-ledger-name" element={<ChangeLedger />} />
           <Route path="/trial-balance" element={<TrialBalanceReport />} />
           <Route path="/product" element={<ProductList />} />
           <Route path="/product/create" element={<ProductAdd />} />

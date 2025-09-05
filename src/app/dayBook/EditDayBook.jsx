@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import moment from "moment";
 
-import { Trash2, Plus, ChevronDown, Check, Minus } from "lucide-react";
+import { Trash2, Plus, ChevronDown, Check, Minus, ArrowRightLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Select from "react-select";
 
@@ -104,6 +104,8 @@ const EditDayBook = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("credit");
+  const [paymentInputMode, setPaymentInputMode] = useState({});
+const [receivedInputMode, setReceivedInputMode] = useState({});
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -267,7 +269,21 @@ const EditDayBook = () => {
     );
     form.setValue("received_total", newTotal.toString());
   };
+// -------------------
+const togglePaymentInputMode = (index) => {
+  setPaymentInputMode(prev => ({
+    ...prev,
+    [index]: !prev[index]
+  }));
+};
 
+const toggleReceivedInputMode = (index) => {
+  setReceivedInputMode(prev => ({
+    ...prev,
+    [index]: !prev[index]
+  }));
+};
+// ----------------------
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
@@ -554,7 +570,7 @@ const EditDayBook = () => {
                   <div className="grid grid-cols-12 gap-1 items-center">
                     <div className="col-span-11">
                       <div className="grid grid-cols-2 gap-1">
-                        <div className="col-span-1">
+                        {/* <div className="col-span-1">
                           <Select
                             options={accountNames.map((account) => ({
                               value: account.account_name,
@@ -600,7 +616,48 @@ const EditDayBook = () => {
                             classNamePrefix="react-select"
                             isClearable
                           />
-                        </div>
+                        </div> */}
+                        <div className="col-span-1">
+  <div className="flex ">
+    {receivedInputMode[index] ? (
+      <Input
+        value={entry.received_about}
+        onChange={(e) => handleReceivedChange(index, "received_about", e.target.value)}
+        className="border-green-200 focus-visible:ring-green-300 h-8 text-sm flex-1"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.received_about) ? 
+          { value: entry.received_about, label: entry.received_about } : null
+        }
+        onChange={(selected) => handleReceivedChange(index, "received_about", selected?.value || "")}
+        styles={{
+          ...selectStyles,
+          control: (base) => ({ ...base, minHeight: "32px", height: "32px" }),
+          valueContainer: (base) => ({ ...base, height: "32px", padding: "0 6px" }),
+          dropdownIndicator: (base) => ({ ...base, padding: "4px" }),
+        }}
+        placeholder="Account"
+        className="text-xs flex-1"
+        classNamePrefix="react-select"
+        isClearable
+      />
+    )}
+    <button
+     type="button"
+       title="Add New Account"
+      onClick={() => toggleReceivedInputMode(index)}
+      className=" hover:bg-green-100 text-blue-500"
+    >
+       <ArrowRightLeft className="h-3 w-5" />
+    </button>
+  </div>
+</div>
                         <div className="col-span-1">
                           <Input
                             type="number"
@@ -664,7 +721,7 @@ const EditDayBook = () => {
                   <div className="grid grid-cols-12 gap-1 items-center">
                     <div className="col-span-11">
                       <div className="grid grid-cols-2 gap-1">
-                        <div className="col-span-1">
+                        {/* <div className="col-span-1">
                           <Select
                             options={accountNames.map((account) => ({
                               value: account.account_name,
@@ -710,7 +767,48 @@ const EditDayBook = () => {
                             classNamePrefix="react-select"
                             isClearable
                           />
-                        </div>
+                        </div> */}
+                        <div className="col-span-1">
+  <div className="flex">
+    {paymentInputMode[index] ? (
+      <Input
+        value={entry.payment_about}
+        onChange={(e) => handlePaymentChange(index, "payment_about", e.target.value)}
+        className="border-red-200 focus-visible:ring-red-300 h-8 text-sm flex-1"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.payment_about) ? 
+          { value: entry.payment_about, label: entry.payment_about } : null
+        }
+        onChange={(selected) => handlePaymentChange(index, "payment_about", selected?.value || "")}
+        styles={{
+          ...selectStyles,
+          control: (base) => ({ ...base, minHeight: "32px", height: "32px" }),
+          valueContainer: (base) => ({ ...base, height: "32px", padding: "0 6px" }),
+          dropdownIndicator: (base) => ({ ...base, padding: "4px" }),
+        }}
+        placeholder="Account"
+        className="text-xs flex-1"
+        classNamePrefix="react-select"
+        isClearable
+      />
+    )}
+    <button
+     type="button"
+       title="Add New Account"
+      onClick={() => togglePaymentInputMode(index)}
+      className=" hover:bg-red-100 text-blue-500"
+    >
+  <ArrowRightLeft className="h-3 w-5" />
+    </button>
+  </div>
+</div>
                         <div className="col-span-1">
                           <Input
                             type="number"
@@ -897,7 +995,7 @@ const EditDayBook = () => {
                         key={index}
                         className="grid grid-cols-1 md:grid-cols-12 gap-1  items-end bg-white p-1 rounded-md border border-green-100"
                       >
-                        <div className="md:col-span-6 space-y-1">
+                        {/* <div className="md:col-span-6 space-y-1">
                           
                           <Select
                             id={`received_about_${index}`}
@@ -929,8 +1027,43 @@ const EditDayBook = () => {
                             placeholder="Select account..."
                             isClearable
                           />
-                        </div>
-
+                        </div> */}
+<div className="md:col-span-6">
+  <div className="flex ">
+    {receivedInputMode[index] ? (
+      <Input
+        value={entry.received_about}
+        onChange={(e) => handleReceivedChange(index, "received_about", e.target.value)}
+        className="border-green-200 focus-visible:ring-green-300 flex-1"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.received_about) ? 
+          { value: entry.received_about, label: entry.received_about } : null
+        }
+        onChange={(selected) => handleReceivedChange(index, "received_about", selected?.value || "")}
+        styles={selectStyles}
+        className="react-select-container text-sm flex-1"
+        classNamePrefix="react-select"
+        placeholder="Select account..."
+        isClearable
+      />
+    )}
+    <button
+       type="button"
+      title="Add New Account"
+      onClick={() => toggleReceivedInputMode(index)}
+      className="hover:bg-green-100 text-blue-500"
+    >
+      <ArrowRightLeft className="h-4 w-6" />
+    </button>
+  </div>
+</div>
                         <div className="md:col-span-5 space-y-1">
                          
                           <Input
@@ -995,7 +1128,7 @@ const EditDayBook = () => {
                         key={index}
                         className="grid grid-cols-1 md:grid-cols-12 gap-1  items-end bg-white p-1 rounded-md border border-red-100"
                       >
-                        <div className="md:col-span-6 space-y-1">
+                        {/* <div className="md:col-span-6 space-y-1">
                         
                           <Select
                             id={`payment_about_${index}`}
@@ -1027,8 +1160,43 @@ const EditDayBook = () => {
                             placeholder="Select account..."
                             isClearable
                           />
-                        </div>
-
+                        </div> */}
+<div className="md:col-span-6">
+  <div className="flex ">
+    {paymentInputMode[index] ? (
+      <Input
+        value={entry.payment_about}
+        onChange={(e) => handlePaymentChange(index, "payment_about", e.target.value)}
+        className="border-red-200 focus-visible:ring-red-300 flex-1"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.payment_about) ? 
+          { value: entry.payment_about, label: entry.payment_about } : null
+        }
+        onChange={(selected) => handlePaymentChange(index, "payment_about", selected?.value || "")}
+        styles={selectStyles}
+        className="react-select-container text-sm flex-1"
+        classNamePrefix="react-select"
+        placeholder="Select account..."
+        isClearable
+      />
+    )}
+    <button
+      type="button"
+      title="Add New Account"
+      onClick={() => togglePaymentInputMode(index)}
+      className="hover:bg-red-100 text-blue-500"
+    >
+       <ArrowRightLeft className="h-4 w-6" />
+    </button>
+  </div>
+</div>
                         <div className="md:col-span-5 space-y-1">
                          
                           <Input
