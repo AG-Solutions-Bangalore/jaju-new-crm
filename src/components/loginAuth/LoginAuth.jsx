@@ -183,7 +183,7 @@ export default function LoginAuth() {
             <CardTitle
               className={`text-2xl text-center${ButtonConfig.loginText}`}
             >
-              Login - JaJu-Dev
+    JaJu Flooring
             </CardTitle>
           </CardHeader>
           <CardContent>

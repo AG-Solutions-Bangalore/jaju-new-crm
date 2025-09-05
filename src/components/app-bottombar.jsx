@@ -15,7 +15,8 @@ import { motion, AnimatePresence } from "framer-motion";
 export function AppBottombar() {
   const location = useLocation();
   const [activeDropdown, setActiveDropdown] = React.useState(null);
-  
+ 
+    
 
   const navItems = [
     {
@@ -30,16 +31,29 @@ export function AppBottombar() {
       icon: ShoppingBag,
     },
 
-    {
+   
+     {
       title: "Ledger",
-      url: "/ledger",
+      url: "#",
       icon: ShoppingBag,
+      items: [
+        {
+          title: "Ledger Report",
+          url: "/ledger",
+        },
+        {
+          title: "Change Ledger Name",
+          url: "/change-ledger-name",
+        },
+      
+      ],
     },
     {
       title: "Trial Balance",
       url: "/trial-balance",
       icon: ShoppingBag,
     },
+    
 
    
   ];

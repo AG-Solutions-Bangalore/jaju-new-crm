@@ -88,6 +88,12 @@ export function AppSidebar({ ...props }) {
         icon: Package,
         isActive: false,
       },
+      {
+        title: "Change Ledger Name",
+        url: "/change-ledger-name",
+        icon: Package,
+        isActive: false,
+      },
     
      
     ],
