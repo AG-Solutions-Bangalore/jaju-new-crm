@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import moment from "moment";
 
-import { Trash2, Plus, ChevronDown, Check, Minus, ArrowRightLeft } from "lucide-react";
+import { Trash2, Plus, ChevronDown, Check, Minus, UserPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Select from "react-select";
 
@@ -20,6 +20,7 @@ import Page from "../dashboard/page";
 import BASE_URL from "@/config/BaseUrl";
 import Loader from "@/components/loader/Loader";
 import Cookies from "js-cookie";
+import useNumericInput from "@/hooks/useNumericInput";
 
 const formSchema = z.object({
   payment_date: z.string(),
@@ -102,6 +103,9 @@ const EditDayBook = () => {
   const selectedDate = location.state?.selectedDate;
   const navigate = useNavigate();
   const { toast } = useToast();
+    const paymentAmountRefs = useRef([]);
+    const keydown = useNumericInput()
+  const receivedAmountRefs = useRef([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("credit");
   const [paymentInputMode, setPaymentInputMode] = useState({});
@@ -232,7 +236,18 @@ const [receivedInputMode, setReceivedInputMode] = useState({});
       ...paymentEntries,
       { id: "", payment_about: "", payment_amount: "", payment_about_new: "" },
     ]);
+     setTimeout(() => {
+      if (paymentAmountRefs.current[paymentEntries.length]) {
+        paymentAmountRefs.current[paymentEntries.length].focus();
+      }
+    }, 0);
   };
+  // const addPaymentEntry = () => {
+  //   setPaymentEntries([
+  //     ...paymentEntries,
+  //     { id: "", payment_about: "", payment_amount: "", payment_about_new: "" },
+  //   ]);
+  // };
 
   const addReceivedEntry = () => {
     setReceivedEntries([
@@ -244,7 +259,23 @@ const [receivedInputMode, setReceivedInputMode] = useState({});
         received_about_new: "",
       },
     ]);
+     setTimeout(() => {
+      if (receivedAmountRefs.current[receivedEntries.length]) {
+        receivedAmountRefs.current[receivedEntries.length].focus();
+      }
+    }, 0);
   };
+  // const addReceivedEntry = () => {
+  //   setReceivedEntries([
+  //     ...receivedEntries,
+  //     {
+  //       id: "",
+  //       received_about: "",
+  //       received_amount: "",
+  //       received_about_new: "",
+  //     },
+  //   ]);
+  // };
 
   const removePaymentEntry = (index) => {
     const updatedEntries = [...paymentEntries];
@@ -618,6 +649,23 @@ const toggleReceivedInputMode = (index) => {
                           />
                         </div> */}
                         <div className="col-span-1">
+                          <Input
+                            type="text"
+                            onKeyDown={keydown}
+                            ref={(el) => (receivedAmountRefs.current[index] = el)}
+                            value={entry.received_amount}
+                            onChange={(e) =>
+                              handleReceivedChange(
+                                index,
+                                "received_amount",
+                                e.target.value
+                              )
+                            }
+                            className="border-green-200 focus-visible:ring-green-300 h-8 text-sm"
+                            placeholder="Amount"
+                          />
+                        </div>
+                        <div className="col-span-1">
   <div className="flex ">
     {receivedInputMode[index] ? (
       <Input
@@ -651,28 +699,15 @@ const toggleReceivedInputMode = (index) => {
     <button
      type="button"
        title="Add New Account"
+       tabIndex={-1}
       onClick={() => toggleReceivedInputMode(index)}
       className=" hover:bg-green-100 text-blue-500"
     >
-       <ArrowRightLeft className="h-3 w-5" />
+       <UserPlus className="h-3 w-5" />
     </button>
   </div>
 </div>
-                        <div className="col-span-1">
-                          <Input
-                            type="number"
-                            value={entry.received_amount}
-                            onChange={(e) =>
-                              handleReceivedChange(
-                                index,
-                                "received_amount",
-                                e.target.value
-                              )
-                            }
-                            className="border-green-200 focus-visible:ring-green-300 h-8 text-sm"
-                            placeholder="Amount"
-                          />
-                        </div>
+                        
                       </div>
                     </div>
                     <div className="col-span-1 flex justify-end">
@@ -680,6 +715,7 @@ const toggleReceivedInputMode = (index) => {
                         type="button"
                         variant="ghost"
                         size="icon"
+                        tabIndex={-1}
                         onClick={() => removeReceivedEntry(index)}
                         disabled={receivedEntries.length <= 1}
                         className="h-7 w-7 hover:bg-green-100 text-red-500"
@@ -769,6 +805,23 @@ const toggleReceivedInputMode = (index) => {
                           />
                         </div> */}
                         <div className="col-span-1">
+                          <Input
+                             ref={(el) => (paymentAmountRefs.current[index] = el)}
+                            type="text"
+                            onKeyDown={keydown}
+                            value={entry.payment_amount}
+                            onChange={(e) =>
+                              handlePaymentChange(
+                                index,
+                                "payment_amount",
+                                e.target.value
+                              )
+                            }
+                            className="border-red-200 focus-visible:ring-red-300 h-8 text-sm"
+                            placeholder="Amount"
+                          />
+                        </div>
+                        <div className="col-span-1">
   <div className="flex">
     {paymentInputMode[index] ? (
       <Input
@@ -802,28 +855,15 @@ const toggleReceivedInputMode = (index) => {
     <button
      type="button"
        title="Add New Account"
+       tabIndex={-1}
       onClick={() => togglePaymentInputMode(index)}
       className=" hover:bg-red-100 text-blue-500"
     >
-  <ArrowRightLeft className="h-3 w-5" />
+  <UserPlus className="h-3 w-5" />
     </button>
   </div>
 </div>
-                        <div className="col-span-1">
-                          <Input
-                            type="number"
-                            value={entry.payment_amount}
-                            onChange={(e) =>
-                              handlePaymentChange(
-                                index,
-                                "payment_amount",
-                                e.target.value
-                              )
-                            }
-                            className="border-red-200 focus-visible:ring-red-300 h-8 text-sm"
-                            placeholder="Amount"
-                          />
-                        </div>
+                        
                       </div>
                     </div>
                     <div className="col-span-1 flex justify-end">
@@ -831,6 +871,7 @@ const toggleReceivedInputMode = (index) => {
                         type="button"
                         variant="ghost"
                         size="icon"
+                        tabIndex={-1}
                         onClick={() => removePaymentEntry(index)}
                         disabled={paymentEntries.length <= 1}
                         className="h-7 w-7 hover:bg-red-100 text-red-500"
@@ -922,7 +963,7 @@ const toggleReceivedInputMode = (index) => {
 
             <CardContent>
               <form
-                onSubmit={form.handleSubmit(onSubmit)}
+               
                 className="space-y-2"
               >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 p-4 rounded-lg">
@@ -982,12 +1023,13 @@ const toggleReceivedInputMode = (index) => {
                     </div>
   {/* Table Header */}
   <div className="grid grid-cols-12 gap-4 mb-2 px-3">
+  <div className="col-span-5 text-sm font-medium text-green-800">
+                        Amount
+                      </div>
                       <div className="col-span-6 text-sm font-medium text-green-800">
                         Account
                       </div>
-                      <div className="col-span-5 text-sm font-medium text-green-800">
-                        Amount
-                      </div>
+                     
                       <div className="col-span-1"></div>
                     </div>
                     {receivedEntries.map((entry, index) => (
@@ -1028,6 +1070,24 @@ const toggleReceivedInputMode = (index) => {
                             isClearable
                           />
                         </div> */}
+                          <div className="md:col-span-5 space-y-1">
+                         
+                         <Input
+                           id={`received_amount_${index}`}
+                           type="text"
+                           onKeyDown={keydown}
+                           ref={(el) => (receivedAmountRefs.current[index] = el)}
+                           value={entry.received_amount}
+                           onChange={(e) =>
+                             handleReceivedChange(
+                               index,
+                               "received_amount",
+                               e.target.value
+                             )
+                           }
+                           className="border-green-200 focus-visible:ring-green-300"
+                         />
+                       </div>
 <div className="md:col-span-6">
   <div className="flex ">
     {receivedInputMode[index] ? (
@@ -1057,35 +1117,22 @@ const toggleReceivedInputMode = (index) => {
     <button
        type="button"
       title="Add New Account"
+      tabIndex={-1}
       onClick={() => toggleReceivedInputMode(index)}
       className="hover:bg-green-100 text-blue-500"
     >
-      <ArrowRightLeft className="h-4 w-6" />
+      <UserPlus className="h-4 w-6" />
     </button>
   </div>
 </div>
-                        <div className="md:col-span-5 space-y-1">
-                         
-                          <Input
-                            id={`received_amount_${index}`}
-                            type="number"
-                            value={entry.received_amount}
-                            onChange={(e) =>
-                              handleReceivedChange(
-                                index,
-                                "received_amount",
-                                e.target.value
-                              )
-                            }
-                            className="border-green-200 focus-visible:ring-green-300"
-                          />
-                        </div>
+                      
 
                         <div className="md:col-span-1 flex justify-end">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
+                            tabIndex={-1}
                             onClick={() => removeReceivedEntry(index)}
                             disabled={receivedEntries.length <= 1}
                             className="hover:bg-green-100"
@@ -1115,12 +1162,13 @@ const toggleReceivedInputMode = (index) => {
                     </div>
 {/* Table Header */}
 <div className="grid grid-cols-12 gap-4 mb-2 px-3">
+<div className="col-span-5 text-sm font-medium text-red-800">
+                        Amount
+                      </div>
                       <div className="col-span-6 text-sm font-medium text-red-800">
                         Account
                       </div>
-                      <div className="col-span-5 text-sm font-medium text-red-800">
-                        Amount
-                      </div>
+                      
                       <div className="col-span-1"></div>
                     </div>
                     {paymentEntries.map((entry, index) => (
@@ -1161,6 +1209,24 @@ const toggleReceivedInputMode = (index) => {
                             isClearable
                           />
                         </div> */}
+                        <div className="md:col-span-5 space-y-1">
+                         
+                         <Input
+                           id={`payment_amount_${index}`}
+                         ref={(el) => (paymentAmountRefs.current[index] = el)}
+                            type="text"
+                            onKeyDown={keydown}
+                           value={entry.payment_amount}
+                           onChange={(e) =>
+                             handlePaymentChange(
+                               index,
+                               "payment_amount",
+                               e.target.value
+                             )
+                           }
+                           className="border-red-200 focus-visible:ring-red-300"
+                         />
+                       </div>
 <div className="md:col-span-6">
   <div className="flex ">
     {paymentInputMode[index] ? (
@@ -1190,35 +1256,22 @@ const toggleReceivedInputMode = (index) => {
     <button
       type="button"
       title="Add New Account"
+      tabIndex={-1}
       onClick={() => togglePaymentInputMode(index)}
       className="hover:bg-red-100 text-blue-500"
     >
-       <ArrowRightLeft className="h-4 w-6" />
+       <UserPlus className="h-4 w-6" />
     </button>
   </div>
 </div>
-                        <div className="md:col-span-5 space-y-1">
-                         
-                          <Input
-                            id={`payment_amount_${index}`}
-                            type="number"
-                            value={entry.payment_amount}
-                            onChange={(e) =>
-                              handlePaymentChange(
-                                index,
-                                "payment_amount",
-                                e.target.value
-                              )
-                            }
-                            className="border-red-200 focus-visible:ring-red-300"
-                          />
-                        </div>
+                        
 
                         <div className="md:col-span-1 flex justify-end">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
+                            tabIndex={-1}
                             onClick={() => removePaymentEntry(index)}
                             disabled={paymentEntries.length <= 1}
                             className="hover:bg-red-100"
@@ -1284,7 +1337,8 @@ const toggleReceivedInputMode = (index) => {
                     </Button>
 
                     <Button
-                      type="submit"
+                     type="button"
+                     onClick={form.handleSubmit(onSubmit)}
                       disabled={isSubmitting}
                       className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                     >
