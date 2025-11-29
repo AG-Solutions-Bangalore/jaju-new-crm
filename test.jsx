@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import moment from "moment";
-import { Trash2, Plus, Minus, UserPlus, Info } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Select from "react-select";
 
@@ -19,8 +19,6 @@ import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
 import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/useNumericInput";
-import LoadDraft from "@/components/common/LoadDraft";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const formSchema = z.object({
   payment_date: z.string(),
@@ -100,20 +98,19 @@ const selectStyles = {
 
 const AddDayBook = () => {
   const paymentAmountRefs = useRef([]);
-  const receivedAmountRefs = useRef([]);
+
+const receivedAmountRefs = useRef([]);
+
 
   const location = useLocation();
   const selectedDate = location.state?.selectedDate;
   const navigate = useNavigate();
   const { toast } = useToast();
-  const keydown = useNumericInput();
+  const keydown = useNumericInput()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("credit");
   const [paymentInputMode, setPaymentInputMode] = useState({});
-  const [receivedInputMode, setReceivedInputMode] = useState({});
-  const [lastSaveTime, setLastSaveTime] = useState(null);
-  const [refreshDraftsTrigger, setRefreshDraftsTrigger] = useState(0);
-
+const [receivedInputMode, setReceivedInputMode] = useState({});
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -159,237 +156,99 @@ const AddDayBook = () => {
     { received_about: "", received_amount: "", received_about_new: "" },
   ]);
 
-  // Optimized calculations with useMemo
-  const paymentTotal = useMemo(() => {
-    return paymentEntries.reduce(
+  const handlePaymentChange = (index, field, value) => {
+    const updatedEntries = [...paymentEntries];
+    updatedEntries[index][field] = value;
+    setPaymentEntries(updatedEntries);
+
+    
+    const newTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseInt(entry.payment_amount || 0),
       0
     );
-  }, [paymentEntries]);
+    form.setValue("payment_total", newTotal.toString());
+  };
 
-  const receivedTotal = useMemo(() => {
-    return receivedEntries.reduce(
+  const handleReceivedChange = (index, field, value) => {
+    const updatedEntries = [...receivedEntries];
+    updatedEntries[index][field] = value;
+    setReceivedEntries(updatedEntries);
+
+    const newTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseInt(entry.received_amount || 0),
       0
     );
-  }, [receivedEntries]);
+    form.setValue("received_total", newTotal.toString());
+  };
 
-  // Update form values only when totals change
-  useEffect(() => {
-    form.setValue("payment_total", paymentTotal.toString());
-  }, [paymentTotal, form]);
-
-  useEffect(() => {
-    form.setValue("received_total", receivedTotal.toString());
-  }, [receivedTotal, form]);
-
-  // Optimized change handlers with useCallback
-  const handlePaymentChange = useCallback((index, field, value) => {
-    setPaymentEntries(prev => {
-      const updatedEntries = [...prev];
-      updatedEntries[index][field] = value;
-      return updatedEntries;
-    });
-  }, []);
-
-  const handleReceivedChange = useCallback((index, field, value) => {
-    setReceivedEntries(prev => {
-      const updatedEntries = [...prev];
-      updatedEntries[index][field] = value;
-      return updatedEntries;
-    });
-  }, []);
-
-  // Optimized entry management
-  const addPaymentEntry = useCallback(() => {
-    setPaymentEntries(prev => [
-      ...prev,
+  
+  const addPaymentEntry = () => {
+    setPaymentEntries([
+      ...paymentEntries,
       { payment_about: "", payment_amount: "", payment_about_new: "" },
     ]);
    
     setTimeout(() => {
-      const newIndex = paymentEntries.length;
-      if (paymentAmountRefs.current[newIndex]) {
-        paymentAmountRefs.current[newIndex].focus();
+      if (paymentAmountRefs.current[paymentEntries.length]) {
+        paymentAmountRefs.current[paymentEntries.length].focus();
       }
     }, 0);
-  }, [paymentEntries.length]);
-
-  const addReceivedEntry = useCallback(() => {
-    setReceivedEntries(prev => [
-      ...prev,
+  };
+  
+ 
+  const addReceivedEntry = () => {
+    setReceivedEntries([
+      ...receivedEntries,
       { received_about: "", received_amount: "", received_about_new: "" },
     ]);
     
     setTimeout(() => {
-      const newIndex = receivedEntries.length;
-      if (receivedAmountRefs.current[newIndex]) {
-        receivedAmountRefs.current[newIndex].focus();
+      if (receivedAmountRefs.current[receivedEntries.length]) {
+        receivedAmountRefs.current[receivedEntries.length].focus();
       }
     }, 0);
-  }, [receivedEntries.length]);
+  };
+  
+  const removePaymentEntry = (index) => {
+    const updatedEntries = [...paymentEntries];
+    updatedEntries.splice(index, 1);
+    setPaymentEntries(updatedEntries);
 
-  const removePaymentEntry = useCallback((index) => {
-    setPaymentEntries(prev => {
-      const updatedEntries = prev.filter((_, i) => i !== index);
-      // Clean up refs
-      paymentAmountRefs.current = paymentAmountRefs.current.filter((_, i) => i !== index);
-      return updatedEntries;
-    });
-  }, []);
-
-  const removeReceivedEntry = useCallback((index) => {
-    setReceivedEntries(prev => {
-      const updatedEntries = prev.filter((_, i) => i !== index);
-      // Clean up refs
-      receivedAmountRefs.current = receivedAmountRefs.current.filter((_, i) => i !== index);
-      return updatedEntries;
-    });
-  }, []);
-
-  // Optimized input mode toggles
-  const togglePaymentInputMode = useCallback((index) => {
-    setPaymentInputMode(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  }, []);
-
-  const toggleReceivedInputMode = useCallback((index) => {
-    setReceivedInputMode(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
-  }, []);
-
-const saveDraft = useCallback(() => {
-    // Check if there's any data to save
-    const hasData = paymentEntries.some(entry => 
-      entry.payment_about || entry.payment_amount
-    ) || receivedEntries.some(entry => 
-      entry.received_about || entry.received_amount
+    const newTotal = updatedEntries.reduce(
+      (sum, entry) => sum + parseInt(entry.payment_amount || 0),
+      0
     );
+    form.setValue("payment_total", newTotal.toString());
+  };
 
-    if (!hasData) {
-      toast({
-        title: "No Data",
-        description: "There is no data to save as draft",
-        variant: "destructive",
-      });
-      return;
-    }
+  const removeReceivedEntry = (index) => {
+    const updatedEntries = [...receivedEntries];
+    updatedEntries.splice(index, 1);
+    setReceivedEntries(updatedEntries);
 
-    const draftData = {
-      paymentEntries: paymentEntries || [],
-      receivedEntries: receivedEntries || [],
-      paymentTotal: paymentTotal || 0,
-      receivedTotal: receivedTotal || 0,
-      balance: (receivedTotal - paymentTotal) || 0,
-      formData: form.getValues() || {},
-      timestamp: moment(form.watch("payment_date")).format("DD MMMM YYYY")
-    };
+    const newTotal = updatedEntries.reduce(
+      (sum, entry) => sum + parseInt(entry.received_amount || 0),
+      0
+    );
+    form.setValue("received_total", newTotal.toString());
+  };
+// -----------------------------
+const togglePaymentInputMode = (index) => {
+  setPaymentInputMode(prev => ({
+    ...prev,
+    [index]: !prev[index]
+  }));
+};
 
-    try {
-      // Get existing drafts
-      const existingDrafts = JSON.parse(localStorage.getItem('daybook-drafts') || '[]');
-      
-      // Add new draft with proper structure
-      const newDraft = {
-        data: draftData,
-        timestamp: draftData.timestamp
-      };
-      
-      const updatedDrafts = [newDraft, ...existingDrafts];
-      
-      // Keep only last 10 drafts
-      const limitedDrafts = updatedDrafts.slice(0, 10);
-      
-      localStorage.setItem('daybook-drafts', JSON.stringify(limitedDrafts));
-      setLastSaveTime(new Date());
-      setRefreshDraftsTrigger(prev => prev + 1); // Add this line to trigger refresh
-      
-      toast({
-        title: "Draft Saved",
-        description: "Your work has been saved as draft",
-        duration: 2000,
-      });
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save draft",
-        variant: "destructive",
-      });
-    }
-  }, [paymentEntries, receivedEntries, paymentTotal, receivedTotal, form, toast]);
-
-  // Load draft handler
-  const handleLoadDraft = useCallback((draftData) => {
-    // Ensure we have safe data with fallbacks
-    const safeData = {
-      paymentEntries: draftData.paymentEntries || [],
-      receivedEntries: draftData.receivedEntries || [],
-      formData: draftData.formData || {}
-    };
-
-    if (safeData.paymentEntries && safeData.paymentEntries.length > 0) {
-      setPaymentEntries(safeData.paymentEntries);
-    }
-    if (safeData.receivedEntries && safeData.receivedEntries.length > 0) {
-      setReceivedEntries(safeData.receivedEntries);
-    }
-    if (safeData.formData) {
-      Object.keys(safeData.formData).forEach(key => {
-        if (safeData.formData[key] !== undefined) {
-          form.setValue(key, safeData.formData[key]);
-        }
-      });
-    }
-
-    toast({
-      title: "Draft Loaded",
-      description: "Your draft has been loaded successfully",
-      duration: 3000,
-    });
-  }, [form, toast]);
-
-  // Clean up corrupted data on component mount
-  useEffect(() => {
-    try {
-      const savedDrafts = localStorage.getItem('daybook-drafts');
-      if (savedDrafts) {
-        const parsedDrafts = JSON.parse(savedDrafts);
-        // Filter out any corrupted drafts
-        const validDrafts = parsedDrafts.filter(draft => 
-          draft && draft.data && draft.data.timestamp
-        );
-        if (validDrafts.length !== parsedDrafts.length) {
-          localStorage.setItem('daybook-drafts', JSON.stringify(validDrafts));
-        }
-      }
-    } catch (error) {
-      console.error('Error cleaning up drafts:', error);
-      localStorage.removeItem('daybook-drafts');
-    }
-  }, []);
-
-  // Keyboard shortcut for saving draft - ONLY Ctrl+S
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-        event.preventDefault(); // Prevent browser save dialog
-        saveDraft();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [saveDraft]);
-
-  // REMOVED: Auto-save when component unmounts
-
-  // Optimized validation
-  const validateEntries = useCallback(() => {
+const toggleReceivedInputMode = (index) => {
+  setReceivedInputMode(prev => ({
+    ...prev,
+    [index]: !prev[index]
+  }));
+};
+// -------------------
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
     const paymentErrors = paymentEntries.map((entry) => ({
       account: !entry.payment_about ? "Account is required" : "",
       amount: !entry.payment_amount
@@ -408,113 +267,103 @@ const saveDraft = useCallback(() => {
         : "",
     }));
 
-    return { paymentErrors, receivedErrors };
-  }, [paymentEntries, receivedEntries]);
+    const hasPaymentErrors = paymentErrors.some(
+      (err) => err.account || err.amount
+    );
+    const hasReceivedErrors = receivedErrors.some(
+      (err) => err.account || err.amount
+    );
 
-  const onSubmit = async (data) => {
-    if (isSubmitting) return; // Prevent double submission
-    
-    setIsSubmitting(true);
-
+    if (hasPaymentErrors || hasReceivedErrors) {
+      toast({
+        title: "Validation Errors",
+        description: (
+          <div className="w-full space-y-2 text-xs max-h-[60vh] overflow-y-auto">
+            {hasPaymentErrors && (
+              <div>
+                <div className="font-medium mb-1 text-white">Debit Errors</div>
+                <table className="w-full border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-red-50">
+                      <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-6">
+                        #
+                      </th>
+                      <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800">
+                        Account
+                      </th>
+                      <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-36">
+                        Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentErrors.map(
+                      (error, i) =>
+                        (error.account || error.amount) && (
+                          <tr key={i} className="bg-white even:bg-gray-50">
+                            <td className="px-1 py-0.5 text-center text-gray-500">
+                              {i + 1}
+                            </td>
+                            <td className="px-1 py-0.5 text-red-600 truncate max-w-0">
+                              {error.account}
+                            </td>
+                            <td className="px-1 py-0.5 text-red-600 font-mono text-right">
+                              {error.amount}
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {hasReceivedErrors && (
+              <div>
+                <div className="font-medium mb-1 text-white">Credit Errors</div>
+                <table className="w-full border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-red-50">
+                      <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-6">
+                        #
+                      </th>
+                      <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800">
+                        Account
+                      </th>
+                      <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-36 ">
+                        Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receivedErrors.map(
+                      (error, i) =>
+                        (error.account || error.amount) && (
+                          <tr key={i} className="bg-white even:bg-gray-50">
+                            <td className="px-1 py-0.5 text-center text-gray-500">
+                              {i + 1}
+                            </td>
+                            <td className="px-1 py-0.5 text-red-600 truncate max-w-0">
+                              {error.account}
+                            </td>
+                            <td className="px-1 py-0.5 text-red-600 font-mono text-right">
+                              {error.amount}
+                            </td>
+                          </tr>
+                        )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ),
+        variant: "destructive",
+        duration: 10000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
     try {
-      const { paymentErrors, receivedErrors } = validateEntries();
-
-      const hasPaymentErrors = paymentErrors.some(
-        (err) => err.account || err.amount
-      );
-      const hasReceivedErrors = receivedErrors.some(
-        (err) => err.account || err.amount
-      );
-
-      if (hasPaymentErrors || hasReceivedErrors) {
-        toast({
-          title: "Validation Errors",
-          description: (
-            <div className="w-full space-y-2 text-xs max-h-[60vh] overflow-y-auto">
-              {hasPaymentErrors && (
-                <div>
-                  <div className="font-medium mb-1 text-white">Debit Errors</div>
-                  <table className="w-full border-collapse table-fixed">
-                    <thead>
-                      <tr className="bg-red-50">
-                        <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-6">
-                          #
-                        </th>
-                        <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800">
-                          Account
-                        </th>
-                        <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-36">
-                          Amount
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paymentErrors.map(
-                        (error, i) =>
-                          (error.account || error.amount) && (
-                            <tr key={i} className="bg-white even:bg-gray-50">
-                              <td className="px-1 py-0.5 text-center text-gray-500">
-                                {i + 1}
-                              </td>
-                              <td className="px-1 py-0.5 text-red-600 truncate max-w-0">
-                                {error.account}
-                              </td>
-                              <td className="px-1 py-0.5 text-red-600 font-mono text-right">
-                                {error.amount}
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {hasReceivedErrors && (
-                <div>
-                  <div className="font-medium mb-1 text-white">Credit Errors</div>
-                  <table className="w-full border-collapse table-fixed">
-                    <thead>
-                      <tr className="bg-red-50">
-                        <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-6">
-                          #
-                        </th>
-                        <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800">
-                          Account
-                        </th>
-                        <th className="px-1 py-0.5 text-left text-xs font-medium text-red-800 w-36 ">
-                          Amount
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {receivedErrors.map(
-                        (error, i) =>
-                          (error.account || error.amount) && (
-                            <tr key={i} className="bg-white even:bg-gray-50">
-                              <td className="px-1 py-0.5 text-center text-gray-500">
-                                {i + 1}
-                              </td>
-                              <td className="px-1 py-0.5 text-red-600 truncate max-w-0">
-                                {error.account}
-                              </td>
-                              <td className="px-1 py-0.5 text-red-600 font-mono text-right">
-                                {error.amount}
-                              </td>
-                            </tr>
-                          )
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          ),
-          variant: "destructive",
-          duration: 10000,
-        });
-        return;
-      }
-
       const payload = {
         payment_date: data.payment_date,
         payment_year: currentYear,
@@ -561,11 +410,13 @@ const saveDraft = useCallback(() => {
     }
   };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     navigate("/home");
-  }, [navigate]);
+  };
 
-  const balance = receivedTotal - paymentTotal;
+  const balance =
+    parseInt(form.watch("received_total")) -
+    parseInt(form.watch("payment_total"));
 
   return (
     <Page>
@@ -578,31 +429,6 @@ const saveDraft = useCallback(() => {
                 Add Day Book -{" "}
                 {moment(form.watch("payment_date")).format("DD MMM YYYY")}
               </h1>
-              <div className="flex flex-col md:flex-row space-x-2 items-end md:items-center">
-              <LoadDraft onLoadDraft={handleLoadDraft} refreshTrigger={refreshDraftsTrigger} selectedDate={moment(form.watch("payment_date")).format("DD MMMM YYYY")} />
-               <div className="flex flex-row items-center gap-2">
-                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveDraft}
-                  className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800 text-xs h-8"
-                >
-                  Save Draft
-                </Button>
-                 <Popover>
-    <PopoverTrigger asChild>
-      <Info
-        className="w-4 h-4 text-blue-600 cursor-pointer hover:text-blue-800"
-      />
-    </PopoverTrigger>
-
-    <PopoverContent className="text-xs p-2 w-fit">
-      <p className="font-semibold">Save Draft</p>
-      <p className="text-gray-600">You can also press <b>Ctrl + S</b> to save.</p>
-    </PopoverContent>
-  </Popover>
-               </div>
-              </div>
             </div>
 
             {/* Summary Cards */}
@@ -610,21 +436,16 @@ const saveDraft = useCallback(() => {
               <div className="bg-green-50 border border-green-100 rounded-md p-2">
                 <p className="text-xs text-green-800 font-medium">Received</p>
                 <p className="text-sm font-bold">
-                  {receivedTotal || 0}
+                  {form.watch("received_total") || 0}
                 </p>
               </div>
               <div className="bg-red-50 border border-red-100 rounded-md p-2">
                 <p className="text-xs text-red-800 font-medium">Payment</p>
                 <p className="text-sm font-bold">
-                  {paymentTotal || 0}
+                  {form.watch("payment_total") || 0}
                 </p>
               </div>
             </div>
-            {lastSaveTime && (
-              <p className="text-xs text-gray-500 mt-1 text-center">
-                Last saved: {moment(lastSaveTime).format('hh:mm A')}
-              </p>
-            )}
           </div>
 
           {/* Tabs for Credit/Debit */}
@@ -666,6 +487,8 @@ const saveDraft = useCallback(() => {
           {/* Credit Tab Content */}
           {activeTab === "credit" && (
             <div className="mb-14">
+              
+
               {receivedEntries.map((entry, index) => (
                 <div
                   key={index}
@@ -674,7 +497,8 @@ const saveDraft = useCallback(() => {
                   <div className="grid grid-cols-12 gap-1 items-center">
                     <div className="col-span-11">
                       <div className="grid grid-cols-2 gap-1">
-                        <div className="col-span-1">
+                    
+                          <div className="col-span-1">
                           <Input
                             type="text"
                             onKeyDown={keydown}
@@ -693,47 +517,50 @@ const saveDraft = useCallback(() => {
                           />
                         </div>
                         <div className="col-span-1">
-                          <div className="flex ">
-                            {receivedInputMode[index] ? (
-                              <Input
-                                value={entry.received_about}
-                                onChange={(e) => handleReceivedChange(index, "received_about", e.target.value)}
-                                className="border-green-200 focus-visible:ring-green-300 h-8 text-sm"
-                                placeholder="Account name"
-                              />
-                            ) : (
-                              <Select
-                                options={accountNames.map((account) => ({
-                                  value: account.account_name,
-                                  label: account.account_name,
-                                }))}
-                                value={accountNames.find(account => account.account_name === entry.received_about) ? 
-                                  { value: entry.received_about, label: entry.received_about } : null
-                                }
-                                onChange={(selected) => handleReceivedChange(index, "received_about", selected?.value || "")}
-                                styles={{
-                                  ...selectStyles,
-                                  control: (base) => ({ ...base, minHeight: "32px", height: "32px" }),
-                                  valueContainer: (base) => ({ ...base, height: "32px", padding: "0 6px" }),
-                                  dropdownIndicator: (base) => ({ ...base, padding: "4px" }),
-                                }}
-                                placeholder="Account"
-                                className="text-xs flex-1"
-                                classNamePrefix="react-select"
-                                isClearable
-                              />
-                            )}
-                            <button
-                              type="button"
-                              title="Add New Account"
-                              tabIndex={-1}
-                              onClick={() => toggleReceivedInputMode(index)}
-                              className=" hover:bg-green-100 text-blue-500"
-                            >
-                              <UserPlus className="h-3 w-5" />
-                            </button>
-                          </div>
-                        </div>
+  <div className="flex ">
+    {receivedInputMode[index] ? (
+      <Input
+        value={entry.received_about}
+        onChange={(e) => handleReceivedChange(index, "received_about", e.target.value)}
+        className="border-green-200 focus-visible:ring-green-300 h-8 text-sm"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.received_about) ? 
+          { value: entry.received_about, label: entry.received_about } : null
+        }
+        onChange={(selected) => handleReceivedChange(index, "received_about", selected?.value || "")}
+        styles={{
+          ...selectStyles,
+          control: (base) => ({ ...base, minHeight: "32px", height: "32px" }),
+          valueContainer: (base) => ({ ...base, height: "32px", padding: "0 6px" }),
+          dropdownIndicator: (base) => ({ ...base, padding: "4px" }),
+        }}
+        placeholder="Account"
+        className="text-xs flex-1"
+        classNamePrefix="react-select"
+        isClearable
+      />
+    )}
+    <button
+      type="button"
+       title="Add New Account"
+       tabIndex={-1}
+      onClick={() => toggleReceivedInputMode(index)}
+      className=" hover:bg-green-100 text-blue-500"
+    >
+      <UserPlus className="h-3 w-5" />
+    </button>
+  </div>
+</div>
+                      
+
+
                       </div>
                     </div>
                     <div className="col-span-1 flex justify-end">
@@ -768,6 +595,8 @@ const saveDraft = useCallback(() => {
           {/* Debit Tab Content */}
           {activeTab === "debit" && (
             <div className="mb-14">
+            
+
               {paymentEntries.map((entry, index) => (
                 <div
                   key={index}
@@ -776,6 +605,7 @@ const saveDraft = useCallback(() => {
                   <div className="grid grid-cols-12 gap-1 items-center">
                     <div className="col-span-11">
                       <div className="grid grid-cols-2 gap-1">
+                       
                         <div className="col-span-1">
                           <Input
                             type="text"
@@ -794,47 +624,49 @@ const saveDraft = useCallback(() => {
                           />
                         </div>
                         <div className="col-span-1">
-                          <div className="flex ">
-                            {paymentInputMode[index] ? (
-                              <Input
-                                value={entry.payment_about}
-                                onChange={(e) => handlePaymentChange(index, "payment_about", e.target.value)}
-                                className="border-red-200 focus-visible:ring-red-300 h-8 text-sm"
-                                placeholder="Account name"
-                              />
-                            ) : (
-                              <Select
-                                options={accountNames.map((account) => ({
-                                  value: account.account_name,
-                                  label: account.account_name,
-                                }))}
-                                value={accountNames.find(account => account.account_name === entry.payment_about) ? 
-                                  { value: entry.payment_about, label: entry.payment_about } : null
-                                }
-                                onChange={(selected) => handlePaymentChange(index, "payment_about", selected?.value || "")}
-                                styles={{
-                                  ...selectStyles,
-                                  control: (base) => ({ ...base, minHeight: "32px", height: "32px" }),
-                                  valueContainer: (base) => ({ ...base, height: "32px", padding: "0 6px" }),
-                                  dropdownIndicator: (base) => ({ ...base, padding: "4px" }),
-                                }}
-                                placeholder="Account"
-                                className="text-xs flex-1"
-                                classNamePrefix="react-select"
-                                isClearable
-                              />
-                            )}
-                            <button
-                              type="button"
-                              title="Add New Account"
-                              tabIndex={-1}
-                              onClick={() => togglePaymentInputMode(index)}
-                              className=" hover:bg-green-100 text-blue-500"
-                            >
-                              <UserPlus className="h-3 w-5" />
-                            </button>
-                          </div>
-                        </div>
+  <div className="flex ">
+    {paymentInputMode[index] ? (
+      <Input
+        value={entry.payment_about}
+        onChange={(e) => handlePaymentChange(index, "payment_about", e.target.value)}
+        className="border-red-200 focus-visible:ring-red-300 h-8 text-sm"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.payment_about) ? 
+          { value: entry.payment_about, label: entry.payment_about } : null
+        }
+        onChange={(selected) => handlePaymentChange(index, "payment_about", selected?.value || "")}
+        styles={{
+          ...selectStyles,
+          control: (base) => ({ ...base, minHeight: "32px", height: "32px" }),
+          valueContainer: (base) => ({ ...base, height: "32px", padding: "0 6px" }),
+          dropdownIndicator: (base) => ({ ...base, padding: "4px" }),
+        }}
+        placeholder="Account"
+        className="text-xs flex-1"
+        classNamePrefix="react-select"
+        isClearable
+      />
+    )}
+    
+     <button
+      type="button"
+       title="Add New Account"
+       tabIndex={-1}
+     onClick={() => togglePaymentInputMode(index)}
+      className=" hover:bg-green-100 text-blue-500"
+    >
+      <UserPlus className="h-3 w-5" />
+    </button>
+  </div>
+</div>
+                        
                       </div>
                     </div>
                     <div className="col-span-1 flex justify-end">
@@ -879,10 +711,10 @@ const saveDraft = useCallback(() => {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <p className="text-green-800">
-                      Credit: {receivedTotal || 0}
+                      Credit: {form.watch("received_total") || 0}
                     </p>
                     <p className="text-red-800">
-                      Debit: {paymentTotal || 0}
+                      Debit: {form.watch("payment_total") || 0}
                     </p>
                   </div>
                   <div className="text-right">
@@ -926,46 +758,18 @@ const saveDraft = useCallback(() => {
         <div className="hidden sm:block">
           <Card className="shadow-sm">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Add Day Book</CardTitle>
-                  <p className="text-sm text-gray-500">
-                    {moment(form.watch("payment_date")).format("DD MMMM YYYY")}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                 <LoadDraft onLoadDraft={handleLoadDraft} refreshTrigger={refreshDraftsTrigger} selectedDate={moment(form.watch("payment_date")).format("DD MMMM YYYY")} />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={saveDraft}
-                    className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-800"
-                  >
-                    Save Draft
-                  </Button>
-                  <Popover>
-    <PopoverTrigger asChild>
-      <Info
-        className="w-4 h-4 text-blue-600 cursor-pointer hover:text-blue-800"
-      />
-    </PopoverTrigger>
-
-    <PopoverContent className="text-xs p-2 w-fit">
-      <p className="font-semibold">Save Draft</p>
-      <p className="text-gray-600">You can also press <b>Ctrl + S</b> to save.</p>
-    </PopoverContent>
-  </Popover>
-                </div>
-              </div>
-              {lastSaveTime && (
-                <p className="text-xs text-gray-500">
-                  Last saved: {moment(lastSaveTime).format('hh:mm A')}
-                </p>
-              )}
+              <CardTitle>Add Day Book</CardTitle>
+              <p className="text-sm text-gray-500">
+                {moment(form.watch("payment_date")).format("DD MMMM YYYY")}
+              </p>
             </CardHeader>
 
             <CardContent>
-              <form className="space-y-2">
+              <form
+              
+           
+                className="space-y-2"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 p-2 rounded-lg">
                   <div className="space-y-1">
                     <Label htmlFor="payment_date">Date</Label>
@@ -984,7 +788,7 @@ const saveDraft = useCallback(() => {
                       id="received_total"
                       type="text"
                       disabled
-                      value={receivedTotal}
+                      {...form.register("received_total")}
                       className="bg-green-50 border-green-200"
                     />
                   </div>
@@ -995,10 +799,12 @@ const saveDraft = useCallback(() => {
                       id="payment_total"
                       type="text"
                       disabled
-                      value={paymentTotal}
+                      {...form.register("payment_total")}
                       className="bg-red-50 border-red-200"
                     />
                   </div>
+
+                 
                 </div>
 
                 <div className="lg:flex lg:space-x-4 space-y-6 lg:space-y-0">
@@ -1010,12 +816,13 @@ const saveDraft = useCallback(() => {
 
                     {/* Table Header */}
                     <div className="grid grid-cols-12 gap-4 mb-2 px-3">
-                      <div className="col-span-5 text-sm font-medium text-green-800">
+                    <div className="col-span-5 text-sm font-medium text-green-800">
                         Amount
                       </div>
                       <div className="col-span-6 text-sm font-medium text-green-800">
                         Account
                       </div>
+                     
                       <div className="col-span-1"></div>
                     </div>
 
@@ -1024,7 +831,8 @@ const saveDraft = useCallback(() => {
                         key={index}
                         className="grid grid-cols-1 md:grid-cols-12 gap-1  items-end bg-white p-1 rounded-md border border-green-100"
                       >
-                        <div className="md:col-span-5">
+                      
+                          <div className="md:col-span-5">
                           <Input
                             id={`received_amount_${index}`}
                             type="text"
@@ -1041,43 +849,44 @@ const saveDraft = useCallback(() => {
                             className="border-green-200 focus-visible:ring-green-300"
                           />
                         </div>
-                        <div className="md:col-span-6">
-                          <div className="flex ">
-                            {receivedInputMode[index] ? (
-                              <Input
-                                value={entry.received_about}
-                                onChange={(e) => handleReceivedChange(index, "received_about", e.target.value)}
-                                className="border-green-200 focus-visible:ring-green-300 flex-1"
-                                placeholder="Account name"
-                              />
-                            ) : (
-                              <Select
-                                options={accountNames.map((account) => ({
-                                  value: account.account_name,
-                                  label: account.account_name,
-                                }))}
-                                value={accountNames.find(account => account.account_name === entry.received_about) ? 
-                                  { value: entry.received_about, label: entry.received_about } : null
-                                }
-                                onChange={(selected) => handleReceivedChange(index, "received_about", selected?.value || "")}
-                                styles={selectStyles}
-                                className="react-select-container text-sm flex-1"
-                                classNamePrefix="react-select"
-                                placeholder="Select account..."
-                                isClearable
-                              />
-                            )}
-                            <button
-                              type="button"
-                              title="Add New Account"
-                              tabIndex={-1}
-                              onClick={() => toggleReceivedInputMode(index)}
-                              className="hover:bg-green-100  text-blue-500"
-                            >
-                              <UserPlus className="h-4 w-6" />
-                            </button>
-                          </div>
-                        </div>
+<div className="md:col-span-6">
+  <div className="flex ">
+    {receivedInputMode[index] ? (
+      <Input
+        value={entry.received_about}
+        onChange={(e) => handleReceivedChange(index, "received_about", e.target.value)}
+        className="border-green-200 focus-visible:ring-green-300 flex-1"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.received_about) ? 
+          { value: entry.received_about, label: entry.received_about } : null
+        }
+        onChange={(selected) => handleReceivedChange(index, "received_about", selected?.value || "")}
+        styles={selectStyles}
+        className="react-select-container text-sm flex-1"
+        classNamePrefix="react-select"
+        placeholder="Select account..."
+        isClearable
+      />
+    )}
+    <button
+      type="button"
+      title="Add New Account"
+     tabIndex={-1}
+      onClick={() => toggleReceivedInputMode(index)}
+      className="hover:bg-green-100  text-blue-500"
+    >
+      <UserPlus className="h-4 w-6" />
+    </button>
+  </div>
+</div>
+                      
 
                         <div className="md:col-span-1 flex justify-end">
                           <Button
@@ -1115,12 +924,13 @@ const saveDraft = useCallback(() => {
 
                     {/* Table Header */}
                     <div className="grid grid-cols-12 gap-4 mb-2 px-3">
-                      <div className="col-span-5 text-sm font-medium text-red-800">
+                    <div className="col-span-5 text-sm font-medium text-red-800">
                         Amount
                       </div>
                       <div className="col-span-6 text-sm font-medium text-red-800">
                         Account
                       </div>
+                     
                       <div className="col-span-1"></div>
                     </div>
 
@@ -1129,7 +939,8 @@ const saveDraft = useCallback(() => {
                         key={index}
                         className="grid grid-cols-1 md:grid-cols-12 gap-1  items-end bg-white p-1 rounded-md border border-red-100"
                       >
-                        <div className="md:col-span-5">
+                      
+                          <div className="md:col-span-5">
                           <Input
                             id={`payment_amount_${index}`}
                             ref={(el) => (paymentAmountRefs.current[index] = el)}
@@ -1146,43 +957,44 @@ const saveDraft = useCallback(() => {
                             className="border-red-200 focus-visible:ring-red-300"
                           />
                         </div>
-                        <div className="md:col-span-6">
-                          <div className="flex ">
-                            {paymentInputMode[index] ? (
-                              <Input
-                                value={entry.payment_about}
-                                onChange={(e) => handlePaymentChange(index, "payment_about", e.target.value)}
-                                className="border-red-200 focus-visible:ring-red-300 flex-1"
-                                placeholder="Account name"
-                              />
-                            ) : (
-                              <Select
-                                options={accountNames.map((account) => ({
-                                  value: account.account_name,
-                                  label: account.account_name,
-                                }))}
-                                value={accountNames.find(account => account.account_name === entry.payment_about) ? 
-                                  { value: entry.payment_about, label: entry.payment_about } : null
-                                }
-                                onChange={(selected) => handlePaymentChange(index, "payment_about", selected?.value || "")}
-                                styles={selectStyles}
-                                className="react-select-container text-sm flex-1"
-                                classNamePrefix="react-select"
-                                placeholder="Select account..."
-                                isClearable
-                              />
-                            )}
-                            <button
-                              type="button"
-                              title="Add New Account"
-                              tabIndex={-1}
-                              onClick={() => togglePaymentInputMode(index)}
-                              className="hover:bg-red-100 text-blue-500"
-                            >
-                              <UserPlus className="h-4 w-6" />
-                            </button>
-                          </div>
-                        </div>
+<div className="md:col-span-6">
+  <div className="flex ">
+    {paymentInputMode[index] ? (
+      <Input
+        value={entry.payment_about}
+        onChange={(e) => handlePaymentChange(index, "payment_about", e.target.value)}
+        className="border-red-200 focus-visible:ring-red-300 flex-1"
+        placeholder="Account name"
+      />
+    ) : (
+      <Select
+        options={accountNames.map((account) => ({
+          value: account.account_name,
+          label: account.account_name,
+        }))}
+        value={accountNames.find(account => account.account_name === entry.payment_about) ? 
+          { value: entry.payment_about, label: entry.payment_about } : null
+        }
+        onChange={(selected) => handlePaymentChange(index, "payment_about", selected?.value || "")}
+        styles={selectStyles}
+        className="react-select-container text-sm flex-1"
+        classNamePrefix="react-select"
+        placeholder="Select account..."
+        isClearable
+      />
+    )}
+    <button
+      type="button"
+     title="Add New Account"
+     tabIndex={-1}
+      onClick={() => togglePaymentInputMode(index)}
+      className="hover:bg-red-100 text-blue-500"
+    >
+       <UserPlus className="h-4 w-6" />
+    </button>
+  </div>
+</div>
+                      
 
                         <div className="md:col-span-1 flex justify-end">
                           <Button
@@ -1225,10 +1037,10 @@ const saveDraft = useCallback(() => {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <p className="text-green-800">
-                            Credit: {receivedTotal || 0}
+                            Credit: {form.watch("received_total") || 0}
                           </p>
                           <p className="text-red-800">
-                            Debit: {paymentTotal || 0}
+                            Debit: {form.watch("payment_total") || 0}
                           </p>
                         </div>
                         <div className="text-right">
