@@ -30,6 +30,7 @@ export function NavUser({ user }) {
     ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
       Cookies.remove(cookie);
     });
+    localStorage.clear();
     navigate("/");
   };
 
