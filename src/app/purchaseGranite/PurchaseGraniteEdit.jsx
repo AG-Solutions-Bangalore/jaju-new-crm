@@ -240,8 +240,7 @@ const PurchaseGraniteEdit = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to update purchase",
+        description: error.response?.data?.message || "Failed to Update Aaya",
         variant: "destructive",
       });
     },
@@ -459,7 +458,7 @@ const PurchaseGraniteEdit = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to update purchase",
+        description: error.message || "Failed to Update Aaya",
         variant: "destructive",
       });
     } finally {
@@ -511,7 +510,7 @@ const PurchaseGraniteEdit = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Edit Purchase Granite</h1>
+                <h1 className="text-base font-bold">Edit Aaya</h1>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -781,7 +780,7 @@ const PurchaseGraniteEdit = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Edit Purchase Granite</CardTitle>
+                  <CardTitle>Edit Aaya</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -1040,7 +1039,7 @@ const PurchaseGraniteEdit = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Updating..." : "Update Purchase"}
+                    {isSubmitting ? "Updating..." : "Update Aaya"}
                   </Button>
                 </div>
               </form>

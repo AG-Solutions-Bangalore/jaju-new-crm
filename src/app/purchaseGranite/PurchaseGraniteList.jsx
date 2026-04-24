@@ -260,7 +260,7 @@ const PurchaseGraniteList = () => {
             <div className="flex flex-col gap-2">
               {/* Title + Add Button */}
               <div className="flex justify-between items-center px-2 py-2">
-                <h1 className="text-base font-bold text-gray-800">Purchase</h1>
+                <h1 className="text-base font-bold text-gray-800">Add Aaya</h1>
                 <Button
                   size="sm"
                   className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
@@ -394,7 +394,7 @@ const PurchaseGraniteList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Purchase List
+            Aaya List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -442,7 +442,7 @@ const PurchaseGraniteList = () => {
                   navigate("/purchase/create");
                 }}
               >
-                <SquarePlus className="h-4 w-4" /> Purchase
+                <SquarePlus className="h-4 w-4" /> Add Aaya
               </Button>{" "}
             </div>
           </div>
@@ -503,7 +503,7 @@ const PurchaseGraniteList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Purchase : &nbsp;
+              Total Aaya : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">

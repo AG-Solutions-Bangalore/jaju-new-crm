@@ -200,8 +200,7 @@ const PurchaseGraniteAdd = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to create purchase",
+        description: error.response?.data?.message || "Failed to create Aaya",
         variant: "destructive",
       });
     },
@@ -420,7 +419,7 @@ const PurchaseGraniteAdd = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create purchase",
+        description: error.message || "Failed to create Aaya",
         variant: "destructive",
       });
     } finally {
@@ -444,7 +443,7 @@ const PurchaseGraniteAdd = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Add Purchase Granite</h1>
+                <h1 className="text-base font-bold">Add Aaya</h1>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -730,7 +729,7 @@ const PurchaseGraniteAdd = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Purchase Granite</CardTitle>
+                  <CardTitle>Add Aaya</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -1002,7 +1001,7 @@ const PurchaseGraniteAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Purchase"}
+                    {isSubmitting ? "Saving..." : "Save Aaya"}
                   </Button>
                 </div>
               </form>
