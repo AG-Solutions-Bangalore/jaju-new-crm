@@ -86,7 +86,7 @@ const AddEstimate = () => {
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data.product_type_group || [];
     },
@@ -100,7 +100,7 @@ const AddEstimate = () => {
           `${BASE_URL}/api/web-fetch-estimate-latest/2023-24`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         setEstimateRef(response.data?.estimateRef || "");
       } catch (error) {
@@ -149,7 +149,7 @@ const AddEstimate = () => {
 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("estimate_tax") || 0) +
@@ -171,7 +171,7 @@ const AddEstimate = () => {
 
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("estimate_tax") || 0) +
@@ -216,7 +216,7 @@ const AddEstimate = () => {
 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("estimate_tax") || 0) +
@@ -233,7 +233,6 @@ const AddEstimate = () => {
     form.setValue("estimate_balance", newBalance.toString());
   };
 
-
   const createEstimateMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -242,7 +241,7 @@ const AddEstimate = () => {
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -256,8 +255,7 @@ const AddEstimate = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to create estimate",
+        description: error.response?.data?.message || "Failed to create Gaya",
         variant: "destructive",
       });
     },
@@ -275,23 +273,23 @@ const AddEstimate = () => {
       qnty: !entry.estimate_sub_qnty
         ? "required"
         : isNaN(entry.estimate_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
+          ? "Quantity must be a number"
+          : "",
       qntySqr: !entry.estimate_sub_qnty_sqr
         ? "required"
         : isNaN(entry.estimate_sub_qnty_sqr)
-        ? "Quantity (sqr) must be a number"
-        : "",
+          ? "Quantity (sqr) must be a number"
+          : "",
       rate: !entry.estimate_sub_rate
         ? "required"
         : isNaN(entry.estimate_sub_rate)
-        ? "Rate must be a number"
-        : "",
+          ? "Rate must be a number"
+          : "",
     }));
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate
+      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate,
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -437,7 +435,7 @@ const AddEstimate = () => {
                                 {error.rate}
                               </td>
                             </tr>
-                          )
+                          ),
                       )}
                     </tbody>
                   </table>
@@ -471,7 +469,7 @@ const AddEstimate = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create estimate",
+        description: error.message || "Failed to create Gaya",
         variant: "destructive",
       });
     } finally {
@@ -495,7 +493,7 @@ const AddEstimate = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Add Estimate</h1>
+                <h1 className="text-base font-bold">Add Gaya</h1>
               </button>
               <div className="text-sm font-medium">
                 Ref: <span className="font-bold">{estimateRef}</span>
@@ -614,7 +612,7 @@ const AddEstimate = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_type",
-                                  value
+                                  value,
                                 )
                               }
                             >
@@ -643,7 +641,7 @@ const AddEstimate = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_item",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="h-8 text-sm"
@@ -661,7 +659,7 @@ const AddEstimate = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_qnty",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -678,7 +676,7 @@ const AddEstimate = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_qnty_sqr",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -695,7 +693,7 @@ const AddEstimate = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_rate",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -883,7 +881,7 @@ const AddEstimate = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Estimate</CardTitle>
+                  <CardTitle>Add Gaya</CardTitle>
                 </div>
                 <div className="text-sm font-medium">
                   Estimate Ref: <span className="font-bold">{estimateRef}</span>
@@ -917,7 +915,6 @@ const AddEstimate = () => {
                       {...form.register("estimate_customer")}
                       className="bg-white"
                       placeholder="Enter customer name"
-                 
                       maxLength={50}
                     />
                   </div>
@@ -1021,7 +1018,7 @@ const AddEstimate = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_type",
-                                    value
+                                    value,
                                   )
                                 }
                               >
@@ -1050,7 +1047,7 @@ const AddEstimate = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_item",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="h-9"
@@ -1066,7 +1063,7 @@ const AddEstimate = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_qnty",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -1083,7 +1080,7 @@ const AddEstimate = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_qnty_sqr",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -1100,7 +1097,7 @@ const AddEstimate = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_rate",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -1117,7 +1114,6 @@ const AddEstimate = () => {
                                 className="h-9 bg-gray-100"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
-                             
                               />
                             </td>
                             <td className="p-2">
@@ -1196,7 +1192,7 @@ const AddEstimate = () => {
                           onChange={(e) =>
                             handleChargeChange(
                               "estimate_loading",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           onKeyDown={handleKeyDown}
@@ -1252,7 +1248,6 @@ const AddEstimate = () => {
                           className="bg-gray-100"
                           onKeyDown={handleKeyDown}
                           placeholder="0"
-                    
                         />
                       </div>
                       <div className="space-y-2">
@@ -1277,7 +1272,6 @@ const AddEstimate = () => {
                           onKeyDown={handleKeyDown}
                           className="bg-gray-100"
                           placeholder="0"
-                      
                         />
                       </div>
                     </div>
@@ -1299,7 +1293,7 @@ const AddEstimate = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Estimate"}
+                    {isSubmitting ? "Saving..." : "Save Gaya"}
                   </Button>
                 </div>
               </form>
