@@ -8,7 +8,6 @@ import moment from "moment";
 import { Trash2, Plus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-
 import {
   Select as SelectShadcn,
   SelectContent,
@@ -82,8 +81,6 @@ const PurchaseGraniteAdd = () => {
     },
   ]);
 
- 
-
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
@@ -92,7 +89,7 @@ const PurchaseGraniteAdd = () => {
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data.product_type_group || [];
     },
@@ -107,21 +104,18 @@ const PurchaseGraniteAdd = () => {
         `${BASE_URL}/api/web-fetch-product-types/${form.watch("purchase_item_type")}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data.product_type || [];
     },
     enabled: !!form.watch("purchase_item_type"),
   });
 
-  
-
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
     updatedEntries[index][field] = value;
     setItemEntries(updatedEntries);
 
-   
     if (
       (field === "purchase_sub_qnty_sqr" || field === "purchase_sub_rate") &&
       updatedEntries[index].purchase_sub_qnty_sqr &&
@@ -134,10 +128,9 @@ const PurchaseGraniteAdd = () => {
       setItemEntries([...updatedEntries]);
     }
 
-   
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0
+      0,
     );
     const otherTotal = parseFloat(form.watch("purchase_other") || 0);
 
@@ -147,10 +140,10 @@ const PurchaseGraniteAdd = () => {
 
   const handleOtherChange = (value) => {
     form.setValue("purchase_other", value);
-    
+
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0
+      0,
     );
     const newTotal = itemsTotal + parseFloat(value || 0);
     form.setValue("purchase_amount", newTotal.toString());
@@ -176,17 +169,14 @@ const PurchaseGraniteAdd = () => {
     setItemEntries(updatedEntries);
     form.setValue("purchase_no_of_count", updatedEntries.length.toString());
 
-    
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0
+      0,
     );
     const otherTotal = parseFloat(form.watch("purchase_other") || 0);
     const newTotal = itemsTotal + otherTotal;
     form.setValue("purchase_amount", newTotal.toString());
   };
-
- 
 
   const createPurchaseMutation = useMutation({
     mutationFn: async (payload) => {
@@ -196,7 +186,7 @@ const PurchaseGraniteAdd = () => {
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -205,12 +195,13 @@ const PurchaseGraniteAdd = () => {
         title: "Success",
         description: data.msg,
       });
-      navigate("/purchase-granite");
+      navigate("/purchase");
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to create purchase",
+        description:
+          error.response?.data?.message || "Failed to create purchase",
         variant: "destructive",
       });
     },
@@ -231,23 +222,23 @@ const PurchaseGraniteAdd = () => {
       qnty: !entry.purchase_sub_qnty
         ? "required"
         : isNaN(entry.purchase_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
+          ? "Quantity must be a number"
+          : "",
       qntySqr: !entry.purchase_sub_qnty_sqr
         ? "required"
         : isNaN(entry.purchase_sub_qnty_sqr)
-        ? "Quantity (sqr) must be a number"
-        : "",
+          ? "Quantity (sqr) must be a number"
+          : "",
       rate: !entry.purchase_sub_rate
         ? "required"
         : isNaN(entry.purchase_sub_rate)
-        ? "Rate must be a number"
-        : "",
+          ? "Rate must be a number"
+          : "",
     }));
 
-    const hasFormErrors = Object.values(formErrors).some(err => err);
+    const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.item || err.qnty || err.qntySqr || err.rate
+      (err) => err.item || err.qnty || err.qntySqr || err.rate,
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -258,7 +249,8 @@ const PurchaseGraniteAdd = () => {
     setIsSubmitting(true);
 
     const formData = form.getValues();
-    const { formErrors, itemErrors, hasFormErrors, hasItemErrors } = validateForm(formData);
+    const { formErrors, itemErrors, hasFormErrors, hasItemErrors } =
+      validateForm(formData);
 
     if (hasFormErrors || hasItemErrors) {
       toast({
@@ -324,7 +316,7 @@ const PurchaseGraniteAdd = () => {
                       {formErrors.otherAmount && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                           Other Amount
+                            Other Amount
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.otherAmount}
@@ -334,7 +326,7 @@ const PurchaseGraniteAdd = () => {
                       {formErrors.totalAmount && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                           Total Amount
+                            Total Amount
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.totalAmount}
@@ -346,7 +338,7 @@ const PurchaseGraniteAdd = () => {
                 </div>
               </div>
             )}
-            
+
             {hasItemErrors && (
               <div className="w-full">
                 <div className="font-medium mb-2 text-white">Item Errors</div>
@@ -395,7 +387,7 @@ const PurchaseGraniteAdd = () => {
                                 {error.rate}
                               </td>
                             </tr>
-                          )
+                          ),
                       )}
                     </tbody>
                   </table>
@@ -423,7 +415,7 @@ const PurchaseGraniteAdd = () => {
         purchase_no_of_count: itemEntries.length,
         purchase_sub_data: itemEntries,
       };
-      
+
       createPurchaseMutation.mutate(payload);
     } catch (error) {
       toast({
@@ -437,7 +429,7 @@ const PurchaseGraniteAdd = () => {
   };
 
   const handleCancel = () => {
-    navigate("/purchase-granite");
+    navigate("/purchase");
   };
 
   return (
@@ -487,7 +479,9 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="purchase_supplier">Supplier <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_supplier">
+                      Supplier <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="purchase_supplier"
                       {...form.register("purchase_supplier")}
@@ -497,7 +491,9 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="purchase_bill_no">Bill No <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_bill_no">
+                      Bill No <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="purchase_bill_no"
                       {...form.register("purchase_bill_no")}
@@ -507,7 +503,9 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="purchase_item_type">Item Type <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_item_type">
+                      Item Type <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <SelectShadcn
                       id="purchase_item_type"
                       value={form.watch("purchase_item_type")}
@@ -535,7 +533,10 @@ const PurchaseGraniteAdd = () => {
                     </SelectShadcn>
                   </div>
                   <div>
-                    <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_other">
+                      Other Amount{" "}
+                      <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="purchase_other"
                       type="tel"
@@ -580,7 +581,7 @@ const PurchaseGraniteAdd = () => {
                               handleItemChange(
                                 index,
                                 "purchase_sub_item",
-                                value
+                                value,
                               )
                             }
                           >
@@ -611,7 +612,7 @@ const PurchaseGraniteAdd = () => {
                                 handleItemChange(
                                   index,
                                   "purchase_sub_qnty",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -628,7 +629,7 @@ const PurchaseGraniteAdd = () => {
                                 handleItemChange(
                                   index,
                                   "purchase_sub_qnty_sqr",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -645,7 +646,7 @@ const PurchaseGraniteAdd = () => {
                                 handleItemChange(
                                   index,
                                   "purchase_sub_rate",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -748,7 +749,9 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_supplier">Supplier <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_supplier">
+                      Supplier <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="purchase_supplier"
                       {...form.register("purchase_supplier")}
@@ -758,7 +761,9 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_bill_no">Bill No <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_bill_no">
+                      Bill No <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="purchase_bill_no"
                       {...form.register("purchase_bill_no")}
@@ -768,7 +773,9 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_item_type">Item Type <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_item_type">
+                      Item Type <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <SelectShadcn
                       id="purchase_item_type"
                       value={form.watch("purchase_item_type")}
@@ -796,7 +803,10 @@ const PurchaseGraniteAdd = () => {
                     </SelectShadcn>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
+                    <Label htmlFor="purchase_other">
+                      Other Amount{" "}
+                      <span className="text-xs text-red-400 ">*</span>
+                    </Label>
                     <Input
                       id="purchase_other"
                       type="tel"
@@ -831,11 +841,25 @@ const PurchaseGraniteAdd = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm">Item <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Qnty (pcs) <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Qnty (sqr) <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Rate <span className="text-xs text-red-400 ">*</span></th>
-                          <th className="text-left p-2 font-medium text-sm">Amount</th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Item{" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Qnty (pcs){" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Qnty (sqr){" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Rate{" "}
+                            <span className="text-xs text-red-400 ">*</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm">
+                            Amount
+                          </th>
                           <th className="text-left p-2 font-medium text-sm"></th>
                         </tr>
                       </thead>
@@ -849,7 +873,7 @@ const PurchaseGraniteAdd = () => {
                                   handleItemChange(
                                     index,
                                     "purchase_sub_item",
-                                    value
+                                    value,
                                   )
                                 }
                               >
@@ -879,7 +903,7 @@ const PurchaseGraniteAdd = () => {
                                   handleItemChange(
                                     index,
                                     "purchase_sub_qnty",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -896,7 +920,7 @@ const PurchaseGraniteAdd = () => {
                                   handleItemChange(
                                     index,
                                     "purchase_sub_qnty_sqr",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -913,7 +937,7 @@ const PurchaseGraniteAdd = () => {
                                   handleItemChange(
                                     index,
                                     "purchase_sub_rate",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}

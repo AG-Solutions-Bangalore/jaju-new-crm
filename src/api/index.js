@@ -18,7 +18,7 @@ export const PRODUCT_LIST = `${BASE_URL}/api/web-fetch-product-type-list`;
 //DASHBOARD
 export const DASHBOARD_LIST = `${BASE_URL}/api/dashboard`;
 //purchase granite
-export const PURCHASE_GRANITE_LIST = `${BASE_URL}/api/web-fetch-purchase-list/Granites`;
+export const PURCHASE_GRANITE_LIST = `${BASE_URL}/api/web-fetch-purchase-list/tiles`;
 
 
 
