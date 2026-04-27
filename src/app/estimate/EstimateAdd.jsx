@@ -124,9 +124,11 @@ const AddEstimate = () => {
       estimate_loading: "",
       estimate_unloading: "",
       estimate_other: "",
+      estimate_other1: "",
       estimate_gross: "",
       estimate_advance: "",
       estimate_balance: "",
+      estimate_temp_amount: "",
     },
   });
 
@@ -156,7 +158,8 @@ const AddEstimate = () => {
       parseFloat(form.watch("estimate_tempo") || 0) +
       parseFloat(form.watch("estimate_loading") || 0) +
       parseFloat(form.watch("estimate_unloading") || 0) +
-      parseFloat(form.watch("estimate_other") || 0);
+      parseFloat(form.watch("estimate_other") || 0) +
+      parseFloat(form.watch("estimate_other1") || 0);
 
     const newGross = itemsTotal + chargesTotal;
     form.setValue("estimate_gross", newGross.toString());
@@ -178,7 +181,8 @@ const AddEstimate = () => {
       parseFloat(form.watch("estimate_tempo") || 0) +
       parseFloat(form.watch("estimate_loading") || 0) +
       parseFloat(form.watch("estimate_unloading") || 0) +
-      parseFloat(form.watch("estimate_other") || 0);
+      parseFloat(form.watch("estimate_other") || 0) +
+      parseFloat(form.watch("estimate_other1") || 0);
 
     const newGross = itemsTotal + chargesTotal;
     form.setValue("estimate_gross", newGross.toString());
@@ -223,7 +227,8 @@ const AddEstimate = () => {
       parseFloat(form.watch("estimate_tempo") || 0) +
       parseFloat(form.watch("estimate_loading") || 0) +
       parseFloat(form.watch("estimate_unloading") || 0) +
-      parseFloat(form.watch("estimate_other") || 0);
+      parseFloat(form.watch("estimate_other") || 0) +
+      parseFloat(form.watch("estimate_other1") || 0);
 
     const newGross = itemsTotal + chargesTotal;
     form.setValue("estimate_gross", newGross.toString());
@@ -788,13 +793,27 @@ const AddEstimate = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="estimate_other">Other Charges</Label>
+                    <Label htmlFor="estimate_other">Other Charges 1</Label>
                     <Input
                       id="estimate_other"
                       type="tel"
                       {...form.register("estimate_other")}
                       onChange={(e) =>
                         handleChargeChange("estimate_other", e.target.value)
+                      }
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
+                      maxLength={10}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="estimate_other1">Other Charges 2</Label>
+                    <Input
+                      id="estimate_other1"
+                      type="tel"
+                      {...form.register("estimate_other1")}
+                      onChange={(e) =>
+                        handleChargeChange("estimate_other1", e.target.value)
                       }
                       onKeyDown={handleKeyDown}
                       className="mt-1"
@@ -831,7 +850,7 @@ const AddEstimate = () => {
                       maxLength={10}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div>
                     <Label htmlFor="estimate_balance">Balance</Label>
                     <Input
                       id="estimate_balance"
@@ -840,6 +859,16 @@ const AddEstimate = () => {
                       disabled
                       onKeyDown={handleKeyDown}
                       className="mt-1 bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="estimate_temp_amount">Amount</Label>
+                    <Input
+                      id="estimate_temp_amount"
+                      type="tel"
+                      {...form.register("estimate_temp_amount")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -1150,12 +1179,15 @@ const AddEstimate = () => {
                 {/* Charges and Totals */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Charges */}
+                  <div className="border-none rounded-lg p-3 bg-white"></div>
+
+                  {/* Totals */}
                   <div className="border rounded-lg p-3 bg-white">
-                    <h3 className="font-medium mb-2">Charges</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="space-x-2 flex items-center justify-between gap-2">
                         <Label htmlFor="estimate_tax">Tax</Label>
                         <Input
+                          className="w-50"
                           id="estimate_tax"
                           type="tel"
                           {...form.register("estimate_tax")}
@@ -1167,9 +1199,10 @@ const AddEstimate = () => {
                           maxLength={10}
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-x-2 flex items-center justify-between gap-2">
                         <Label htmlFor="estimate_tempo">Tempo Charges</Label>
                         <Input
+                          className="w-50"
                           id="estimate_tempo"
                           type="tel"
                           {...form.register("estimate_tempo")}
@@ -1181,11 +1214,12 @@ const AddEstimate = () => {
                           maxLength={10}
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-x-2 flex items-center justify-between gap-2">
                         <Label htmlFor="estimate_loading">
                           Load/Unload Charges
                         </Label>
                         <Input
+                          className="w-50"
                           id="estimate_loading"
                           type="tel"
                           {...form.register("estimate_loading")}
@@ -1200,26 +1234,10 @@ const AddEstimate = () => {
                           maxLength={10}
                         />
                       </div>
-                      {/* <div className="space-y-2">
-                        <Label htmlFor="estimate_unloading">
-                          Unloading Charges
-                        </Label>
+                      <div className="space-x-2 flex items-center justify-between gap-2">
+                        <Label htmlFor="estimate_other">Other Charges 1</Label>
                         <Input
-                          id="estimate_unloading"
-                          type="tel"
-                          {...form.register("estimate_unloading")}
-                          onChange={(e) =>
-                            handleChargeChange(
-                              "estimate_unloading",
-                              e.target.value
-                            )
-                          }
-                        />
-                      
-                      </div> */}
-                      <div className="space-y-2">
-                        <Label htmlFor="estimate_other">Other Charges</Label>
-                        <Input
+                          className="w-50"
                           id="estimate_other"
                           type="tel"
                           {...form.register("estimate_other")}
@@ -1231,28 +1249,40 @@ const AddEstimate = () => {
                           maxLength={10}
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Totals */}
-                  <div className="border rounded-lg p-3 bg-white">
-                    <h3 className="font-medium mb-2">Totals</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div className="space-y-2">
+                      <div className="space-x-2 flex items-center justify-between gap-2">
+                        <Label htmlFor="estimate_other">Other Charges 2</Label>
+                        <Input
+                          className="w-50"
+                          id="estimate_other1"
+                          type="tel"
+                          {...form.register("estimate_other1")}
+                          onChange={(e) =>
+                            handleChargeChange(
+                              "estimate_other1",
+                              e.target.value,
+                            )
+                          }
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                          maxLength={10}
+                        />
+                      </div>
+                      <div className="space-x-2 flex items-center justify-between gap-2">
                         <Label htmlFor="estimate_gross">Gross Total</Label>
                         <Input
+                          className="w-50 bg-gray-100"
                           id="estimate_gross"
                           type="tel"
                           {...form.register("estimate_gross")}
                           disabled
-                          className="bg-gray-100"
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-x-2 flex items-center justify-between gap-2">
                         <Label htmlFor="estimate_advance">Advance</Label>
                         <Input
+                          className="w-50"
                           id="estimate_advance"
                           type="tel"
                           {...form.register("estimate_advance")}
@@ -1262,15 +1292,26 @@ const AddEstimate = () => {
                           maxLength={10}
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-x-2 flex items-center justify-between gap-2">
                         <Label htmlFor="estimate_balance">Balance</Label>
                         <Input
+                          className="w-50 bg-gray-100"
                           id="estimate_balance"
                           type="tel"
                           {...form.register("estimate_balance")}
                           disabled
                           onKeyDown={handleKeyDown}
-                          className="bg-gray-100"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="space-x-2 flex items-center justify-between gap-2">
+                        <Label htmlFor="estimate_temp_amount">Amount</Label>
+                        <Input
+                          className="w-50"
+                          id="estimate_temp_amount"
+                          type="tel"
+                          {...form.register("estimate_temp_amount")}
+                          onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
