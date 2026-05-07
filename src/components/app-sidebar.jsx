@@ -153,18 +153,18 @@ export function AppSidebar({ ...props }) {
         icon: Mountain,
         isActive: false,
       },
-      {
-        title: "Gaya",
-        url: "/estimate",
-        icon: FileText,
-        isActive: false,
-      },
       // {
-      //   title: "Sales",
-      //   url: "/sales",
-      //   icon: ShoppingCart,
+      //   title: "Estimate",
+      //   url: "/estimate",
+      //   icon: FileText,
       //   isActive: false,
       // },
+      {
+        title: "Gaya",
+        url: "/sales",
+        icon: ShoppingCart,
+        isActive: false,
+      },
       {
         title: "Stock",
         url: "/stocks",

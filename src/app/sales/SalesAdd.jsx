@@ -45,13 +45,14 @@ const formSchema = z.object({
   sales_loading: z.string(),
   sales_unloading: z.string(),
   sales_other: z.string(),
+  sales_other1: z.string(),
   sales_gross: z.string(),
   sales_advance: z.string(),
   sales_balance: z.string(),
+  sales_temp_amount: z.string(),
 });
 
 const SalesAdd = () => {
-  
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,20 +76,18 @@ const SalesAdd = () => {
       sales_address: "",
       sales_mobile: "",
 
-
       sales_item_type: "",
-
 
       sales_tax: "",
       sales_tempo: "",
       sales_loading: "",
       sales_unloading: "",
       sales_other: "",
+      sales_other1: "",
       sales_gross: "",
       sales_advance: "",
       sales_balance: "",
-
-
+      sales_temp_amount: "",
     },
   });
   const [itemEntries, setItemEntries] = useState([
@@ -102,8 +101,11 @@ const SalesAdd = () => {
       sales_sub_item_original: "",
     },
   ]);
+  const [customItems, setCustomItems] = useState({});
 
- 
+  const handleCustomItemChange = (index, value) => {
+    setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
 
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
@@ -113,32 +115,30 @@ const SalesAdd = () => {
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data.product_type_group || [];
     },
   });
 
- 
-
-
-
   const { data: product = [], refetch: refetchProducts } = useQuery({
-    queryKey: ["product", form.watch("sales_item_type")],
+    queryKey: ["product"],
     queryFn: async () => {
-      if (!form.watch("sales_item_type")) return [];
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-types/${form.watch(
-          "sales_item_type"
-        )}`,
+        `${BASE_URL}/api/web-fetch-product-type-group-new`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
-      return response.data.product_type || [];
+      return (
+        response.data.data ||
+        response.data.product_type ||
+        response.data.product_type_group ||
+        response.data.product_type_group_new ||
+        []
+      );
     },
-    enabled: !!form.watch("sales_item_type"),
   });
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -159,20 +159,20 @@ const SalesAdd = () => {
 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
       parseFloat(form.watch("sales_tempo") || 0) +
       parseFloat(form.watch("sales_loading") || 0) +
       parseFloat(form.watch("sales_unloading") || 0) +
-      parseFloat(form.watch("sales_other") || 0);
+      parseFloat(form.watch("sales_other") || 0) +
+      parseFloat(form.watch("sales_other1") || 0);
 
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -181,20 +181,20 @@ const SalesAdd = () => {
 
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
       parseFloat(form.watch("sales_tempo") || 0) +
       parseFloat(form.watch("sales_loading") || 0) +
       parseFloat(form.watch("sales_unloading") || 0) +
-      parseFloat(form.watch("sales_other") || 0);
+      parseFloat(form.watch("sales_other") || 0) +
+      parseFloat(form.watch("sales_other1") || 0);
 
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -225,26 +225,34 @@ const SalesAdd = () => {
     updatedEntries.splice(index, 1);
     setItemEntries(updatedEntries);
 
+    setCustomItems((prev) => {
+      const newCustom = { ...prev };
+      for (let i = index; i < updatedEntries.length; i++) {
+        newCustom[i] = newCustom[i + 1];
+      }
+      delete newCustom[updatedEntries.length];
+      return newCustom;
+    });
+
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
       parseFloat(form.watch("sales_tempo") || 0) +
       parseFloat(form.watch("sales_loading") || 0) +
       parseFloat(form.watch("sales_unloading") || 0) +
-      parseFloat(form.watch("sales_other") || 0);
+      parseFloat(form.watch("sales_other") || 0) +
+      parseFloat(form.watch("sales_other1") || 0);
 
     const newGross = itemsTotal + chargesTotal;
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance =
-      newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
     form.setValue("sales_balance", newBalance.toString());
   };
 
- 
   const createSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -253,7 +261,7 @@ const SalesAdd = () => {
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -267,8 +275,7 @@ const SalesAdd = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to create sales",
+        description: error.response?.data?.message || "Failed to create sales",
         variant: "destructive",
       });
     },
@@ -277,33 +284,40 @@ const SalesAdd = () => {
     const formErrors = {
       date: !data.sales_date ? "Date is required" : "",
       customer: !data.sales_customer ? "Customer name is required" : "",
-      itemType: !data.sales_item_type ? "Item type is required" : "",
     };
 
     const itemErrors = itemEntries.map((entry, index) => ({
-      type: !entry.sales_sub_type ? "required" : "",
-      originalItem: !entry.sales_sub_item_original ? "required" : "",
-      item: !entry.sales_sub_item ? "required" : "",
+      item:
+        !entry.sales_sub_item ||
+        (entry.sales_sub_item === "NOT IN THE LIST" && !customItems[index])
+          ? "required"
+          : "",
       qnty: !entry.sales_sub_qnty
         ? "required"
         : isNaN(entry.sales_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
+          ? "Quantity must be a number"
+          : "",
       qntySqr: !entry.sales_sub_qnty_sqr
         ? "required"
         : isNaN(entry.sales_sub_qnty_sqr)
-        ? "Quantity (sqr) must be a number"
-        : "",
+          ? "Quantity (sqr) must be a number"
+          : "",
       rate: !entry.sales_sub_rate
         ? "required"
         : isNaN(entry.sales_sub_rate)
-        ? "Rate must be a number"
-        : "",
+          ? "Rate must be a number"
+          : "",
     }));
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || err.originalItem
+      (err) =>
+        err.type ||
+        err.item ||
+        err.qnty ||
+        err.qntySqr ||
+        err.rate ||
+        err.originalItem,
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -410,9 +424,7 @@ const SalesAdd = () => {
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Item
                         </th>
-                        <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                        Original  Item
-                        </th>
+
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
                         </th>
@@ -456,7 +468,7 @@ const SalesAdd = () => {
                                 {error.rate}
                               </td>
                             </tr>
-                          )
+                          ),
                       )}
                     </tbody>
                   </table>
@@ -472,20 +484,27 @@ const SalesAdd = () => {
       return;
     }
 
-    
     await onSubmit(formData);
   };
 
   const onSubmit = async (data) => {
     try {
+      const formattedItemEntries = itemEntries.map((entry, index) => ({
+        ...entry,
+        sales_sub_pcs: entry.sales_sub_qnty,
+        sales_sub_item:
+          entry.sales_sub_item === "NOT IN THE LIST"
+            ? customItems[index]
+            : entry.sales_sub_item,
+      }));
+
       const payload = {
         ...data,
         sales_year: currentYear,
-        sales_no_of_count: itemEntries.length,
-        sales_sub_data: itemEntries,
+        sales_no_of_count: formattedItemEntries.length,
+        sales_sub_data: formattedItemEntries,
       };
 
-      
       createSalesMutation.mutate(payload);
     } catch (error) {
       toast({
@@ -516,7 +535,6 @@ const SalesAdd = () => {
                 <ArrowLeft className="h-5 w-5 mr-1" />
                 <h1 className="text-base font-bold">Add Sales</h1>
               </button>
-             
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-green-50 border border-green-100 rounded-md p-2">
@@ -580,7 +598,7 @@ const SalesAdd = () => {
                       maxLength={200}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="sales_item_type">Item Type</Label>
 
                     <SelectShadcn
@@ -608,7 +626,7 @@ const SalesAdd = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -625,15 +643,11 @@ const SalesAdd = () => {
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-11">
                         <div className="grid grid-cols-2 gap-1 mb-1">
-                          <div className="col-span-1">
+                          {/* <div className="col-span-1">
                             <SelectShadcn
                               value={entry.sales_sub_type}
                               onValueChange={(value) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_type",
-                                  value
-                                )
+                                handleItemChange(index, "sales_sub_type", value)
                               }
                             >
                               <SelectTrigger className="w-full">
@@ -653,87 +667,60 @@ const SalesAdd = () => {
                                 </SelectGroup>
                               </SelectContent>
                             </SelectShadcn>
-                          </div>
+                          </div> */}
                           <div className="col-span-1">
-                            <Input
-                              value={entry.sales_sub_item}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_item",
-                                  e.target.value
-                                )
-                              }
-                              maxLength={20}
-                              className="h-8 text-sm"
-                              placeholder="Item Name"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-1">
-                          <div>
                             <SelectShadcn
-                              value={entry.sales_sub_item_original}
+                              value={entry.sales_sub_item}
                               onValueChange={(value) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_item_original",
-                                  value
-                                )
+                                handleItemChange(index, "sales_sub_item", value)
                               }
                             >
                               <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select Original Item..." />
+                                <SelectValue placeholder="Select item..." />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
-                                  <SelectLabel>Original Items</SelectLabel>
+                                  <SelectLabel>Items</SelectLabel>
                                   {product.map((item) => (
                                     <SelectItem
-                                      key={item.product_type}
-                                      value={item.product_type}
+                                      key={
+                                        item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type
+                                      }
+                                      value={
+                                        item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type
+                                      }
                                     >
-                                      {item.product_type}
+                                      {item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type}
                                     </SelectItem>
                                   ))}
+                                  <SelectItem value="NOT IN THE LIST">
+                                    NOT IN THE LIST
+                                  </SelectItem>
                                 </SelectGroup>
                               </SelectContent>
                             </SelectShadcn>
-                          </div>
-                          <div>
-                            <Input
-                              type="tel"
-                              value={entry.sales_sub_qnty}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_qnty",
-                                  e.target.value
-                                )
-                              }
-                              maxLength={10}
-                              onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
-                              placeholder="Qnty (pcs)"
-                            />
-                          </div>
-                          <div>
-                            <Input
-                              type="tel"
-                              value={entry.sales_sub_qnty_sqr}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_qnty_sqr",
-                                  e.target.value
-                                )
-                              }
-                              maxLength={10}
-                              onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
-                              placeholder="Qnty (sqr)"
-                            />
+                            {entry.sales_sub_item === "NOT IN THE LIST" && (
+                              <div className="mt-1">
+                                <Input
+                                  type="text"
+                                  value={customItems[index] || ""}
+                                  onChange={(e) =>
+                                    handleCustomItemChange(
+                                      index,
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="h-8 text-sm"
+                                  placeholder="Enter custom item name"
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 mt-1 gap-1">
@@ -745,7 +732,7 @@ const SalesAdd = () => {
                                 handleItemChange(
                                   index,
                                   "sales_sub_rate",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               maxLength={10}
@@ -840,13 +827,27 @@ const SalesAdd = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="sales_other">Other Charges</Label>
+                    <Label htmlFor="sales_other">Other Charges 1</Label>
                     <Input
                       id="sales_other"
                       type="tel"
                       {...form.register("sales_other")}
                       onChange={(e) =>
                         handleChargeChange("sales_other", e.target.value)
+                      }
+                      maxLength={10}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sales_other">Other Charges 2</Label>
+                    <Input
+                      id="sales_other1"
+                      type="tel"
+                      {...form.register("sales_other1")}
+                      onChange={(e) =>
+                        handleChargeChange("sales_other1", e.target.value)
                       }
                       maxLength={10}
                       onKeyDown={handleKeyDown}
@@ -883,7 +884,7 @@ const SalesAdd = () => {
                       className="mt-1"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1">
                     <Label htmlFor="sales_balance">Balance</Label>
                     <Input
                       id="sales_balance"
@@ -892,6 +893,16 @@ const SalesAdd = () => {
                       disabled
                       onKeyDown={handleKeyDown}
                       className="mt-1 bg-gray-100"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sales_temp_amount">Amount</Label>
+                    <Input
+                      id="sales_temp_amount"
+                      type="tel"
+                      {...form.register("sales_temp_amount")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
                     />
                   </div>
                 </div>
@@ -933,16 +944,15 @@ const SalesAdd = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Sales</CardTitle>
+                  <CardTitle>Add Gaya</CardTitle>
                 </div>
-               
               </div>
             </CardHeader>
 
             <CardContent>
               <form onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
                     <Label htmlFor="sales_date">
                       Date <span className="text-xs text-red-400 ">*</span>
@@ -980,7 +990,7 @@ const SalesAdd = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="sales_item_type">
                       Item Type <span className="text-xs text-red-400 ">*</span>
                     </Label>
@@ -1010,8 +1020,8 @@ const SalesAdd = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  </div>
-                  <div className="space-y-2 col-span-2 lg:col-span-4">
+                  </div> */}
+                  <div className="space-y-2 col-span-2 lg:col-span-3">
                     <Label htmlFor="sales_address">Address</Label>
                     <Input
                       id="sales_address"
@@ -1033,18 +1043,15 @@ const SalesAdd = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm">
+                          {/* <th className="text-left p-2 font-medium text-sm">
                             Type{" "}
                             <span className="text-xs text-red-400 ">*</span>
-                          </th>
+                          </th> */}
                           <th className="text-left p-2 font-medium text-sm">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
-                            Original Item{" "}
-                            <span className="text-xs text-red-400 ">*</span>
-                          </th>
+
                           <th className="text-left p-2 font-medium text-sm">
                             Qnty (pcs){" "}
                             <span className="text-xs text-red-400 ">*</span>
@@ -1066,14 +1073,14 @@ const SalesAdd = () => {
                       <tbody>
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
-                            <td className="p-2">
+                            {/* <td className="p-2">
                               <SelectShadcn
                                 value={entry.sales_sub_type}
                                 onValueChange={(value) =>
                                   handleItemChange(
                                     index,
                                     "sales_sub_type",
-                                    value
+                                    value,
                                   )
                                 }
                               >
@@ -1094,51 +1101,62 @@ const SalesAdd = () => {
                                   </SelectGroup>
                                 </SelectContent>
                               </SelectShadcn>
-                            </td>
-                            <td className="p-2">
-                              <Input
-                                value={entry.sales_sub_item}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_item",
-                                    e.target.value
-                                  )
-                                }
-                                maxLength={20}
-                                className="h-9"
-                                placeholder="Item Name"
-                              />
-                            </td>
-
+                            </td> */}
                             <td className="p-2">
                               <SelectShadcn
-                                value={entry.sales_sub_item_original}
+                                value={entry.sales_sub_item}
                                 onValueChange={(value) =>
                                   handleItemChange(
                                     index,
-                                    "sales_sub_item_original",
-                                    value
+                                    "sales_sub_item",
+                                    value,
                                   )
                                 }
                               >
-                                <SelectTrigger className="w-[8rem]">
-                                  <SelectValue placeholder="Select Original Item" />
+                                <SelectTrigger className="w-[12rem]">
+                                  <SelectValue placeholder="Select item" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectGroup>
-                                    <SelectLabel>Original Items</SelectLabel>
+                                    <SelectLabel>Items</SelectLabel>
                                     {product.map((item) => (
                                       <SelectItem
-                                        key={item.product_type}
-                                        value={item.product_type}
+                                        key={
+                                          item.item_name ||
+                                          item.product_type_group ||
+                                          item.product_type
+                                        }
+                                        value={
+                                          item.item_name ||
+                                          item.product_type_group ||
+                                          item.product_type
+                                        }
                                       >
-                                        {item.product_type}
+                                        {item.item_name ||
+                                          item.product_type_group ||
+                                          item.product_type}
                                       </SelectItem>
                                     ))}
+                                    <SelectItem value="NOT IN THE LIST">
+                                      NOT IN THE LIST
+                                    </SelectItem>
                                   </SelectGroup>
                                 </SelectContent>
                               </SelectShadcn>
+                              {entry.sales_sub_item === "NOT IN THE LIST" && (
+                                <Input
+                                  type="text"
+                                  className="mt-1 h-9"
+                                  placeholder="Enter custom item name"
+                                  value={customItems[index] || ""}
+                                  onChange={(e) =>
+                                    handleCustomItemChange(
+                                      index,
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              )}
                             </td>
 
                             <td className="p-2">
@@ -1149,7 +1167,7 @@ const SalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "sales_sub_qnty",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 maxLength={10}
@@ -1166,7 +1184,7 @@ const SalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "sales_sub_qnty_sqr",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 maxLength={10}
@@ -1183,7 +1201,7 @@ const SalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "sales_sub_rate",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 maxLength={10}
@@ -1235,15 +1253,17 @@ const SalesAdd = () => {
 
                 {/* Charges and Totals */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Charges */}
+                  <div></div>
+
+                  {/* Totals */}
                   <div className="border rounded-lg p-3 bg-white">
-                    <h3 className="font-medium mb-2">Charges</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tax">Tax</Label>
                         <Input
                           id="sales_tax"
                           type="tel"
+                          className="w-1/2"
                           {...form.register("sales_tax")}
                           onChange={(e) =>
                             handleChargeChange("sales_tax", e.target.value)
@@ -1253,9 +1273,10 @@ const SalesAdd = () => {
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
                         <Input
+                          className="w-1/2"
                           id="sales_tempo"
                           type="tel"
                           {...form.register("sales_tempo")}
@@ -1267,45 +1288,27 @@ const SalesAdd = () => {
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_loading">
                           Load/Unload Charges
                         </Label>
                         <Input
+                          className="w-1/2"
                           id="sales_loading"
                           type="tel"
                           {...form.register("sales_loading")}
                           onChange={(e) =>
-                            handleChargeChange(
-                              "sales_loading",
-                              e.target.value
-                            )
+                            handleChargeChange("sales_loading", e.target.value)
                           }
                           maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
-                      {/* <div className="space-y-2">
-                        <Label htmlFor="sales_unloading">
-                          Unloading Charges
-                        </Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_other">Other Charges 1</Label>
                         <Input
-                          id="sales_unloading"
-                          type="tel"
-                          {...form.register("sales_unloading")}
-                          onChange={(e) =>
-                            handleChargeChange(
-                              "sales_unloading",
-                              e.target.value
-                            )
-                          }
-                        />
-                      
-                      </div> */}
-                      <div className="space-y-2">
-                        <Label htmlFor="sales_other">Other Charges</Label>
-                        <Input
+                          className="w-1/2"
                           id="sales_other"
                           type="tel"
                           {...form.register("sales_other")}
@@ -1317,28 +1320,37 @@ const SalesAdd = () => {
                           placeholder="0"
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Totals */}
-                  <div className="border rounded-lg p-3 bg-white">
-                    <h3 className="font-medium mb-2">Totals</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="sales_gross">Gross Total</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_other1">Other Charges 2</Label>
                         <Input
-                          id="sales_gross"
+                          className="w-1/2"
+                          id="sales_other1"
                           type="tel"
-                          {...form.register("sales_gross")}
-                          disabled
-                          className="bg-gray-100"
+                          {...form.register("sales_other1")}
+                          onChange={(e) =>
+                            handleChargeChange("sales_other1", e.target.value)
+                          }
+                          maxLength={10}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_gross">Gross Total</Label>
+                        <Input
+                          className="w-1/2 bg-gray-100"
+                          id="sales_gross"
+                          type="tel"
+                          {...form.register("sales_gross")}
+                          disabled
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_advance">Advance</Label>
                         <Input
+                          className="w-1/2"
                           id="sales_advance"
                           type="tel"
                           {...form.register("sales_advance")}
@@ -1348,15 +1360,26 @@ const SalesAdd = () => {
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_balance">Balance</Label>
                         <Input
+                          className="w-1/2 bg-gray-100"
                           id="sales_balance"
                           type="tel"
                           {...form.register("sales_balance")}
                           disabled
                           onKeyDown={handleKeyDown}
-                          className="bg-gray-100"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_temp_amount">Amount</Label>
+                        <Input
+                          className="w-1/2"
+                          id="sales_temp_amount"
+                          type="tel"
+                          {...form.register("sales_temp_amount")}
+                          onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
@@ -1379,7 +1402,7 @@ const SalesAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Sales"}
+                    {isSubmitting ? "Saving..." : "Save Gaya"}
                   </Button>
                 </div>
               </form>

@@ -41,9 +41,11 @@ const formSchema = z.object({
   sales_loading: z.string(),
   sales_unloading: z.string(),
   sales_other: z.string(),
+  sales_other1: z.string(),
   sales_gross: z.string(),
   sales_advance: z.string(),
   sales_balance: z.string(),
+  sales_temp_amount: z.string(),
 });
 
 const SalesEdit = () => {
@@ -80,9 +82,11 @@ const SalesEdit = () => {
       sales_loading: "",
       sales_unloading: "",
       sales_other: "",
+      sales_other1: "",
       sales_gross: "",
       sales_advance: "",
       sales_balance: "",
+      sales_temp_amount: "",
     },
   });
   const [itemEntries, setItemEntries] = useState([
@@ -97,6 +101,11 @@ const SalesEdit = () => {
       sales_sub_item_original: "",
     },
   ]);
+  const [customItems, setCustomItems] = useState({});
+
+  const handleCustomItemChange = (index, value) => {
+    setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
 
   const {
     data: salesId,
@@ -111,7 +120,7 @@ const SalesEdit = () => {
         `${BASE_URL}/api/web-fetch-sales-by-id/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -120,70 +129,58 @@ const SalesEdit = () => {
     cacheTime: 0,
   });
 
-  const { data: productTypeGroup = [] } = useQuery({
-    queryKey: ["productTypeGroup"],
-    queryFn: async () => {
-      const token = Cookies.get("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-type-group`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      return response.data.product_type_group || [];
-    },
-  });
-
   const { data: product = [], refetch: refetchProducts } = useQuery({
-    queryKey: ["product", form.watch("sales_item_type")],
+    queryKey: ["product"],
     queryFn: async () => {
       setIsLoadingItems(true);
-
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-types/${form.watch(
-          "sales_item_type"
-        )}`,
+        `${BASE_URL}/api/web-fetch-product-type-group-new`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setIsLoadingItems(false);
-      return response.data.product_type || [];
+      return (
+        response.data.data ||
+        response.data.product_type ||
+        response.data.product_type_group ||
+        response.data.product_type_group_new ||
+        []
+      );
     },
-    enabled: !!form.watch("sales_item_type") && !!salesId?.sales,
-    staleTime: 60 * 1000 
   });
 
   useEffect(() => {
     if (salesId?.sales && salesId?.salesSub) {
       setIsInitialLoading(true);
-      
+
       const { sales, salesSub } = salesId;
-      
-      
+
       form.reset({
-       sales_date: moment(sales.sales_date).format("YYYY-MM-DD"),
-              sales_year: sales.sales_year || currentYear,
-              sales_item_type: sales.sales_item_type || "Granites",
-              sales_customer: sales.sales_customer || "",
-              sales_address: sales.sales_address || "",
-              sales_mobile: sales.sales_mobile || "",
-              sales_other: sales.sales_other?.toString() || "",
-              sales_tempo: sales.sales_tempo?.toString() || "",
-              sales_tax: sales.sales_tax?.toString() || "",
-              sales_gross: sales.sales_gross?.toString() || "",
-              sales_loading: sales.sales_loading || "",
-              sales_unloading: sales.sales_unloading || "",
-              sales_advance: sales.sales_advance || "",
-              sales_balance: sales.sales_balance || "",
-              sales_no_of_count: sales.sales_no_of_count?.toString() || "1",
+        sales_date: moment(sales.sales_date).format("YYYY-MM-DD"),
+        sales_year: sales.sales_year || currentYear,
+        sales_item_type: sales.sales_item_type || "Granites",
+        sales_customer: sales.sales_customer || "",
+        sales_address: sales.sales_address || "",
+        sales_mobile: sales.sales_mobile || "",
+        sales_other: sales.sales_other?.toString() || "",
+        sales_other1: sales.sales_other1?.toString() || "",
+        sales_tempo: sales.sales_tempo?.toString() || "",
+        sales_tax: sales.sales_tax?.toString() || "",
+        sales_gross: sales.sales_gross?.toString() || "",
+        sales_loading: sales.sales_loading || "",
+        sales_unloading: sales.sales_unloading || "",
+        sales_advance: sales.sales_advance || "",
+        sales_balance: sales.sales_balance || "",
+        sales_no_of_count: sales.sales_no_of_count?.toString() || "1",
+        sales_temp_amount: sales.sales_temp_amount?.toString() || "",
       });
-  
-    
+
       // setTimeout(() => {
-        if (salesSub?.length > 0) {
-          setItemEntries(salesSub.map((sub) => ({
+      if (salesSub?.length > 0) {
+        setItemEntries(
+          salesSub.map((sub) => ({
             id: sub.id || "",
             sales_sub_type: sub.sales_sub_type || "",
             sales_sub_item: sub.sales_sub_item || "",
@@ -192,9 +189,10 @@ const SalesEdit = () => {
             sales_sub_qnty_sqr: sub.sales_sub_qnty_sqr?.toString() || "",
             sales_sub_rate: sub.sales_sub_rate?.toString() || "",
             sales_sub_amount: sub.sales_sub_amount?.toString() || "",
-          })));
-        }
-        setIsInitialLoading(false);
+          })),
+        );
+      }
+      setIsInitialLoading(false);
       // }, 100);
     }
   }, [salesId, form, currentYear]);
@@ -218,7 +216,7 @@ const SalesEdit = () => {
 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
@@ -239,7 +237,7 @@ const SalesEdit = () => {
 
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
@@ -270,7 +268,7 @@ const SalesEdit = () => {
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -297,24 +295,26 @@ const SalesEdit = () => {
     };
 
     const itemErrors = itemEntries.map((entry, index) => ({
-      type: !entry.sales_sub_type ? "required" : "",
-      originalItem: !entry.sales_sub_item_original ? "required" : "",
-      item: !entry.sales_sub_item ? "required" : "",
+      item:
+        !entry.sales_sub_item ||
+        (entry.sales_sub_item === "NOT IN THE LIST" && !customItems[index])
+          ? "required"
+          : "",
       qnty: !entry.sales_sub_qnty
         ? "required"
         : isNaN(entry.sales_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
+          ? "Quantity must be a number"
+          : "",
       qntySqr: !entry.sales_sub_qnty_sqr
         ? "required"
         : isNaN(entry.sales_sub_qnty_sqr)
-        ? "Quantity (sqr) must be a number"
-        : "",
+          ? "Quantity (sqr) must be a number"
+          : "",
       rate: !entry.sales_sub_rate
         ? "required"
         : isNaN(entry.sales_sub_rate)
-        ? "Rate must be a number"
-        : "",
+          ? "Rate must be a number"
+          : "",
     }));
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
@@ -325,7 +325,7 @@ const SalesEdit = () => {
         err.qnty ||
         err.qntySqr ||
         err.rate ||
-        err.originalItem
+        err.originalItem,
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -433,7 +433,7 @@ const SalesEdit = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                        Original  Item
+                          Original Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
@@ -478,7 +478,7 @@ const SalesEdit = () => {
                                 {error.rate}
                               </td>
                             </tr>
-                          )
+                          ),
                       )}
                     </tbody>
                   </table>
@@ -499,11 +499,20 @@ const SalesEdit = () => {
 
   const onSubmit = async (data) => {
     try {
+      const formattedItemEntries = itemEntries.map((entry, index) => ({
+        ...entry,
+        sales_sub_pcs: entry.sales_sub_qnty,
+        sales_sub_item:
+          entry.sales_sub_item === "NOT IN THE LIST"
+            ? customItems[index]
+            : entry.sales_sub_item,
+      }));
+
       const payload = {
         ...data,
         sales_year: currentYear,
-        sales_no_of_count: itemEntries.length,
-        sales_sub_data: itemEntries,
+        sales_no_of_count: formattedItemEntries.length,
+        sales_sub_data: formattedItemEntries,
       };
 
       updateSalesMutation.mutate(payload);
@@ -522,7 +531,7 @@ const SalesEdit = () => {
     navigate("/sales");
   };
 
-  if (isFetching || productTypeGroup.length === 0 || isInitialLoading ) {
+  if (isFetching || isInitialLoading) {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">
@@ -627,7 +636,7 @@ const SalesEdit = () => {
                       maxLength={200}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="sales_item_type">Item Type</Label>
 
                     <SelectShadcn
@@ -655,7 +664,7 @@ const SalesEdit = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -671,41 +680,67 @@ const SalesEdit = () => {
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-12">
-                        <div className="grid grid-cols-2 gap-1 mb-1">
+                        <div className="grid grid-cols-1 gap-1 mb-1">
                           <div className="col-span-1">
-                            <Input
-                              value={entry.sales_sub_type}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_type",
-                                  e.target.value
-                                )
-                              }
-                              maxLength={20}
-                              className="h-8 text-sm"
-                              placeholder="Types"
-                            />
-                          </div>
-                          <div className="col-span-1">
-                            <Input
+                            <SelectShadcn
                               value={entry.sales_sub_item}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "sales_sub_item",
-                                  e.target.value
-                                )
+                              onValueChange={(value) =>
+                                handleItemChange(index, "sales_sub_item", value)
                               }
-                              maxLength={20}
-                              className="h-8 text-sm"
-                              placeholder="Item Name"
-                            />
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select item...">
+                                  {entry.sales_sub_item || "Select item"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  <SelectLabel>Items</SelectLabel>
+                                  {product.map((item) => (
+                                    <SelectItem
+                                      key={
+                                        item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type
+                                      }
+                                      value={
+                                        item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type
+                                      }
+                                    >
+                                      {item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type}
+                                    </SelectItem>
+                                  ))}
+                                  <SelectItem value="NOT IN THE LIST">
+                                    NOT IN THE LIST
+                                  </SelectItem>
+                                </SelectGroup>
+                              </SelectContent>
+                            </SelectShadcn>
+                            {entry.sales_sub_item === "NOT IN THE LIST" && (
+                              <div className="mt-1">
+                                <Input
+                                  type="text"
+                                  value={customItems[index] || ""}
+                                  onChange={(e) =>
+                                    handleCustomItemChange(
+                                      index,
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="h-8 text-sm"
+                                  placeholder="Enter custom item name"
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         <div className="grid grid-cols-3 gap-1">
-                          <div>
+                          {/* <div>
                             {isLoadingItems || !product.length ? (
                               <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
                             ) : (
@@ -737,7 +772,7 @@ const SalesEdit = () => {
                                 </SelectContent>
                               </SelectShadcn>
                             )}
-                          </div>
+                          </div> */}
                           <div>
                             <Input
                               type="tel"
@@ -746,7 +781,7 @@ const SalesEdit = () => {
                                 handleItemChange(
                                   index,
                                   "sales_sub_qnty",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               maxLength={10}
@@ -763,7 +798,7 @@ const SalesEdit = () => {
                                 handleItemChange(
                                   index,
                                   "sales_sub_qnty_sqr",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               maxLength={10}
@@ -782,7 +817,7 @@ const SalesEdit = () => {
                                 handleItemChange(
                                   index,
                                   "sales_sub_rate",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               maxLength={10}
@@ -955,7 +990,7 @@ const SalesEdit = () => {
             <CardContent>
               <form onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
                     <Label htmlFor="sales_date">
                       Date <span className="text-xs text-red-400 ">*</span>
@@ -993,7 +1028,7 @@ const SalesEdit = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="sales_item_type">
                       Item Type <span className="text-xs text-red-400 ">*</span>
                     </Label>
@@ -1023,8 +1058,8 @@ const SalesEdit = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  </div>
-                  <div className="space-y-2 col-span-2 lg:col-span-4">
+                  </div> */}
+                  <div className="space-y-2 col-span-2 lg:col-span-3">
                     <Label htmlFor="sales_address">Address</Label>
                     <Input
                       id="sales_address"
@@ -1047,17 +1082,13 @@ const SalesEdit = () => {
                       <thead>
                         <tr className="border-b">
                           <th className="text-left p-2 font-medium text-sm">
-                            Type{" "}
-                            <span className="text-xs text-red-400 ">*</span>
-                          </th>
-                          <th className="text-left p-2 font-medium text-sm">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          {/* <th className="text-left p-2 font-medium text-sm">
                             Original Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
-                          </th>
+                          </th> */}
                           <th className="text-left p-2 font-medium text-sm">
                             Qnty (pcs){" "}
                             <span className="text-xs text-red-400 ">*</span>
@@ -1079,67 +1110,66 @@ const SalesEdit = () => {
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
-                              <Input
-                                value={entry.sales_sub_type}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_type",
-                                    e.target.value
-                                  )
-                                }
-                                maxLength={20}
-                                className="h-9"
-                                placeholder="Types"
-                              />
-                            </td>
-                            <td className="p-2">
-                              <Input
-                                value={entry.sales_sub_item}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_item",
-                                    e.target.value
-                                  )
-                                }
-                                maxLength={20}
-                                className="h-9"
-                                placeholder="Item Name"
-                              />
-                            </td>
-
-                            <td className="p-2">
-                              {isLoadingItems || !product.length ? (
-                                <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
+                              {isLoadingItems ? (
+                                <div className="h-9 bg-gray-200 rounded animate-pulse w-[12rem]"></div>
                               ) : (
-                                <SelectShadcn
-                                  value={entry.sales_sub_item_original}
-                                  onValueChange={(value) =>
-                                    handleItemChange(
-                                      index,
-                                      "sales_sub_item_original",
-                                      value
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-[8rem]">
-                                    <SelectValue placeholder="Select Original Item" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>Original Items</SelectLabel>
-                                      {product.map((item) => (
-                                        <SelectItem
-                                          key={item.product_type}
-                                          value={item.product_type}
-                                        >
-                                          {item.product_type}
+                                <>
+                                  <SelectShadcn
+                                    value={entry.sales_sub_item}
+                                    onValueChange={(value) =>
+                                      handleItemChange(
+                                        index,
+                                        "sales_sub_item",
+                                        value,
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[12rem]">
+                                      <SelectValue placeholder="Select item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectLabel>Items</SelectLabel>
+                                        {product.map((item) => (
+                                          <SelectItem
+                                            key={
+                                              item.item_name ||
+                                              item.product_type_group ||
+                                              item.product_type
+                                            }
+                                            value={
+                                              item.item_name ||
+                                              item.product_type_group ||
+                                              item.product_type
+                                            }
+                                          >
+                                            {item.item_name ||
+                                              item.product_type_group ||
+                                              item.product_type}
+                                          </SelectItem>
+                                        ))}
+                                        <SelectItem value="NOT IN THE LIST">
+                                          NOT IN THE LIST
                                         </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </SelectShadcn>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </SelectShadcn>
+                                  {entry.sales_sub_item ===
+                                    "NOT IN THE LIST" && (
+                                    <Input
+                                      type="text"
+                                      className="mt-1 h-9"
+                                      placeholder="Enter custom item name"
+                                      value={customItems[index] || ""}
+                                      onChange={(e) =>
+                                        handleCustomItemChange(
+                                          index,
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  )}
+                                </>
                               )}
                             </td>
 
@@ -1151,7 +1181,7 @@ const SalesEdit = () => {
                                   handleItemChange(
                                     index,
                                     "sales_sub_qnty",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 maxLength={10}
@@ -1168,7 +1198,7 @@ const SalesEdit = () => {
                                   handleItemChange(
                                     index,
                                     "sales_sub_qnty_sqr",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 maxLength={10}
@@ -1185,7 +1215,7 @@ const SalesEdit = () => {
                                   handleItemChange(
                                     index,
                                     "sales_sub_rate",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 maxLength={10}
@@ -1213,15 +1243,15 @@ const SalesEdit = () => {
 
                 {/* Charges and Totals */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Charges */}
+                  <div></div>
                   <div className="border rounded-lg p-3 bg-white">
-                    <h3 className="font-medium mb-2">Charges</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tax">Tax</Label>
                         <Input
                           id="sales_tax"
                           type="tel"
+                          className="w-1/2"
                           {...form.register("sales_tax")}
                           onChange={(e) =>
                             handleChargeChange("sales_tax", e.target.value)
@@ -1231,9 +1261,10 @@ const SalesEdit = () => {
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
                         <Input
+                          className="w-1/2"
                           id="sales_tempo"
                           type="tel"
                           {...form.register("sales_tempo")}
@@ -1245,11 +1276,12 @@ const SalesEdit = () => {
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_loading">
                           Load/Unload Charges
                         </Label>
                         <Input
+                          className="w-1/2"
                           id="sales_loading"
                           type="tel"
                           {...form.register("sales_loading")}
@@ -1261,26 +1293,10 @@ const SalesEdit = () => {
                           placeholder="0"
                         />
                       </div>
-                      {/* <div className="space-y-2">
-                        <Label htmlFor="sales_unloading">
-                          Unloading Charges
-                        </Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_other">Other Charges 1</Label>
                         <Input
-                          id="sales_unloading"
-                          type="tel"
-                          {...form.register("sales_unloading")}
-                          onChange={(e) =>
-                            handleChargeChange(
-                              "sales_unloading",
-                              e.target.value
-                            )
-                          }
-                        />
-                      
-                      </div> */}
-                      <div className="space-y-2">
-                        <Label htmlFor="sales_other">Other Charges</Label>
-                        <Input
+                          className="w-1/2"
                           id="sales_other"
                           type="tel"
                           {...form.register("sales_other")}
@@ -1292,46 +1308,66 @@ const SalesEdit = () => {
                           placeholder="0"
                         />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Totals */}
-                  <div className="border rounded-lg p-3 bg-white">
-                    <h3 className="font-medium mb-2">Totals</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_other1">Other Charges 2</Label>
+                        <Input
+                          className="w-1/2"
+                          id="sales_other1"
+                          type="tel"
+                          {...form.register("sales_other1")}
+                          onChange={(e) =>
+                            handleChargeChange("sales_other1", e.target.value)
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_gross">Gross Total</Label>
                         <Input
+                          className="w-1/2 bg-gray-100"
                           id="sales_gross"
                           type="tel"
                           {...form.register("sales_gross")}
                           disabled
-                          className="bg-gray-100"
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_advance">Advance</Label>
                         <Input
+                          className="w-1/2"
                           id="sales_advance"
                           type="tel"
                           {...form.register("sales_advance")}
                           onChange={(e) => handleAdvanceChange(e.target.value)}
-                          onKeyDown={handleKeyDown}
                           maxLength={10}
+                          onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="sales_balance">Balance</Label>
                         <Input
+                          className="w-1/2 bg-gray-100"
                           id="sales_balance"
                           type="tel"
                           {...form.register("sales_balance")}
                           disabled
                           onKeyDown={handleKeyDown}
-                          className="bg-gray-100"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sales_temp_amount">Amount</Label>
+                        <Input
+                          className="w-1/2"
+                          id="sales_temp_amount"
+                          type="tel"
+                          {...form.register("sales_temp_amount")}
+                          onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>

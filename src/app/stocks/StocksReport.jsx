@@ -59,7 +59,7 @@ const StocksReport = () => {
 
       const token = Cookies.get("token");
       const response = await axios.post(
-        `${BASE_URL}/api/web-fetch-stock-report`,
+        `${BASE_URL}/api/web-fetch-stock-new-report`,
         searchParams,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -309,7 +309,7 @@ const StocksReport = () => {
                             }
                           >
                             <td className="border p-1 text-left">
-                              {item.product_type}
+                              {item.item_name}
                             </td>
                             <td className="border p-1 text-right">
                               {item.openpurch - item.closesale}
@@ -515,7 +515,7 @@ const StocksReport = () => {
                               }
                             >
                               <TableCell className="text-left border-r">
-                                {item.product_type}
+                                {item.item_name}
                               </TableCell>
                               <TableCell className="text-center border-r">
                                 {item.openpurch - item.closesale}
