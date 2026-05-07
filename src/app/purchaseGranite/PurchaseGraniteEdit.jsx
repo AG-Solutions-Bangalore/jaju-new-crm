@@ -33,7 +33,7 @@ const formSchema = z.object({
   purchase_date: z.string(),
   purchase_year: z.string(),
   purchase_type: z.string(),
-  purchase_item_type: z.string().min(1, "Item type is required"),
+  purchase_item_type: z.string(),
   purchase_supplier: z.string().min(1, "Supplier is required"),
   purchase_bill_no: z.string().min(1, "Bill number is required"),
   purchase_amount: z.string().min(1, "Total Amount is required"),
@@ -66,7 +66,7 @@ const PurchaseGraniteEdit = () => {
     defaultValues: {
       purchase_date: moment().format("YYYY-MM-DD"),
       purchase_year: currentYear,
-      purchase_type: "Granites",
+      purchase_type: "",
       purchase_item_type: "",
       purchase_supplier: "",
       purchase_bill_no: "",
@@ -87,6 +87,11 @@ const PurchaseGraniteEdit = () => {
       purchase_sub_amount: "",
     },
   ]);
+  const [customItems, setCustomItems] = useState({});
+
+  const handleCustomItemChange = (index, value) => {
+    setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
 
   const {
     data: purchaseByid,
@@ -110,42 +115,26 @@ const PurchaseGraniteEdit = () => {
     cacheTime: 0,
   });
 
-  const { data: productTypeGroup = [] } = useQuery({
-    queryKey: ["productTypeGroup"],
-    queryFn: async () => {
-      const token = Cookies.get("token");
-      const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-type-group`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      return response.data.product_type_group || [];
-    },
-  });
-
   const { data: product = [], refetch: refetchProducts } = useQuery({
-    queryKey: ["product", form.watch("purchase_item_type")],
+    queryKey: ["product"],
     queryFn: async () => {
       setIsLoadingItems(true);
-      const itemType =
-        form.watch("purchase_item_type") ||
-        purchaseByid?.purchase?.purchase_item_type ||
-        "";
-      if (!itemType) return [];
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${BASE_URL}/api/web-fetch-product-types/${itemType}`,
+        `${BASE_URL}/api/web-fetch-product-type-group-new`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
       setIsLoadingItems(false);
-      return response.data.product_type || [];
+      return (
+        response.data.data ||
+        response.data.product_type ||
+        response.data.product_type_group ||
+        response.data.product_type_group_new ||
+        []
+      );
     },
-    enabled:
-      !!form.watch("purchase_item_type") ||
-      !!purchaseByid?.purchase?.purchase_item_type,
   });
 
   useEffect(() => {
@@ -154,7 +143,7 @@ const PurchaseGraniteEdit = () => {
       const formValues = {
         purchase_date: moment(pId.purchase_date).format("YYYY-MM-DD"),
         purchase_year: pId.purchase_year || currentYear,
-        purchase_type: pId.purchase_type || "Granites",
+        purchase_type: pId.purchase_type || "",
         purchase_item_type: pId.purchase_item_type || "",
         purchase_supplier: pId.purchase_supplier || "",
         purchase_bill_no: pId.purchase_bill_no || "",
@@ -251,13 +240,16 @@ const PurchaseGraniteEdit = () => {
       date: !data.purchase_date ? "Date is required" : "",
       supplier: !data.purchase_supplier ? "Supplier is required" : "",
       billNo: !data.purchase_bill_no ? "Bill number is required" : "",
-      itemType: !data.purchase_item_type ? "Item type is required" : "",
       otherAmount: !data.purchase_other ? "Other Amount is required" : "",
       totalAmount: !data.purchase_amount ? "Total Amount is required" : "",
     };
 
     const itemErrors = itemEntries.map((entry, index) => ({
-      item: !entry.purchase_sub_item ? "required" : "",
+      item:
+        !entry.purchase_sub_item ||
+        (entry.purchase_sub_item === "NOT IN THE LIST" && !customItems[index])
+          ? "required"
+          : "",
       qnty: !entry.purchase_sub_qnty
         ? "required"
         : isNaN(entry.purchase_sub_qnty)
@@ -447,14 +439,25 @@ const PurchaseGraniteEdit = () => {
 
   const onSubmit = async (data) => {
     try {
+      const formattedItemEntries = itemEntries.map((entry, index) => {
+        return {
+          ...entry,
+          purchase_sub_pcs: entry.purchase_sub_qnty,
+          purchase_sub_item:
+            entry.purchase_sub_item === "NOT IN THE LIST"
+              ? customItems[index]
+              : entry.purchase_sub_item,
+        };
+      });
+
       const payload = {
         ...data,
         purchase_year: currentYear,
-        purchase_no_of_count: itemEntries.length,
-        purchase_sub_data: itemEntries,
+        purchase_no_of_count: formattedItemEntries.length,
+        purchase_sub_data: formattedItemEntries,
       };
 
-      updatePurchaseMutation.mutate(payload);
+      await updatePurchaseMutation.mutateAsync(payload);
     } catch (error) {
       toast({
         title: "Error",
@@ -470,7 +473,7 @@ const PurchaseGraniteEdit = () => {
     navigate("/purchase");
   };
 
-  if (isFetching || productTypeGroup.length == 0) {
+  if (isFetching) {
     return (
       <Page>
         <div className="flex justify-center items-center h-full">
@@ -568,7 +571,7 @@ const PurchaseGraniteEdit = () => {
                       maxLength={10}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="purchase_item_type">
                       Item Type <span className="text-xs text-red-400 ">*</span>
                     </Label>
@@ -597,7 +600,7 @@ const PurchaseGraniteEdit = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  </div>
+                  </div> */}
                   <div>
                     <Label htmlFor="purchase_other">
                       Other Amount{" "}
@@ -664,15 +667,39 @@ const PurchaseGraniteEdit = () => {
                                   <SelectLabel>Items</SelectLabel>
                                   {product.map((item) => (
                                     <SelectItem
-                                      key={item.product_type}
-                                      value={item.product_type}
+                                      key={
+                                        item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type
+                                      }
+                                      value={
+                                        item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type
+                                      }
                                     >
-                                      {item.product_type}
+                                      {item.item_name ||
+                                        item.product_type_group ||
+                                        item.product_type}
                                     </SelectItem>
                                   ))}
+                                  <SelectItem value="NOT IN THE LIST">
+                                    NOT IN THE LIST
+                                  </SelectItem>
                                 </SelectGroup>
                               </SelectContent>
                             </SelectShadcn>
+                          )}
+                          {entry.purchase_sub_item === "NOT IN THE LIST" && (
+                            <Input
+                              type="text"
+                              className="mt-1 h-9"
+                              placeholder="Enter custom item name"
+                              value={customItems[index] || ""}
+                              onChange={(e) =>
+                                handleCustomItemChange(index, e.target.value)
+                              }
+                            />
                           )}
                         </div>
                         <div className="grid grid-cols-3 gap-1">
@@ -822,7 +849,7 @@ const PurchaseGraniteEdit = () => {
                       maxLength={10}
                     />
                   </div>
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="purchase_item_type">
                       Item Type <span className="text-xs text-red-400 ">*</span>
                     </Label>
@@ -851,7 +878,7 @@ const PurchaseGraniteEdit = () => {
                         </SelectGroup>
                       </SelectContent>
                     </SelectShadcn>
-                  </div>
+                  </div> */}
                   <div className="space-y-2">
                     <Label htmlFor="purchase_other">
                       Other Amount{" "}
@@ -920,33 +947,63 @@ const PurchaseGraniteEdit = () => {
                               {isLoadingItems ? (
                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
                               ) : (
-                                <SelectShadcn
-                                  value={entry.purchase_sub_item}
-                                  onValueChange={(value) =>
-                                    handleItemChange(
-                                      index,
-                                      "purchase_sub_item",
-                                      value,
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-[8rem]">
-                                    <SelectValue placeholder="Select item" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>Items</SelectLabel>
-                                      {product.map((item) => (
-                                        <SelectItem
-                                          key={item.product_type}
-                                          value={item.product_type}
-                                        >
-                                          {item.product_type}
+                                <>
+                                  <SelectShadcn
+                                    value={entry.purchase_sub_item}
+                                    onValueChange={(value) =>
+                                      handleItemChange(
+                                        index,
+                                        "purchase_sub_item",
+                                        value,
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[8rem]">
+                                      <SelectValue placeholder="Select item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectLabel>Items</SelectLabel>
+                                        {product.map((item) => (
+                                          <SelectItem
+                                            key={
+                                              item.item_name ||
+                                              item.product_type_group ||
+                                              item.product_type
+                                            }
+                                            value={
+                                              item.item_name ||
+                                              item.product_type_group ||
+                                              item.product_type
+                                            }
+                                          >
+                                            {item.item_name ||
+                                              item.product_type_group ||
+                                              item.product_type}
+                                          </SelectItem>
+                                        ))}
+                                        <SelectItem value="NOT IN THE LIST">
+                                          NOT IN THE LIST
                                         </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </SelectShadcn>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </SelectShadcn>
+                                  {entry.purchase_sub_item ===
+                                    "NOT IN THE LIST" && (
+                                    <Input
+                                      type="text"
+                                      className="mt-1 h-9"
+                                      placeholder="Enter custom item name"
+                                      value={customItems[index] || ""}
+                                      onChange={(e) =>
+                                        handleCustomItemChange(
+                                          index,
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  )}
+                                </>
                               )}
                             </td>
                             <td className="p-2">

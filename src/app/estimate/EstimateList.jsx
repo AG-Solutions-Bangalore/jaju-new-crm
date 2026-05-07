@@ -101,7 +101,7 @@ const EstimateList = () => {
     {
       accessorKey: "estimate_date",
       id: "Estimate Date",
-      header: "Gaya Date",
+      header: "Estimate Date",
       cell: ({ row }) => {
         const date = row.getValue("Estimate Date");
         const estimateId = row.original.id;
@@ -128,7 +128,7 @@ const EstimateList = () => {
     {
       accessorKey: "estimate_no",
       id: "Estimate No",
-      header: "Gaya No",
+      header: "Estimate No",
       cell: ({ row }) => {
         const value = row.getValue("Estimate No");
         const estimateStatus = row.original.estimate_status;
@@ -253,7 +253,9 @@ const EstimateList = () => {
             <div className="flex flex-col gap-2">
               {/* Title + Add Button */}
               <div className="flex justify-between items-center px-2 py-2">
-                <h1 className="text-base font-bold text-gray-800">Gaya List</h1>
+                <h1 className="text-base font-bold text-gray-800">
+                  Estimate List
+                </h1>
                 <Button
                   size="sm"
                   className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
@@ -267,7 +269,7 @@ const EstimateList = () => {
               <div className="relative px-2 pb-2">
                 <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-500" />
                 <Input
-                  placeholder="Search Gaya..."
+                  placeholder="Search Estimate..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -322,7 +324,7 @@ const EstimateList = () => {
                       </div>
                     </div>
                     <div>
-                      <div className="text-gray-500">Gaya No</div>
+                      <div className="text-gray-500">Estimate No</div>
                       <div>
                         {(() => {
                           const userType = Cookies.get("userType");
@@ -372,7 +374,7 @@ const EstimateList = () => {
 
             {filteredEstimates.length === 0 && (
               <div className="text-center py-4 text-gray-500 text-sm">
-                No Gaya records found
+                No Estimate records found
               </div>
             )}
           </div>
@@ -417,7 +419,7 @@ const EstimateList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Gaya List
+            Estimate List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -425,7 +427,7 @@ const EstimateList = () => {
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search Gaya..."
+                placeholder="Search Estimate..."
                 value={table.getState().globalFilter || ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
@@ -466,7 +468,7 @@ const EstimateList = () => {
                 }}
               >
                 <SquarePlus className="h-4 w-4" />
-                Add Gaya
+                Add Estimate
               </Button>{" "}
             </div>
           </div>
@@ -527,7 +529,7 @@ const EstimateList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Gaya : &nbsp;
+              Total Estimate : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">

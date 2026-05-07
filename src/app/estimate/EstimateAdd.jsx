@@ -45,9 +45,11 @@ const formSchema = z.object({
   estimate_loading: z.string(),
   estimate_unloading: z.string(),
   estimate_other: z.string(),
+  estimate_other1: z.string(),
   estimate_gross: z.string(),
   estimate_advance: z.string(),
   estimate_balance: z.string(),
+  estimate_temp_amount: z.string(),
 });
 
 const AddEstimate = () => {
@@ -260,7 +262,8 @@ const AddEstimate = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to create Gaya",
+        description:
+          error.response?.data?.message || "Failed to create Estimate",
         variant: "destructive",
       });
     },
@@ -474,7 +477,7 @@ const AddEstimate = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create Gaya",
+        description: error.message || "Failed to create Estimate",
         variant: "destructive",
       });
     } finally {
@@ -498,7 +501,7 @@ const AddEstimate = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Add Gaya</h1>
+                <h1 className="text-base font-bold">Add Estimate</h1>
               </button>
               <div className="text-sm font-medium">
                 Ref: <span className="font-bold">{estimateRef}</span>
@@ -910,7 +913,7 @@ const AddEstimate = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Gaya</CardTitle>
+                  <CardTitle>Add Estimate</CardTitle>
                 </div>
                 <div className="text-sm font-medium">
                   Estimate Ref: <span className="font-bold">{estimateRef}</span>
@@ -1334,7 +1337,7 @@ const AddEstimate = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Gaya"}
+                    {isSubmitting ? "Saving..." : "Save Estimate"}
                   </Button>
                 </div>
               </form>
