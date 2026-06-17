@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
@@ -28,6 +28,7 @@ import Page from "../dashboard/page";
 import Loader from "@/components/loader/Loader";
 import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/useNumericInput";
+import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -158,6 +159,12 @@ const EstimateSalesAdd = () => {
     },
     enabled: !!form.watch("sales_item_type"),
   });
+
+  const productOptions = useMemo(() => 
+    product.map((item) => ({
+      value: item.product_type,
+      label: item.product_type,
+    })), [product]);
 
   useEffect(() => {
     if (salesEstimateId) {
@@ -769,33 +776,18 @@ const EstimateSalesAdd = () => {
                             {isLoadingItems ? (
                                                  <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
                             ) : (
-                              <SelectShadcn
+                               <MemoizedProductSelect
                                 value={entry.sales_sub_item_original}
-                                onValueChange={(value) =>
+                                onChange={(value) =>
                                   handleItemChange(
                                     index,
                                     "sales_sub_item_original",
                                     value
                                   )
                                 }
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select Original Item..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Original Items</SelectLabel>
-                                    {product.map((item) => (
-                                      <SelectItem
-                                        key={item.product_type}
-                                        value={item.product_type}
-                                      >
-                                        {item.product_type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </SelectShadcn>
+                                options={productOptions}
+                                placeholder="Select Original Item..."
+                              />
                             )}
                           </div>
                           <div>
@@ -1232,33 +1224,20 @@ const EstimateSalesAdd = () => {
                               {isLoadingItems ? (
                                                   <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
                               ) : (
-                                <SelectShadcn
-                                  value={entry.sales_sub_item_original}
-                                  onValueChange={(value) =>
-                                    handleItemChange(
-                                      index,
-                                      "sales_sub_item_original",
-                                      value
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-[8rem]">
-                                    <SelectValue placeholder="Select Original Item" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>Original Items</SelectLabel>
-                                      {product.map((item) => (
-                                        <SelectItem
-                                          key={item.product_type}
-                                          value={item.product_type}
-                                        >
-                                          {item.product_type}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </SelectShadcn>
+                                 <div className="w-[8rem]">
+                                  <MemoizedProductSelect
+                                    value={entry.sales_sub_item_original}
+                                    onChange={(value) =>
+                                      handleItemChange(
+                                        index,
+                                        "sales_sub_item_original",
+                                        value
+                                      )
+                                    }
+                                    options={productOptions}
+                                    placeholder="Select Original Item"
+                                  />
+                                </div>
                               )}
                             </td>
 

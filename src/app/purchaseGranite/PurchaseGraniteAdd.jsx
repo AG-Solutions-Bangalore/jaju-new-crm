@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
@@ -27,6 +27,7 @@ import Page from "@/app/dashboard/page";
 import { useToast } from "@/hooks/use-toast";
 import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/useNumericInput";
+import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
 
 const formSchema = z.object({
   purchase_date: z.string(),
@@ -119,6 +120,14 @@ const PurchaseGraniteAdd = () => {
       );
     },
   });
+
+  const productOptions = useMemo(() => [
+    ...product.map((item) => {
+      const name = item.item_name || item.product_type_group || item.product_type;
+      return { value: name, label: name };
+    }),
+    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
+  ], [product]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -607,46 +616,18 @@ const PurchaseGraniteAdd = () => {
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-11">
                         <div className="mb-1">
-                          <SelectShadcn
+                           <MemoizedProductSelect
                             value={entry.purchase_sub_item}
-                            onValueChange={(value) =>
+                            onChange={(value) =>
                               handleItemChange(
                                 index,
                                 "purchase_sub_item",
                                 value,
                               )
                             }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select item..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Items</SelectLabel>
-                                {product.map((item) => (
-                                  <SelectItem
-                                    key={
-                                      item.item_name ||
-                                      item.product_type_group ||
-                                      item.product_type
-                                    }
-                                    value={
-                                      item.item_name ||
-                                      item.product_type_group ||
-                                      item.product_type
-                                    }
-                                  >
-                                    {item.item_name ||
-                                      item.product_type_group ||
-                                      item.product_type}
-                                  </SelectItem>
-                                ))}
-                                <SelectItem value="NOT IN THE LIST">
-                                  NOT IN THE LIST
-                                </SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </SelectShadcn>
+                            options={productOptions}
+                            placeholder="Select item..."
+                          />
                           {entry.purchase_sub_item === "NOT IN THE LIST" && (
                             <div className="mt-1">
                               <Input
@@ -925,46 +906,20 @@ const PurchaseGraniteAdd = () => {
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
-                              <SelectShadcn
-                                value={entry.purchase_sub_item}
-                                onValueChange={(value) =>
-                                  handleItemChange(
-                                    index,
-                                    "purchase_sub_item",
-                                    value,
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-[8rem]">
-                                  <SelectValue placeholder="Select item" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Items</SelectLabel>
-                                    {product.map((item) => (
-                                      <SelectItem
-                                        key={
-                                          item.item_name ||
-                                          item.product_type_group ||
-                                          item.product_type
-                                        }
-                                        value={
-                                          item.item_name ||
-                                          item.product_type_group ||
-                                          item.product_type
-                                        }
-                                      >
-                                        {item.item_name ||
-                                          item.product_type_group ||
-                                          item.product_type}
-                                      </SelectItem>
-                                    ))}
-                                    <SelectItem value="NOT IN THE LIST">
-                                      NOT IN THE LIST
-                                    </SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </SelectShadcn>
+                               <div className="w-[8rem]">
+                                <MemoizedProductSelect
+                                  value={entry.purchase_sub_item}
+                                  onChange={(value) =>
+                                    handleItemChange(
+                                      index,
+                                      "purchase_sub_item",
+                                      value,
+                                    )
+                                  }
+                                  options={productOptions}
+                                  placeholder="Select item"
+                                />
+                              </div>
                               {entry.purchase_sub_item ===
                                 "NOT IN THE LIST" && (
                                 <Input
