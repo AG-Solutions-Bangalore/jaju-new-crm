@@ -59,6 +59,7 @@ const SalesEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [gstEdited, setGstEdited] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -156,13 +157,17 @@ const SalesEdit = () => {
     },
   });
 
-  const productOptions = useMemo(() => [
-    ...product.map((item) => {
-      const name = item.item_name || item.product_type_group || item.product_type;
-      return { value: name, label: name };
-    }),
-    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
-  ], [product]);
+  const productOptions = useMemo(
+    () => [
+      ...product.map((item) => {
+        const name =
+          item.item_name || item.product_type_group || item.product_type;
+        return { value: name, label: name };
+      }),
+      { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
+    ],
+    [product],
+  );
 
   useEffect(() => {
     if (salesId?.sales && salesId?.salesSub) {
@@ -170,7 +175,7 @@ const SalesEdit = () => {
 
       const { sales, salesSub } = salesId;
 
-       form.reset({
+      form.reset({
         sales_date: moment(sales.sales_date).format("YYYY-MM-DD"),
         sales_year: sales.sales_year || currentYear,
         sales_item_type: sales.sales_item_type || "Granites",
@@ -191,6 +196,10 @@ const SalesEdit = () => {
         sales_no_of_count: sales.sales_no_of_count?.toString() || "1",
         sales_temp_amount: sales.sales_temp_amount?.toString() || "",
       });
+
+      if (sales.sales_gst_percentage) {
+        setGstEdited(true);
+      }
 
       // setTimeout(() => {
       if (salesSub?.length > 0) {
@@ -225,14 +234,23 @@ const SalesEdit = () => {
     const other1 = parseFloat(form.watch("sales_other1") || 0);
 
     const grandTotal = itemsTotal + tempo + loading + other + other1;
-    const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
-    const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
+    if (!gstEdited) {
+      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      form.setValue("sales_tax", gstAmount.toString());
+    }
+    const currentGst = parseFloat(form.watch("sales_tax") || 0);
+    const finalTotal = parseFloat((grandTotal + currentGst).toFixed(2));
 
-    form.setValue("sales_tax", gstAmount.toString());
     form.setValue("sales_gross", finalTotal.toString());
     form.setValue("sales_balance", finalTotal.toString());
     form.setValue("sales_advance", "0");
   };
+
+  useEffect(() => {
+    if (!gstEdited) {
+      calculateAndSetTotals(itemEntries);
+    }
+  }, [gstEdited]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -517,7 +535,7 @@ const SalesEdit = () => {
       const other1 = parseFloat(form.watch("sales_other1") || 0);
 
       const grandTotal = itemsTotal + tempo + loading + other + other1;
-      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      const gstAmount = parseFloat(form.watch("sales_tax") || 0);
       const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
 
       const payload = {
@@ -589,9 +607,12 @@ const SalesEdit = () => {
   const watchOther = parseFloat(form.watch("sales_other") || 0);
   const watchOther1 = parseFloat(form.watch("sales_other1") || 0);
 
-  const displayGrandTotal = itemsTotal + watchTempo + watchLoading + watchOther + watchOther1;
-  const displayGst = parseFloat((displayGrandTotal * 0.18).toFixed(2));
-  const displayFinalTotal = parseFloat((displayGrandTotal + displayGst).toFixed(2));
+  const displayGrandTotal =
+    itemsTotal + watchTempo + watchLoading + watchOther + watchOther1;
+  const displayGst = parseFloat(form.watch("sales_tax") || 0);
+  const displayFinalTotal = parseFloat(
+    (displayGrandTotal + displayGst).toFixed(2),
+  );
 
   return (
     <Page>
@@ -716,7 +737,7 @@ const SalesEdit = () => {
                       <div className="col-span-12">
                         <div className="grid grid-cols-1 gap-1 mb-1">
                           <div className="col-span-1">
-                             <MemoizedProductSelect
+                            <MemoizedProductSelect
                               value={entry.sales_sub_item}
                               onChange={(value) =>
                                 handleItemChange(index, "sales_sub_item", value)
@@ -941,14 +962,34 @@ const SalesEdit = () => {
                     />
                   </div>
 
-                  {/* GST 18% */}
+                  {/* GST Amount */}
                   <div>
-                    <Label>GST 18%</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>GST</Label>
+                      {gstEdited && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGstEdited(false);
+                            calculateAndSetTotals(itemEntries);
+                          }}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Reset to 18%
+                        </button>
+                      )}
+                    </div>
                     <Input
-                      type="text"
+                      type="tel"
                       value={displayGst.toString()}
-                      disabled
-                      className="mt-1 bg-gray-100 font-medium"
+                      onChange={(e) => {
+                        setGstEdited(true);
+                        form.setValue("sales_tax", e.target.value);
+                      }}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
+                      maxLength={10}
+                      placeholder="0"
                     />
                   </div>
 
@@ -957,7 +998,9 @@ const SalesEdit = () => {
 
                   {/* Final Total */}
                   <div>
-                    <Label className="font-semibold text-blue-900">Final Total</Label>
+                    <Label className="font-semibold text-blue-900">
+                      Final Total
+                    </Label>
                     <Input
                       type="text"
                       value={displayFinalTotal.toString()}
@@ -1136,7 +1179,7 @@ const SalesEdit = () => {
                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[12rem]"></div>
                               ) : (
                                 <>
-                                   <div className="w-[12rem]">
+                                  <div className="w-[12rem]">
                                     <MemoizedProductSelect
                                       value={entry.sales_sub_item}
                                       onChange={(value) =>
@@ -1331,26 +1374,41 @@ const SalesEdit = () => {
                         />
                       </div>
 
-                      {/* GST 18% */}
+                      {/* GST Amount */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">GST 18%</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="font-medium">GST</Label>
+                          {gstEdited && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setGstEdited(false);
+                                calculateAndSetTotals(itemEntries);
+                              }}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Reset to 18%
+                            </button>
+                          )}
+                        </div>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium"
-                          type="text"
+                          className="w-1/2"
+                          type="tel"
                           value={displayGst.toString()}
-                          disabled
+                          onChange={(e) => {
+                            setGstEdited(true);
+                            form.setValue("sales_tax", e.target.value);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
                         />
                       </div>
-
-                      {/* Spacer */}
-                      <div className="flex items-center justify-between h-9">
-                        <div className="w-1/2"></div>
-                        <div className="w-1/2 h-8 bg-gray-100 rounded-md"></div>
-                      </div>
-
                       {/* Final Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-semibold text-blue-900">Final Total</Label>
+                        <Label className="font-semibold text-blue-900">
+                          Final Total
+                        </Label>
                         <Input
                           className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900"
                           type="text"

@@ -59,6 +59,7 @@ const SalesAdd = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gstEdited, setGstEdited] = useState(false);
   const handleKeyDown = useNumericInput();
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -146,14 +147,18 @@ const SalesAdd = () => {
     },
   });
 
-  const productOptions = useMemo(() => [
-    ...product.map((item) => {
-      const name = item.item_name || item.product_type_group || item.product_type;
-      return { value: name, label: name };
-    }),
-    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
-  ], [product]);
-  const calculateAndSetTotals = (entries) => {
+  const productOptions = useMemo(
+    () => [
+      ...product.map((item) => {
+        const name =
+          item.item_name || item.product_type_group || item.product_type;
+        return { value: name, label: name };
+      }),
+      { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
+    ],
+    [product],
+  );
+  const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
       0,
@@ -164,14 +169,23 @@ const SalesAdd = () => {
     const other1 = parseFloat(form.watch("sales_other1") || 0);
 
     const grandTotal = itemsTotal + tempo + loading + other + other1;
-    const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
-    const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
+    if (!skipGst && !gstEdited) {
+      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      form.setValue("sales_tax", gstAmount.toString());
+    }
+    const currentGst = parseFloat(form.watch("sales_tax") || 0);
+    const finalTotal = parseFloat((grandTotal + currentGst).toFixed(2));
 
-    form.setValue("sales_tax", gstAmount.toString());
     form.setValue("sales_gross", finalTotal.toString());
     form.setValue("sales_balance", finalTotal.toString());
     form.setValue("sales_advance", "0");
   };
+
+  useEffect(() => {
+    if (!gstEdited) {
+      calculateAndSetTotals(itemEntries);
+    }
+  }, [gstEdited]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -485,7 +499,7 @@ const SalesAdd = () => {
       const other1 = parseFloat(form.watch("sales_other1") || 0);
 
       const grandTotal = itemsTotal + tempo + loading + other + other1;
-      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      const gstAmount = parseFloat(form.watch("sales_tax") || 0);
       const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
 
       const payload = {
@@ -529,9 +543,12 @@ const SalesAdd = () => {
   const watchOther = parseFloat(form.watch("sales_other") || 0);
   const watchOther1 = parseFloat(form.watch("sales_other1") || 0);
 
-  const displayGrandTotal = itemsTotal + watchTempo + watchLoading + watchOther + watchOther1;
-  const displayGst = parseFloat((displayGrandTotal * 0.18).toFixed(2));
-  const displayFinalTotal = parseFloat((displayGrandTotal + displayGst).toFixed(2));
+  const displayGrandTotal =
+    itemsTotal + watchTempo + watchLoading + watchOther + watchOther1;
+  const displayGst = parseFloat(form.watch("sales_tax") || 0);
+  const displayFinalTotal = parseFloat(
+    (displayGrandTotal + displayGst).toFixed(2),
+  );
 
   return (
     <Page>
@@ -566,7 +583,7 @@ const SalesAdd = () => {
 
           <div className="mb-14">
             <form onSubmit={handleFormSubmit} className="space-y-4">
-              {/* Customer Info */}
+              Customer Info
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
@@ -641,7 +658,6 @@ const SalesAdd = () => {
                   </div> */}
                 </div>
               </div>
-
               {/* Items */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-3">
@@ -681,7 +697,7 @@ const SalesAdd = () => {
                             </SelectShadcn>
                           </div> */}
                           <div className="col-span-1">
-                             <MemoizedProductSelect
+                            <MemoizedProductSelect
                               value={entry.sales_sub_item}
                               onChange={(value) =>
                                 handleItemChange(index, "sales_sub_item", value)
@@ -763,7 +779,6 @@ const SalesAdd = () => {
                   Add Item
                 </Button>
               </div>
-
               {/* Charges and Totals */}
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-4">
                 <h3 className="font-medium">Charges & Totals</h3>
@@ -858,23 +873,45 @@ const SalesAdd = () => {
                     />
                   </div>
 
-                  {/* GST 18% */}
+                  {/* GST Amount */}
                   <div>
-                    <Label>GST 18%</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>GST</Label>
+                      {gstEdited && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGstEdited(false);
+                            calculateAndSetTotals(itemEntries);
+                          }}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Reset to 18%
+                        </button>
+                      )}
+                    </div>
                     <Input
-                      type="text"
+                      type="tel"
                       value={displayGst.toString()}
-                      disabled
-                      className="mt-1 bg-gray-100 font-medium"
+                      onChange={(e) => {
+                        setGstEdited(true);
+                        form.setValue("sales_tax", e.target.value);
+                      }}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
+                      maxLength={10}
+                      placeholder="0"
                     />
                   </div>
 
                   {/* Spacer */}
-                  <div className="h-8 bg-gray-100 rounded-md w-full"></div>
+                  {/* <div className="h-8 bg-gray-100 rounded-md w-full"></div> */}
 
                   {/* Final Total */}
                   <div>
-                    <Label className="font-semibold text-blue-900">Final Total</Label>
+                    <Label className="font-semibold text-blue-900">
+                      Final Total
+                    </Label>
                     <Input
                       type="text"
                       value={displayFinalTotal.toString()}
@@ -884,7 +921,6 @@ const SalesAdd = () => {
                   </div>
                 </div>
               </div>
-
               {/* Action Buttons */}
               <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-2 flex justify-between">
                 <Button
@@ -921,7 +957,7 @@ const SalesAdd = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Gaya</CardTitle>
+                  <CardTitle>Add Sales</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -929,7 +965,20 @@ const SalesAdd = () => {
             <CardContent>
               <form onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="JFCBILLNO">
+                      JFC Bill No
+                      <span className="text-xs text-red-400 ">*</span>
+                    </Label>
+                    <Input
+                      id="JFCBILLNO"
+                      {...form.register("JFCBILLNO")}
+                      className="bg-white"
+                      placeholder="Enter bill number"
+                      maxLength={50}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="sales_date">
                       Date <span className="text-xs text-red-400 ">*</span>
@@ -1030,11 +1079,11 @@ const SalesAdd = () => {
                           </th>
 
                           <th className="text-left p-2 font-medium text-sm">
-                            Qnty (pcs){" "}
+                            Qnty (pcs/box){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm">
-                            Qnty (sqr){" "}
+                            Qnty (sqft){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm">
@@ -1080,7 +1129,7 @@ const SalesAdd = () => {
                               </SelectShadcn>
                             </td> */}
                             <td className="p-2">
-                               <div className="w-[12rem]">
+                              <div className="w-[12rem]">
                                 <MemoizedProductSelect
                                   value={entry.sales_sub_item}
                                   onChange={(value) =>
@@ -1245,7 +1294,7 @@ const SalesAdd = () => {
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
-                          placeholder="Other Label 1"
+                          placeholder="Other  1"
                           className="w-1/2 h-9"
                           {...form.register("sales_other_label")}
                         />
@@ -1267,7 +1316,7 @@ const SalesAdd = () => {
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
-                          placeholder="Other Label 2"
+                          placeholder="Other 2"
                           className="w-1/2 h-9"
                           {...form.register("sales_other1_label")}
                         />
@@ -1296,26 +1345,48 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* GST 18% */}
+                      {/* GST Amount */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">GST 18%</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="font-medium">GST</Label>
+                          {gstEdited && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setGstEdited(false);
+                                calculateAndSetTotals(itemEntries);
+                              }}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Reset to 18%
+                            </button>
+                          )}
+                        </div>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium"
-                          type="text"
+                          className="w-1/2"
+                          type="tel"
                           value={displayGst.toString()}
-                          disabled
+                          onChange={(e) => {
+                            setGstEdited(true);
+                            form.setValue("sales_tax", e.target.value);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
                         />
                       </div>
 
                       {/* Spacer */}
-                      <div className="flex items-center justify-between h-9">
+                      {/* <div className="flex items-center justify-between h-9">
                         <div className="w-1/2"></div>
                         <div className="w-1/2 h-8 bg-gray-100 rounded-md"></div>
-                      </div>
+                      </div> */}
 
                       {/* Final Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-semibold text-blue-900">Final Total</Label>
+                        <Label className="font-semibold text-blue-900">
+                          Final Total
+                        </Label>
                         <Input
                           className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900"
                           type="text"

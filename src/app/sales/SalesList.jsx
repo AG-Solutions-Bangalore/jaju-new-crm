@@ -118,9 +118,9 @@ const SalesList = () => {
     },
     {
       accessorKey: "sales_no",
-      id: "Estimate No",
-      header: "Estimate No",
-      cell: ({ row }) => <div>{row.getValue("Estimate No")}</div>,
+      id: "JFC Bill No",
+      header: "JFC Bill No",
+      cell: ({ row }) => <div>{row.getValue("JFC Bill No")}</div>,
     },
     {
       accessorKey: "sales_customer",
@@ -458,7 +458,7 @@ const SalesList = () => {
                   navigate("/sales/create");
                 }}
               >
-                <SquarePlus className="h-4 w-4" /> Add Gaya
+                <SquarePlus className="h-4 w-4" /> Add Sales
               </Button>{" "}
             </div>
           </div>
