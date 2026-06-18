@@ -1438,7 +1438,7 @@ const SalesEdit = () => {
                                 }
                                 maxLength={10}
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                               />
                             </td>
@@ -1492,7 +1492,7 @@ const SalesEdit = () => {
                       <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
                         <Input
-                          className="w-1/2"
+                          className="w-1/2 text-right"
                           id="sales_tempo"
                           type="tel"
                           {...form.register("sales_tempo")}
