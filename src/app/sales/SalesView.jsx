@@ -220,7 +220,7 @@ const SalesView = () => {
                     {item.sales_sub_item}
                   </td>
                   <td className="border p-1 text-right">
-                    {item.sales_sub_qnty}
+                    {item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}
                   </td>
                   <td className="border p-1 text-right">
                     {item.sales_sub_rate}
@@ -381,7 +381,7 @@ const SalesView = () => {
                     <TableRow key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-white'}>
                       <TableCell className="text-center border-r">{index + 1}</TableCell>
                       <TableCell className="text-center border-r">{item.sales_sub_item}</TableCell>
-                      <TableCell className="text-center border-r">{item.sales_sub_qnty}</TableCell>
+                      <TableCell className="text-center border-r">{item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}</TableCell>
                       <TableCell className="text-center border-r">{item.sales_sub_rate}</TableCell>
                       <TableCell className="text-center">{item.sales_sub_amount}</TableCell>
                     </TableRow>

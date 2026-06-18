@@ -220,7 +220,7 @@ const PurchaseGraniteView = () => {
                             {item.purchase_sub_item}
                           </td>
                           <td className="border p-1 text-right">
-                            {item.purchase_sub_qnty}
+                            {item.purchase_sub_pcs}/{parseFloat(item.purchase_sub_qnty_sqr) || item.purchase_sub_qnty_sqr}
                           </td>
                           <td className="border p-1 text-right">
                             {item.purchase_sub_rate}
@@ -358,7 +358,7 @@ const PurchaseGraniteView = () => {
                           {item.purchase_sub_item}
                         </TableCell>
                         <TableCell className="text-center border-r">
-                          {item.purchase_sub_qnty}
+                          {item.purchase_sub_pcs}/{parseFloat(item.purchase_sub_qnty_sqr) || item.purchase_sub_qnty_sqr}
                         </TableCell>
                         <TableCell className="text-center border-r">
                           {item.purchase_sub_rate}
