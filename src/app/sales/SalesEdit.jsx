@@ -997,6 +997,40 @@ const SalesEdit = () => {
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-4">
                 <h3 className="font-medium">Charges & Totals</h3>
                 <div className="space-y-3">
+                  {/* Loading/Unloading */}
+                  <div>
+                    <Label>Labour Charges</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <SelectShadcn
+                        value={loadingType}
+                        onValueChange={setLoadingType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Loading Only">Loading Only</SelectItem>
+                          <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                        </SelectContent>
+                      </SelectShadcn>
+                      <Input
+                        id={loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading & Unloading" ? "sales_unloading" : "sales_loading"}
+                        type="tel"
+                        value={form.watch(loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading & Unloading" ? "sales_unloading" : "sales_loading") || ""}
+                        onChange={(e) => {
+                          handleChargeChange(
+                            loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading & Unloading" ? "sales_unloading" : "sales_loading",
+                            e.target.value,
+                          )
+                        }}
+                        maxLength={10}
+                        onKeyDown={handleKeyDown}
+                        className="text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
                   {/* Tempo Charges */}
                   <div>
                     <Label htmlFor="sales_tempo">Tempo Charges</Label>
@@ -1011,39 +1045,6 @@ const SalesEdit = () => {
                       className="mt-1 text-right"
                       placeholder="0"
                     />
-                  </div>
-
-                  {/* Loading/Unloading */}
-                  <div>
-                    <Label>Labour Charges</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
-                      <SelectShadcn
-                        value={loadingType}
-                        onValueChange={setLoadingType}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Loading Only">Loading Only</SelectItem>
-                          <SelectItem value="Loading and Unloading">Loading and Unloading</SelectItem>
-                        </SelectContent>
-                      </SelectShadcn>
-                      <Input
-                        id={loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading and Unloading" ? "sales_unloading" : "sales_loading"}
-                        type="tel"
-                        value={form.watch(loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading and Unloading" ? "sales_unloading" : "sales_loading") || ""}
-                        onChange={(e) => {
-                          handleChargeChange(
-                            loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading and Unloading" ? "sales_unloading" : "sales_loading",
-                            e.target.value,
-                          )
-                        }}
-                        maxLength={10}
-                        onKeyDown={handleKeyDown}
-                        placeholder="0"
-                      />
-                    </div>
                   </div>
 
                   {/* Other 1 */}
@@ -1136,7 +1137,7 @@ const SalesEdit = () => {
                       type="text"
                       value={Number(displayFinalTotal).toFixed(0)}
                       disabled
-                      className="mt-1 bg-blue-50 font-bold border-blue-200 text-blue-900 text-right"
+                      className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
                     />
                   </div>
 
@@ -1303,7 +1304,7 @@ const SalesEdit = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
+                          <th className="text-left p-2 font-medium text-sm w-[140px] min-w-[120px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
@@ -1488,6 +1489,40 @@ const SalesEdit = () => {
                   <div></div>
                   <div className="border rounded-lg p-3 bg-white">
                     <div className="grid grid-cols-1 gap-2">
+                      {/* Loading/Unloading */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Labour Charges</Label>
+                        <div className="flex w-1/2 gap-1">
+                          <SelectShadcn
+                            value={loadingType}
+                            onValueChange={setLoadingType}
+                          >
+                            <SelectTrigger className="w-1/2 h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Loading Only">Loading Only</SelectItem>
+                              <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                            </SelectContent>
+                          </SelectShadcn>
+                          <Input
+                            className="w-1/2 h-9 text-right"
+                            id={loadingType === "Loading Only" ? "sales_loading" : "sales_unloading"}
+                            type="tel"
+                            value={form.watch(loadingType === "Loading Only" ? "sales_loading" : "sales_unloading") || ""}
+                            onChange={(e) =>
+                              handleChargeChange(
+                                loadingType === "Loading Only" ? "sales_loading" : "sales_unloading",
+                                e.target.value,
+                              )
+                            }
+                            maxLength={10}
+                            onKeyDown={handleKeyDown}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+
                       {/* Tempo Charges */}
                       <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
@@ -1503,40 +1538,6 @@ const SalesEdit = () => {
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
-                      </div>
-
-                      {/* Loading/Unloading */}
-                      <div className="flex items-center justify-between">
-                        <Label className="font-medium">Labour Charges</Label>
-                        <div className="flex w-1/2 gap-1">
-                          <SelectShadcn
-                            value={loadingType}
-                            onValueChange={setLoadingType}
-                          >
-                            <SelectTrigger className="w-1/2 h-9">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Loading">Loading</SelectItem>
-                              <SelectItem value="Unloading">Unloading</SelectItem>
-                            </SelectContent>
-                          </SelectShadcn>
-                          <Input
-                            className="w-1/2 h-9 text-right"
-                            id={loadingType === "Loading" ? "sales_loading" : "sales_unloading"}
-                            type="tel"
-                            value={form.watch(loadingType === "Loading" ? "sales_loading" : "sales_unloading") || ""}
-                            onChange={(e) =>
-                              handleChargeChange(
-                                loadingType === "Loading" ? "sales_loading" : "sales_unloading",
-                                e.target.value,
-                              )
-                            }
-                            maxLength={10}
-                            onKeyDown={handleKeyDown}
-                            placeholder="0"
-                          />
-                        </div>
                       </div>
 
                       {/* Other 1 */}
@@ -1623,7 +1624,7 @@ const SalesEdit = () => {
                           Net Total
                         </Label>
                         <Input
-                          className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900 text-right"
+                          className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
                           type="text"
                           value={Number(displayFinalTotal).toFixed(0)}
                           disabled

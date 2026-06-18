@@ -590,20 +590,6 @@ const PurchaseGraniteEdit = () => {
                 <h1 className="text-base font-bold">Edit Purchase </h1>
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Total</p>
-                <p className="text-sm font-bold">
-                  {form.watch("purchase_amount") || 0}
-                </p>
-              </div>
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Other</p>
-                <p className="text-sm font-bold">
-                  {form.watch("purchase_other") || 0}
-                </p>
-              </div>
-            </div>
           </div>
 
           <div className="mb-14">
@@ -675,33 +661,6 @@ const PurchaseGraniteEdit = () => {
                       </SelectContent>
                     </SelectShadcn>
                   </div> */}
-                  <div>
-                    <Label htmlFor="purchase_other">
-                      Other Amount{" "}
-                      <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-                    <Input
-                      id="purchase_other"
-                      type="tel"
-                      {...form.register("purchase_other")}
-                      onChange={(e) => handleOtherChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="mt-1"
-                      placeholder="0"
-                      maxLength={10}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="purchase_amount">Total Amount</Label>
-                    <Input
-                      id="purchase_amount"
-                      type="tel"
-                      {...form.register("purchase_amount")}
-                      disabled
-                      className="mt-1 bg-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -789,7 +748,7 @@ const PurchaseGraniteEdit = () => {
                                 )
                               }
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Qnty (pcs)"
                               maxLength={10}
                             />
@@ -806,7 +765,7 @@ const PurchaseGraniteEdit = () => {
                                 )
                               }
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Qnty (sqr)"
                               maxLength={10}
                             />
@@ -823,7 +782,7 @@ const PurchaseGraniteEdit = () => {
                                 )
                               }
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Rate"
                               maxLength={10}
                             />
@@ -835,7 +794,7 @@ const PurchaseGraniteEdit = () => {
                             value={entry.purchase_sub_amount}
                             disabled
                             onKeyDown={handleKeyDown}
-                            className="h-8 text-sm bg-gray-100"
+                            className="h-8 text-sm bg-gray-100 text-right"
                             placeholder="Amount"
                           />
                         </div>
@@ -865,6 +824,37 @@ const PurchaseGraniteEdit = () => {
                   <Plus className="h-3 w-3 mr-1" />
                   Add Item
                 </Button>
+              </div>
+
+              {/* Other Amount & Total */}
+              <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-3">
+                <div>
+                  <Label htmlFor="purchase_other">
+                    Other Amount{" "}
+                    <span className="text-xs text-red-400 ">*</span>
+                  </Label>
+                  <Input
+                    id="purchase_other"
+                    type="tel"
+                    {...form.register("purchase_other")}
+                    onChange={(e) => handleOtherChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right"
+                    placeholder="0"
+                    maxLength={10}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="purchase_amount">Total Amount</Label>
+                  <Input
+                    id="purchase_amount"
+                    type="tel"
+                    {...form.register("purchase_amount")}
+                    disabled
+                    className="mt-1 bg-gray-100 text-right"
+                    placeholder="0"
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -975,33 +965,6 @@ const PurchaseGraniteEdit = () => {
                       </SelectContent>
                     </SelectShadcn>
                   </div> */}
-                  <div className="space-y-2">
-                    <Label htmlFor="purchase_other">
-                      Other Amount{" "}
-                      <span className="text-xs text-red-400 ">*</span>{" "}
-                    </Label>
-                    <Input
-                      id="purchase_other"
-                      type="tel"
-                      {...form.register("purchase_other")}
-                      onChange={(e) => handleOtherChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="bg-white"
-                      placeholder="0"
-                      maxLength={10}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="purchase_amount">Total Amount</Label>
-                    <Input
-                      id="purchase_amount"
-                      type="tel"
-                      {...form.register("purchase_amount")}
-                      disabled
-                      className="bg-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
                 </div>
 
                 {/* Items Table */}
@@ -1107,7 +1070,7 @@ const PurchaseGraniteEdit = () => {
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                                 maxLength={10}
                               />
@@ -1124,7 +1087,7 @@ const PurchaseGraniteEdit = () => {
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                                 maxLength={10}
                               />
@@ -1141,7 +1104,7 @@ const PurchaseGraniteEdit = () => {
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                                 maxLength={10}
                               />
@@ -1157,7 +1120,7 @@ const PurchaseGraniteEdit = () => {
                                     e.target.value,
                                   )
                                 }
-                                className="h-9 "
+                                className="h-9 text-right"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
                                 maxLength={10}
@@ -1191,6 +1154,39 @@ const PurchaseGraniteEdit = () => {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Item
                     </Button>
+                  </div>
+                </div>
+
+                {/* Other Amount & Total */}
+                <div className="border rounded-lg p-3 bg-white">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div></div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
+                        <Input
+                          id="purchase_other"
+                          type="tel"
+                          {...form.register("purchase_other")}
+                          onChange={(e) => handleOtherChange(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className="w-1/2 bg-white text-right"
+                          placeholder="0"
+                          maxLength={10}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="purchase_amount">Total Amount</Label>
+                        <Input
+                          id="purchase_amount"
+                          type="tel"
+                          {...form.register("purchase_amount")}
+                          disabled
+                          className="w-1/2 bg-gray-100 text-right"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
