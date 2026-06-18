@@ -335,7 +335,7 @@ const SalesView = () => {
           <CardContent>
             <div ref={tableRef} className="overflow-x-auto print:p-4">
               <div className="text-center border-l border-t border-r p-4 space-y-1">
-                <h3 className="text-2xl font-semibold">JAHAJ ESTIMATE</h3>
+                <h3 className="text-2xl font-semibold">JAJU'S ESTIMATE</h3>
                 {/* <p className="text-sm">New 80 ft Sompura, Sriniwaspura Road, Banakshankari 6th Stage 11th Block, Srinivaspura, Bengaluru, Karnataka 560098</p>
                 <p className="text-sm">Phone: 097420 42097</p>
                 <h4 className="text-xl font-semibold mt-2">SALES</h4> */}
@@ -430,7 +430,7 @@ const SalesView = () => {
                   </TableRow>
                   <TableRow className="font-bold">
                     <TableCell colSpan={4} className="text-right bg-white border-r border-b">
-                      Total
+                      Net Total
                     </TableCell>
                     <TableCell className="text-right  bg-white border-b pr-4">
                       {Number(salesData?.sales?.sales_gross).toFixed(0)}

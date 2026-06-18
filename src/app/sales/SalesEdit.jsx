@@ -914,7 +914,7 @@ const SalesEdit = () => {
                               }
                               maxLength={10}
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Qnty (pcs)"
                             />
                           </div>
@@ -931,7 +931,7 @@ const SalesEdit = () => {
                               }
                               maxLength={10}
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Qnty (sqr)"
                             />
                           </div>
@@ -950,7 +950,7 @@ const SalesEdit = () => {
                               }
                               maxLength={10}
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Rate"
                             />
                           </div>
@@ -960,7 +960,7 @@ const SalesEdit = () => {
                               value={entry.sales_sub_amount}
                               disabled
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm bg-gray-100"
+                              className="h-8 text-sm bg-gray-100 text-right"
                               placeholder="Amount"
                             />
                           </div>
@@ -1008,7 +1008,7 @@ const SalesEdit = () => {
                         handleChargeChange("sales_tempo", e.target.value)
                       }
                       onKeyDown={handleKeyDown}
-                      className="mt-1"
+                      className="mt-1 text-right"
                       placeholder="0"
                     />
                   </div>
@@ -1064,6 +1064,7 @@ const SalesEdit = () => {
                         }
                         maxLength={10}
                         onKeyDown={handleKeyDown}
+                        className="text-right"
                         placeholder="0"
                       />
                     </div>
@@ -1087,6 +1088,7 @@ const SalesEdit = () => {
                         }
                         maxLength={10}
                         onKeyDown={handleKeyDown}
+                        className="text-right"
                         placeholder="0"
                       />
                     </div>
@@ -1097,26 +1099,26 @@ const SalesEdit = () => {
                     <Label>Gross Total</Label>
                     <Input
                       type="text"
-                      value={displayGrandTotal.toString()}
+                      value={Number(displayGrandTotal).toFixed(0)}
                       disabled
-                      className="mt-1 bg-gray-100 font-medium"
+                      className="mt-1 bg-gray-100 font-medium text-right"
                     />
                   </div>
 
                   {/* GST Amount */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <Label>GST 18% ({displayGst.toFixed(2)})</Label>
+                      <Label>GST 18% ({Number(displayGst).toFixed(0)})</Label>
                     </div>
                     <Input
                       type="tel"
-                      value={displayGst.toString()}
+                      value={Number(displayGst).toFixed(0)}
                       onChange={(e) => {
                         setGstEdited(true);
                         form.setValue("sales_tax", e.target.value);
                       }}
                       onKeyDown={handleKeyDown}
-                      className="mt-1"
+                      className="mt-1 text-right"
                       maxLength={10}
                       placeholder="0"
                     />
@@ -1132,9 +1134,9 @@ const SalesEdit = () => {
                     </Label>
                     <Input
                       type="text"
-                      value={displayFinalTotal.toString()}
+                      value={Number(displayFinalTotal).toFixed(0)}
                       disabled
-                      className="mt-1 bg-blue-50 font-bold border-blue-200 text-blue-900"
+                      className="mt-1 bg-blue-50 font-bold border-blue-200 text-blue-900 text-right"
                     />
                   </div>
 
@@ -1145,7 +1147,7 @@ const SalesEdit = () => {
                       type="tel"
                       {...form.register("sales_amount_received")}
                       onKeyDown={handleKeyDown}
-                      className="mt-1"
+                      className="mt-1 text-right"
                       maxLength={10}
                       placeholder="0"
                     />
@@ -1402,7 +1404,7 @@ const SalesEdit = () => {
                                 }
                                 maxLength={10}
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                               />
                             </td>
@@ -1419,7 +1421,7 @@ const SalesEdit = () => {
                                 }
                                 maxLength={10}
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                               />
                             </td>
@@ -1445,7 +1447,7 @@ const SalesEdit = () => {
                                 type="tel"
                                 value={entry.sales_sub_amount}
                                 disabled
-                                className="h-9 bg-gray-100"
+                                className="h-9 bg-gray-100 text-right"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
                               />
@@ -1585,20 +1587,20 @@ const SalesEdit = () => {
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">Gross Total</Label>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium"
+                          className="w-1/2 bg-gray-100 font-medium text-right"
                           type="text"
-                          value={displayGrandTotal.toString()}
+                          value={Number(displayGrandTotal).toFixed(0)}
                           disabled
                         />
                       </div>
 
                       {/* GST Amount */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">GST 18% ({displayGst.toFixed(2)})</Label>
+                        <Label className="font-medium">GST 18% ({Number(displayGst).toFixed(0)})</Label>
                         <Input
-                          className="w-1/2"
+                          className="w-1/2 text-right"
                           type="tel"
-                          value={displayGst.toString()}
+                          value={Number(displayGst).toFixed(0)}
                           onChange={(e) => {
                             setGstEdited(true);
                             form.setValue("sales_tax", e.target.value);
@@ -1621,9 +1623,9 @@ const SalesEdit = () => {
                           Net Total
                         </Label>
                         <Input
-                          className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900"
+                          className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900 text-right"
                           type="text"
-                          value={displayFinalTotal.toString()}
+                          value={Number(displayFinalTotal).toFixed(0)}
                           disabled
                         />
                       </div>
@@ -1632,7 +1634,7 @@ const SalesEdit = () => {
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">Final Amount Received</Label>
                         <Input
-                          className="w-1/2"
+                          className="w-1/2 text-right"
                           type="tel"
                           {...form.register("sales_amount_received")}
                           onKeyDown={handleKeyDown}
