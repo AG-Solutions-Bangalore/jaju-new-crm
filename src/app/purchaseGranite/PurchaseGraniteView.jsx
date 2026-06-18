@@ -295,12 +295,12 @@ const PurchaseGraniteView = () => {
                   <h3 className="text-2xl font-semibold">
                     JAJU'S FLOORING CONCEPTS
                   </h3>
-                  <p className="text-sm">
+                  {/* <p className="text-sm">
                     New 80 ft Sompura, Sriniwaspura Road, Banakshankari 6th
                     Stage 11th Block, Srinivaspura, Bengaluru, Karnataka 560098
                   </p>
                   <p className="text-sm">Phone: 097420 42097</p>
-                  <h4 className="text-xl font-semibold mt-2">PURCHASE</h4>
+                  <h4 className="text-xl font-semibold mt-2">PURCHASE</h4> */}
                 </div>
 
                 <div className="grid grid-cols-2 border m-0">
@@ -338,10 +338,10 @@ const PurchaseGraniteView = () => {
                         Quantity
                       </TableHead>
                       <TableHead className="text-center text-black font-bold  border-r">
-                        Rate (₹)
+                        Rate
                       </TableHead>
                       <TableHead className="text-center text-black font-bold ">
-                        Amount (₹)
+                        Amount
                       </TableHead>
                     </TableRow>
                   </TableHeader>

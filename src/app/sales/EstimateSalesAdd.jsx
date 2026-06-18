@@ -117,7 +117,7 @@ const EstimateSalesAdd = () => {
         `${BASE_URL}/api/web-fetch-estimate-by-id/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -134,7 +134,7 @@ const EstimateSalesAdd = () => {
         `${BASE_URL}/api/web-fetch-product-type-group`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data.product_type_group || [];
     },
@@ -148,11 +148,11 @@ const EstimateSalesAdd = () => {
       const token = Cookies.get("token");
       const response = await axios.get(
         `${BASE_URL}/api/web-fetch-product-types/${form.watch(
-          "sales_item_type"
+          "sales_item_type",
         )}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setIsLoadingItems(false);
       return response.data.product_type || [];
@@ -160,11 +160,14 @@ const EstimateSalesAdd = () => {
     enabled: !!form.watch("sales_item_type"),
   });
 
-  const productOptions = useMemo(() => 
-    product.map((item) => ({
-      value: item.product_type,
-      label: item.product_type,
-    })), [product]);
+  const productOptions = useMemo(
+    () =>
+      product.map((item) => ({
+        value: item.product_type,
+        label: item.product_type,
+      })),
+    [product],
+  );
 
   useEffect(() => {
     if (salesEstimateId) {
@@ -193,7 +196,7 @@ const EstimateSalesAdd = () => {
           id: sub.id || "",
           estimate_sub_type: sub.estimate_sub_type || "",
           estimate_sub_item: sub.estimate_sub_item || "",
-         
+
           estimate_sub_qnty: sub.estimate_sub_qnty?.toString() || "",
           estimate_sub_qnty_sqr: sub.estimate_sub_qnty_sqr?.toString() || "",
           estimate_sub_rate: sub.estimate_sub_rate?.toString() || "",
@@ -224,7 +227,7 @@ const EstimateSalesAdd = () => {
 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
@@ -245,7 +248,7 @@ const EstimateSalesAdd = () => {
 
     const itemsTotal = itemEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
@@ -290,7 +293,7 @@ const EstimateSalesAdd = () => {
 
     const itemsTotal = updatedEntries.reduce(
       (sum, entry) => sum + parseFloat(entry.estimate_sub_amount || 0),
-      0
+      0,
     );
     const chargesTotal =
       parseFloat(form.watch("sales_tax") || 0) +
@@ -306,7 +309,6 @@ const EstimateSalesAdd = () => {
     form.setValue("sales_balance", newBalance.toString());
   };
 
-
   const createEstimateSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -315,7 +317,7 @@ const EstimateSalesAdd = () => {
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -348,23 +350,29 @@ const EstimateSalesAdd = () => {
       qnty: !entry.estimate_sub_qnty
         ? "required"
         : isNaN(entry.estimate_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
+          ? "Quantity must be a number"
+          : "",
       qntySqr: !entry.estimate_sub_qnty_sqr
         ? "required"
         : isNaN(entry.estimate_sub_qnty_sqr)
-        ? "Quantity (sqr) must be a number"
-        : "",
+          ? "Quantity (sqr) must be a number"
+          : "",
       rate: !entry.estimate_sub_rate
         ? "required"
         : isNaN(entry.estimate_sub_rate)
-        ? "Rate must be a number"
-        : "",
+          ? "Rate must be a number"
+          : "",
     }));
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.type || err.item || err.qnty || err.qntySqr || err.rate || err.originalItem
+      (err) =>
+        err.type ||
+        err.item ||
+        err.qnty ||
+        err.qntySqr ||
+        err.rate ||
+        err.originalItem,
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -472,7 +480,7 @@ const EstimateSalesAdd = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                        Original  Item
+                          Original Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
@@ -501,7 +509,7 @@ const EstimateSalesAdd = () => {
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.type}
                               </td>
-                             
+
                               <td className="px-1.5 py-1.5 text-red-600 border-b border-gray-200 break-all">
                                 {error.item}
                               </td>
@@ -518,7 +526,7 @@ const EstimateSalesAdd = () => {
                                 {error.rate}
                               </td>
                             </tr>
-                          )
+                          ),
                       )}
                     </tbody>
                   </table>
@@ -706,8 +714,6 @@ const EstimateSalesAdd = () => {
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium">Items</h3>
                 </div>
-               
-            
 
                 {itemEntries.map((entry, index) => (
                   <div
@@ -733,7 +739,11 @@ const EstimateSalesAdd = () => {
                             <SelectShadcn
                               value={entry.estimate_sub_type}
                               onValueChange={(value) =>
-                                handleItemChange(index, "estimate_sub_type", value)
+                                handleItemChange(
+                                  index,
+                                  "estimate_sub_type",
+                                  value,
+                                )
                               }
                             >
                               <SelectTrigger className="w-full">
@@ -761,7 +771,7 @@ const EstimateSalesAdd = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_item",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="h-8 text-sm"
@@ -774,15 +784,15 @@ const EstimateSalesAdd = () => {
                         <div className="grid grid-cols-3 gap-1">
                           <div>
                             {isLoadingItems ? (
-                                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
+                              <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
                             ) : (
-                               <MemoizedProductSelect
+                              <MemoizedProductSelect
                                 value={entry.sales_sub_item_original}
                                 onChange={(value) =>
                                   handleItemChange(
                                     index,
                                     "sales_sub_item_original",
-                                    value
+                                    value,
                                   )
                                 }
                                 options={productOptions}
@@ -798,7 +808,7 @@ const EstimateSalesAdd = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_qnty",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -815,7 +825,7 @@ const EstimateSalesAdd = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_qnty_sqr",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -834,7 +844,7 @@ const EstimateSalesAdd = () => {
                                 handleItemChange(
                                   index,
                                   "estimate_sub_rate",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               onKeyDown={handleKeyDown}
@@ -871,8 +881,6 @@ const EstimateSalesAdd = () => {
                   </div>
                 ))}
 
-
-
                 <Button
                   type="button"
                   variant="outline"
@@ -883,8 +891,7 @@ const EstimateSalesAdd = () => {
                   <Plus className="h-3 w-3 mr-1" />
                   Add Item
                 </Button>
-              
-              </div> 
+              </div>
 
               {/* Charges */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
@@ -962,7 +969,6 @@ const EstimateSalesAdd = () => {
                       disabled
                       onKeyDown={handleKeyDown}
                       className="mt-1 bg-gray-100"
-                      
                     />
                   </div>
                   <div>
@@ -1157,10 +1163,6 @@ const EstimateSalesAdd = () => {
                         </tr>
                       </thead>
                       <tbody>
-
-
-
-
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
@@ -1183,7 +1185,7 @@ const EstimateSalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_type",
-                                    value
+                                    value,
                                   )
                                 }
                               >
@@ -1212,7 +1214,7 @@ const EstimateSalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_item",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="h-9"
@@ -1222,16 +1224,16 @@ const EstimateSalesAdd = () => {
 
                             <td className="p-2">
                               {isLoadingItems ? (
-                                                  <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
+                                <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
                               ) : (
-                                 <div className="w-[8rem]">
+                                <div className="w-[8rem]">
                                   <MemoizedProductSelect
                                     value={entry.sales_sub_item_original}
                                     onChange={(value) =>
                                       handleItemChange(
                                         index,
                                         "sales_sub_item_original",
-                                        value
+                                        value,
                                       )
                                     }
                                     options={productOptions}
@@ -1249,7 +1251,7 @@ const EstimateSalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_qnty",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -1266,7 +1268,7 @@ const EstimateSalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_qnty_sqr",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -1283,7 +1285,7 @@ const EstimateSalesAdd = () => {
                                   handleItemChange(
                                     index,
                                     "estimate_sub_rate",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
@@ -1476,7 +1478,7 @@ const EstimateSalesAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Sales"}
+                    {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </form>

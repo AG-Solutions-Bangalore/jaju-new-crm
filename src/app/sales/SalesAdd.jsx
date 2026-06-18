@@ -101,9 +101,14 @@ const SalesAdd = () => {
     },
   ]);
   const [customItems, setCustomItems] = useState({});
+  const [isCustomItem, setIsCustomItem] = useState({});
 
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
+
+  const handleToggleCustomItem = (index) => {
+    setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
   const { data: productTypeGroup = [] } = useQuery({
@@ -147,7 +152,6 @@ const SalesAdd = () => {
           item.item_name || item.product_type_group || item.product_type;
         return { value: name, label: name };
       }),
-      { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
     ],
     [product],
   );
@@ -272,8 +276,7 @@ const SalesAdd = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
-        !entry.sales_sub_item ||
-        (entry.sales_sub_item === "NOT IN THE LIST" && !customItems[index])
+        !entry.sales_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
       qnty: !entry.sales_sub_qnty
@@ -476,10 +479,9 @@ const SalesAdd = () => {
       const formattedItemEntries = itemEntries.map((entry, index) => ({
         ...entry,
         sales_sub_pcs: entry.sales_sub_qnty,
-        sales_sub_item:
-          entry.sales_sub_item === "NOT IN THE LIST"
-            ? customItems[index]
-            : entry.sales_sub_item,
+        sales_sub_item: isCustomItem[index]
+          ? customItems[index]
+          : entry.sales_sub_item,
       }));
 
       const itemsTotal = itemEntries.reduce(
@@ -664,57 +666,59 @@ const SalesAdd = () => {
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-11">
-                        <div className="grid grid-cols-2 gap-1 mb-1">
-                          {/* <div className="col-span-1">
-                            <SelectShadcn
-                              value={entry.sales_sub_type}
-                              onValueChange={(value) =>
-                                handleItemChange(index, "sales_sub_type", value)
-                              }
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectLabel>Item Types</SelectLabel>
-                                  {typeOptions.map((type) => (
-                                    <SelectItem
-                                      key={type.value}
-                                      value={type.value}
-                                    >
-                                      {type.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </SelectShadcn>
-                          </div> */}
-                          <div className={entry.sales_sub_item === "NOT IN THE LIST" ? "col-span-1" : "col-span-2"}>
-                            <MemoizedProductSelect
-                              value={entry.sales_sub_item}
-                              onChange={(value) =>
-                                handleItemChange(index, "sales_sub_item", value)
-                              }
-                              options={productOptions}
-                              placeholder="Select item..."
-                            />
-                          </div>
-                          {entry.sales_sub_item === "NOT IN THE LIST" && (
-                            <div className="col-span-1">
-                              <Input
-                                type="text"
-                                value={customItems[index] || ""}
-                                onChange={(e) =>
-                                  handleCustomItemChange(
-                                    index,
-                                    e.target.value,
-                                  )
-                                }
-                                className="h-8 text-sm"
-                                placeholder="Enter name"
-                              />
-                            </div>
+                        <div className="flex gap-1 mb-1">
+                          {isCustomItem[index] ? (
+                            <>
+                              <div className="flex-1">
+                                <Input
+                                  type="text"
+                                  className="h-8 text-sm uppercase"
+                                  placeholder="Enter item name"
+                                  value={customItems[index] || ""}
+                                  onChange={(e) =>
+                                    handleCustomItemChange(
+                                      index,
+                                      e.target.value.toUpperCase(),
+                                    )
+                                  }
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                Select
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex-1">
+                                <MemoizedProductSelect
+                                  value={entry.sales_sub_item}
+                                  onChange={(value) =>
+                                    handleItemChange(
+                                      index,
+                                      "sales_sub_item",
+                                      value,
+                                    )
+                                  }
+                                  options={productOptions}
+                                  placeholder="Select item..."
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                NOT IN LIST
+                              </Button>
+                            </>
                           )}
                         </div>
                         <div className="grid grid-cols-2 mt-1 gap-1">
@@ -1137,33 +1141,60 @@ const SalesAdd = () => {
                             </td> */}
                             <td className="p-2">
                               <div className="flex gap-2 items-start">
-                                <div className="flex-1 min-w-0">
-                                  <MemoizedProductSelect
-                                    value={entry.sales_sub_item}
-                                    onChange={(value) =>
-                                      handleItemChange(
-                                        index,
-                                        "sales_sub_item",
-                                        value,
-                                      )
-                                    }
-                                    options={productOptions}
-                                    placeholder="Select item"
-                                  />
-                                </div>
-                                {entry.sales_sub_item === "NOT IN THE LIST" && (
-                                  <Input
-                                    type="text"
-                                    className="h-9 w-[120px] shrink-0"
-                                    placeholder="Enter name"
-                                    value={customItems[index] || ""}
-                                    onChange={(e) =>
-                                      handleCustomItemChange(
-                                        index,
-                                        e.target.value,
-                                      )
-                                    }
-                                  />
+                                {isCustomItem[index] ? (
+                                  <div className="flex-1 min-w-0 flex gap-2">
+                                    <Input
+                                      type="text"
+                                      className="h-9 uppercase"
+                                      placeholder="Enter item name"
+                                      value={customItems[index] || ""}
+                                      onChange={(e) =>
+                                        handleCustomItemChange(
+                                          index,
+                                          e.target.value.toUpperCase(),
+                                        )
+                                      }
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 whitespace-nowrap shrink-0"
+                                      onClick={() =>
+                                        handleToggleCustomItem(index)
+                                      }
+                                    >
+                                      Select
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0">
+                                      <MemoizedProductSelect
+                                        value={entry.sales_sub_item}
+                                        onChange={(value) =>
+                                          handleItemChange(
+                                            index,
+                                            "sales_sub_item",
+                                            value,
+                                          )
+                                        }
+                                        options={productOptions}
+                                        placeholder="Select item"
+                                      />
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 whitespace-nowrap shrink-0"
+                                      onClick={() =>
+                                        handleToggleCustomItem(index)
+                                      }
+                                    >
+                                      NOT IN LIST
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </td>
@@ -1435,7 +1466,7 @@ const SalesAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Sale"}
+                    {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </form>

@@ -82,9 +82,14 @@ const PurchaseGraniteAdd = () => {
     },
   ]);
   const [customItems, setCustomItems] = useState({});
+  const [isCustomItem, setIsCustomItem] = useState({});
 
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
+
+  const handleToggleCustomItem = (index) => {
+    setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
   const { data: productTypeGroup = [] } = useQuery({
@@ -128,7 +133,6 @@ const PurchaseGraniteAdd = () => {
           item.item_name || item.product_type_group || item.product_type;
         return { value: name, label: name };
       }),
-      { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
     ],
     [product],
   );
@@ -249,8 +253,7 @@ const PurchaseGraniteAdd = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
-        !entry.purchase_sub_item ||
-        (entry.purchase_sub_item === "NOT IN THE LIST" && !customItems[index])
+        !entry.purchase_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
       qnty: !entry.purchase_sub_qnty
@@ -447,10 +450,9 @@ const PurchaseGraniteAdd = () => {
         return {
           ...entry,
           purchase_sub_pcs: entry.purchase_sub_qnty,
-          purchase_sub_item:
-            entry.purchase_sub_item === "NOT IN THE LIST"
-              ? customItems[index]
-              : entry.purchase_sub_item,
+          purchase_sub_item: isCustomItem[index]
+            ? customItems[index]
+            : entry.purchase_sub_item,
         };
       });
 
@@ -489,7 +491,7 @@ const PurchaseGraniteAdd = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Add Aaya</h1>
+                <h1 className="text-base font-bold">Add Purchases</h1>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -619,31 +621,59 @@ const PurchaseGraniteAdd = () => {
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-11">
-                        <div className="mb-1">
-                          <MemoizedProductSelect
-                            value={entry.purchase_sub_item}
-                            onChange={(value) =>
-                              handleItemChange(
-                                index,
-                                "purchase_sub_item",
-                                value,
-                              )
-                            }
-                            options={productOptions}
-                            placeholder="Select item..."
-                          />
-                          {entry.purchase_sub_item === "NOT IN THE LIST" && (
-                            <div className="mt-1">
-                              <Input
-                                type="text"
-                                value={customItems[index] || ""}
-                                onChange={(e) =>
-                                  handleCustomItemChange(index, e.target.value)
-                                }
-                                className="h-8 text-sm"
-                                placeholder="Enter custom item name"
-                              />
-                            </div>
+                        <div className="flex gap-1 mb-1">
+                          {isCustomItem[index] ? (
+                            <>
+                              <div className="flex-1">
+                                <Input
+                                  type="text"
+                                  className="h-8 text-sm uppercase"
+                                  placeholder="Enter item name"
+                                  value={customItems[index] || ""}
+                                  onChange={(e) =>
+                                    handleCustomItemChange(
+                                      index,
+                                      e.target.value.toUpperCase(),
+                                    )
+                                  }
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                Select
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex-1">
+                                <MemoizedProductSelect
+                                  value={entry.purchase_sub_item}
+                                  onChange={(value) =>
+                                    handleItemChange(
+                                      index,
+                                      "purchase_sub_item",
+                                      value,
+                                    )
+                                  }
+                                  options={productOptions}
+                                  placeholder="Select item..."
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                NOT IN LIST
+                              </Button>
+                            </>
                           )}
                         </div>
                         <div className="grid grid-cols-3 gap-1">
@@ -773,7 +803,7 @@ const PurchaseGraniteAdd = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Aaya</CardTitle>
+                  <CardTitle>Add Purchases</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -884,61 +914,89 @@ const PurchaseGraniteAdd = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqr){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Rate{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
                             Amount
                           </th>
-                          <th className="text-left p-2 font-medium text-sm"></th>
+                          <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
-                              <div className="w-[8rem]">
-                                <MemoizedProductSelect
-                                  value={entry.purchase_sub_item}
-                                  onChange={(value) =>
-                                    handleItemChange(
-                                      index,
-                                      "purchase_sub_item",
-                                      value,
-                                    )
-                                  }
-                                  options={productOptions}
-                                  placeholder="Select item"
-                                />
+                              <div className="flex gap-2 items-start">
+                                {isCustomItem[index] ? (
+                                  <div className="flex-1 min-w-0 flex gap-2">
+                                    <Input
+                                      type="text"
+                                      className="h-9 uppercase"
+                                      placeholder="Enter item name"
+                                      value={customItems[index] || ""}
+                                      onChange={(e) =>
+                                        handleCustomItemChange(
+                                          index,
+                                          e.target.value.toUpperCase(),
+                                        )
+                                      }
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 whitespace-nowrap shrink-0"
+                                      onClick={() =>
+                                        handleToggleCustomItem(index)
+                                      }
+                                    >
+                                      Select
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0">
+                                      <MemoizedProductSelect
+                                        value={entry.purchase_sub_item}
+                                        onChange={(value) =>
+                                          handleItemChange(
+                                            index,
+                                            "purchase_sub_item",
+                                            value,
+                                          )
+                                        }
+                                        options={productOptions}
+                                        placeholder="Select item"
+                                      />
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 whitespace-nowrap shrink-0"
+                                      onClick={() =>
+                                        handleToggleCustomItem(index)
+                                      }
+                                    >
+                                      NOT IN LIST
+                                    </Button>
+                                  </>
+                                )}
                               </div>
-                              {entry.purchase_sub_item ===
-                                "NOT IN THE LIST" && (
-                                <Input
-                                  type="text"
-                                  className="mt-1 h-9"
-                                  placeholder="Enter custom item name"
-                                  value={customItems[index] || ""}
-                                  onChange={(e) =>
-                                    handleCustomItemChange(
-                                      index,
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
                             </td>
                             <td className="p-2">
                               <Input
@@ -1047,7 +1105,7 @@ const PurchaseGraniteAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Purchase"}
+                    {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </form>
