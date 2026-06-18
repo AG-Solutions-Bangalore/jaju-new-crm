@@ -181,7 +181,7 @@ const SalesView = () => {
               </span>
             </div>
             <div className="flex justify-center border p-1">
-              <span className="font-medium">Sales No:</span>{" "}
+              <span className="font-medium">	JFC Bill No:</span>{" "}
               <span className="ml-1">
                 {salesData?.sales?.sales_no}
               </span>
@@ -343,7 +343,7 @@ const SalesView = () => {
     </span>
   </div>
   <div className="flex items-center justify-center py-2 px-3">
-    <span className="font-medium">Sales No:</span>
+    <span className="font-medium">	JFC Bill No:</span>
     <span className="ml-1">{salesData?.sales?.sales_no}</span>
   </div>
 </div>

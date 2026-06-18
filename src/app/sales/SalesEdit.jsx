@@ -284,6 +284,7 @@ const SalesEdit = () => {
   };
 
   const removeItemEntry = (index) => {
+    const entry = itemEntries[index];
     const updatedEntries = [...itemEntries];
     updatedEntries.splice(index, 1);
     setItemEntries(updatedEntries);
@@ -297,7 +298,38 @@ const SalesEdit = () => {
       return newCustom;
     });
 
+    if (entry.id) {
+      const token = Cookies.get("token");
+      axios
+        .delete(`${BASE_URL}/api/web-delete-sales-sub/${entry.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description:
+              error.response?.data?.message || "Failed to delete item",
+            variant: "destructive",
+          });
+        });
+    }
+
     calculateAndSetTotals(updatedEntries);
+  };
+
+  const addItemEntry = () => {
+    const newEntry = {
+      sales_sub_type: "",
+      sales_sub_item: "",
+      sales_sub_qnty: "",
+      sales_sub_qnty_sqr: "",
+      sales_sub_rate: "",
+      sales_sub_amount: "",
+      sales_sub_item_original: "",
+    };
+    const updated = [...itemEntries, newEntry];
+    setItemEntries(updated);
+    calculateAndSetTotals(updated);
   };
 
   const updateSalesMutation = useMutation({
@@ -913,6 +945,16 @@ const SalesEdit = () => {
                     </div>
                   </div>
                 ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addItemEntry}
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 text-xs h-8 mt-2"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Item
+                </Button>
               </div>
 
               {/* Charges and Totals */}
@@ -1362,6 +1404,18 @@ const SalesEdit = () => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addItemEntry}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
                   </div>
                 </div>
 
