@@ -908,8 +908,8 @@ const PurchaseGraniteEdit = () => {
               </div>
             </CardHeader>
 
-            <CardContent>
-              <form onSubmit={handleFormSubmit} className="space-y-2">
+                <CardContent>
+                  <form id="purchase-edit-form" onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Purchase Information */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
@@ -1203,6 +1203,19 @@ const PurchaseGraniteEdit = () => {
                     className="border-gray-300 hover:bg-gray-50"
                   >
                     Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const formElement = document.getElementById('purchase-edit-form');
+                      if (formElement) {
+                        formElement.requestSubmit();
+                      }
+                    }}
+                    className="border-gray-300 hover:bg-gray-50"
+                  >
+                    Save and Close
                   </Button>
                   <Button
                     type="submit"

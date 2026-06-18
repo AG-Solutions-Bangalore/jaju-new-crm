@@ -166,7 +166,7 @@ const SalesView = () => {
       ) : (
         <>
           <div className="text-center border p-2 space-y-1 mb-3 text-xs">
-            <h3 className="text-sm font-semibold">JAJU'S FLOORING CONCEPTS</h3>
+            <h3 className="text-sm font-semibold">JAHAJ ESTIMATE</h3>
             {/* <p className="text-xs">New 80 ft Sompura, Sriniwaspura Road</p>
             <p className="text-xs">Bengaluru, Karnataka 560098</p>
             <p className="text-xs">Phone: 097420 42097</p> */}
@@ -223,10 +223,10 @@ const SalesView = () => {
                     {item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}
                   </td>
                   <td className="border p-1 text-right">
-                    {item.sales_sub_rate}
+                    {Number(item.sales_sub_rate).toFixed(0)}
                   </td>
                   <td className="border p-1 text-right">
-                    {item.sales_sub_amount}
+                    {Number(item.sales_sub_amount).toFixed(0)}
                   </td>
                 </tr>
               ))}
@@ -239,49 +239,49 @@ const SalesView = () => {
               <tr>
                 <td className="border p-1 text-right font-medium">Sub-Total</td>
                 <td className="border p-1 text-right">
-                  {calculateSubTotal(salesData?.salesSub)}
+                  {Number(calculateSubTotal(salesData?.salesSub)).toFixed(0)}
                 </td>
               </tr>
               <tr>
                 <td className="border p-1 text-right font-medium">Tax</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_tax}
+                  {Number(salesData?.sales?.sales_tax).toFixed(0)}
                 </td>
               </tr>
               <tr>
                 <td className="border p-1 text-right font-medium">Tempo Charges</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_tempo}
+                  {Number(salesData?.sales?.sales_tempo).toFixed(0)}
                 </td>
               </tr>
               <tr>
                 <td className="border p-1 text-right font-medium">Loading/Unloading</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_loading}
+                  {Number(salesData?.sales?.sales_loading).toFixed(0)}
                 </td>
               </tr>
               <tr>
                 <td className="border p-1 text-right font-medium">Other Charges</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_other}
+                  {Number(salesData?.sales?.sales_other).toFixed(0)}
                 </td>
               </tr>
               <tr className="font-bold">
                 <td className="border p-1 text-right">Total</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_gross}
+                  {Number(salesData?.sales?.sales_gross).toFixed(0)}
                 </td>
               </tr>
               <tr>
                 <td className="border p-1 text-right font-medium">Advance Received</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_advance}
+                  {Number(salesData?.sales?.sales_advance).toFixed(0)}
                 </td>
               </tr>
               <tr className="font-bold">
                 <td className="border p-1 text-right">Balance</td>
                 <td className="border p-1 text-right">
-                  {salesData?.sales?.sales_balance}
+                  {Number(salesData?.sales?.sales_balance).toFixed(0)}
                 </td>
               </tr>
             </tbody>
@@ -335,7 +335,7 @@ const SalesView = () => {
           <CardContent>
             <div ref={tableRef} className="overflow-x-auto print:p-4">
               <div className="text-center border-l border-t border-r p-4 space-y-1">
-                <h3 className="text-2xl font-semibold">JAJU'S FLOORING CONCEPTS</h3>
+                <h3 className="text-2xl font-semibold">JAHAJ ESTIMATE</h3>
                 {/* <p className="text-sm">New 80 ft Sompura, Sriniwaspura Road, Banakshankari 6th Stage 11th Block, Srinivaspura, Bengaluru, Karnataka 560098</p>
                 <p className="text-sm">Phone: 097420 42097</p>
                 <h4 className="text-xl font-semibold mt-2">SALES</h4> */}
@@ -379,11 +379,11 @@ const SalesView = () => {
                 <TableBody>
                   {salesData?.salesSub?.map((item, index) => (
                     <TableRow key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-white'}>
-                      <TableCell className="text-center border-r">{index + 1}</TableCell>
-                      <TableCell className="text-center border-r">{item.sales_sub_item}</TableCell>
-                      <TableCell className="text-center border-r">{item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}</TableCell>
-                      <TableCell className="text-center border-r">{item.sales_sub_rate}</TableCell>
-                      <TableCell className="text-center">{item.sales_sub_amount}</TableCell>
+                      <TableCell className="text-left border-r pl-4">{index + 1}</TableCell>
+                      <TableCell className="text-left border-r pl-4">{item.sales_sub_item}</TableCell>
+                      <TableCell className="text-right border-r pr-4">{item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}</TableCell>
+                      <TableCell className="text-right border-r pr-4">{Number(item.sales_sub_rate).toFixed(0)}</TableCell>
+                      <TableCell className="text-right pr-4">{Number(item.sales_sub_amount).toFixed(0)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -392,64 +392,64 @@ const SalesView = () => {
                     <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
                       Sub-Total
                     </TableCell>
-                    <TableCell className="text-right  bg-white border-b">
-                      {calculateSubTotal(salesData?.salesSub)}
+                    <TableCell className="text-right  bg-white border-b pr-4">
+                      {Number(calculateSubTotal(salesData?.salesSub)).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={4} className="text-right bg-white  font-medium border-r border-b">
                       Tax
                     </TableCell>
-                    <TableCell className="text-right bg-white border-b">
-                      {salesData?.sales?.sales_tax}
+                    <TableCell className="text-right bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_tax).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={4} className="text-right  bg-white font-medium border-r border-b">
                       Tempo Charges
                     </TableCell>
-                    <TableCell className="text-right  bg-white border-b">
-                      {salesData?.sales?.sales_tempo}
+                    <TableCell className="text-right  bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_tempo).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
                       Loading/Unloading
                     </TableCell>
-                    <TableCell className="text-right bg-white border-b">
-                      {salesData?.sales?.sales_loading}
+                    <TableCell className="text-right bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_loading).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
                       Other Charges
                     </TableCell>
-                    <TableCell className="text-right bg-white border-b">
-                      {salesData?.sales?.sales_other}
+                    <TableCell className="text-right bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_other).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow className="font-bold">
                     <TableCell colSpan={4} className="text-right bg-white border-r border-b">
                       Total
                     </TableCell>
-                    <TableCell className="text-right  bg-white border-b">
-                      {salesData?.sales?.sales_gross}
+                    <TableCell className="text-right  bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_gross).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
                       Advance Received
                     </TableCell>
-                    <TableCell className="text-right bg-white border-b">
-                      {salesData?.sales?.sales_advance}
+                    <TableCell className="text-right bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_advance).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow className="font-bold">
                     <TableCell colSpan={4} className="text-right bg-white border-r">
                       Balance
                     </TableCell>
-                    <TableCell className="text-right bg-white">
-                      {salesData?.sales?.sales_balance}
+                    <TableCell className="text-right bg-white pr-4">
+                      {Number(salesData?.sales?.sales_balance).toFixed(0)}
                     </TableCell>
                   </TableRow>
                 </TableFooter>

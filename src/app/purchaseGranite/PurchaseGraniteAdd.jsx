@@ -483,35 +483,21 @@ const PurchaseGraniteAdd = () => {
     <Page>
       <div className="w-full p-0 md:p-0">
         <div className="sm:hidden">
-          {/* Mobile View */}
-          <div className="sticky top-0 z-10 border border-gray-200 rounded-lg bg-blue-50 shadow-sm p-2 mb-2">
-            <div className="flex justify-between items-center mb-2">
-              <button
-                onClick={handleCancel}
-                className="flex items-center text-blue-800"
-              >
-                <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Add Purchases</h1>
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Total</p>
-                <p className="text-sm font-bold">
-                  {form.watch("purchase_amount") || 0}
-                </p>
+                {/* Mobile View */}
+              <div className="sticky top-0 z-10 border border-gray-200 rounded-lg bg-blue-50 shadow-sm p-2 mb-2">
+                <div className="flex justify-between items-center mb-2">
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center text-blue-800"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-1" />
+                    <h1 className="text-base font-bold">Add Purchases</h1>
+                  </button>
+                </div>
               </div>
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Other</p>
-                <p className="text-sm font-bold">
-                  {form.watch("purchase_other") || 0}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          <div className="mb-14">
-            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <div className="mb-14">
+                <form id="purchase-form" onSubmit={handleFormSubmit} className="space-y-4">
               {/* Purchase Info */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <h3 className="font-medium mb-3">Purchase Information</h3>
@@ -808,8 +794,8 @@ const PurchaseGraniteAdd = () => {
               </div>
             </CardHeader>
 
-            <CardContent>
-              <form onSubmit={handleFormSubmit} className="space-y-2">
+                <CardContent>
+                  <form id="purchase-form" onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Purchase Information */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
@@ -1090,7 +1076,7 @@ const PurchaseGraniteAdd = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                  {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-4 border-t">
                   <Button
                     type="button"
@@ -1099,6 +1085,19 @@ const PurchaseGraniteAdd = () => {
                     className="border-gray-300 hover:bg-gray-50"
                   >
                     Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const formElement = document.getElementById('purchase-form');
+                      if (formElement) {
+                        formElement.requestSubmit();
+                      }
+                    }}
+                    className="border-gray-300 hover:bg-gray-50"
+                  >
+                    Save and Close
                   </Button>
                   <Button
                     type="submit"

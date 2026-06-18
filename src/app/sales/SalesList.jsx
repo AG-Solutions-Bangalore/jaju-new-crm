@@ -133,18 +133,6 @@ const SalesList = () => {
       header: "Gross",
       cell: ({ row }) => <div>{row.getValue("Gross")}</div>,
     },
-    // {
-    //   accessorKey: "sales_advance",
-    //   id: "Advance",
-    //   header: "Advance",
-    //   cell: ({ row }) => <div>{row.getValue("Advance")}</div>,
-    // },
-    // {
-    //   accessorKey: "sales_balance",
-    //   id: "Balance",
-    //   header: "Balance",
-    //   cell: ({ row }) => <div>{row.getValue("Balance")}</div>,
-    // },
 
     {
       id: "actions",
@@ -342,14 +330,6 @@ const SalesList = () => {
                       <div className="text-gray-500">Gross</div>
                       <div>{sale.sales_gross}</div>
                     </div>
-                    {/* <div>
-                      <div className="text-gray-500">Advance</div>
-                      <div>{sale.sales_advance}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Balance</div>
-                      <div>{sale.sales_balance}</div>
-                    </div> */}
                   </div>
                 </Card>
               ))}

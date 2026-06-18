@@ -111,6 +111,7 @@ const SalesEdit = () => {
       sales_sub_item_original: "",
     },
   ]);
+  const [loadingType, setLoadingType] = useState("Loading");
   const [customItems, setCustomItems] = useState({});
   const [isCustomItem, setIsCustomItem] = useState({});
 
@@ -240,10 +241,11 @@ const SalesEdit = () => {
     );
     const tempo = parseFloat(form.watch("sales_tempo") || 0);
     const loading = parseFloat(form.watch("sales_loading") || 0);
+    const unloading = parseFloat(form.watch("sales_unloading") || 0);
     const other = parseFloat(form.watch("sales_other") || 0);
     const other1 = parseFloat(form.watch("sales_other1") || 0);
 
-    const grandTotal = itemsTotal + tempo + loading + other + other1;
+    const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
     if (!gstEdited) {
       const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
       form.setValue("sales_tax", gstAmount.toString());
@@ -590,10 +592,11 @@ const SalesEdit = () => {
       );
       const tempo = parseFloat(form.watch("sales_tempo") || 0);
       const loading = parseFloat(form.watch("sales_loading") || 0);
+      const unloading = parseFloat(form.watch("sales_unloading") || 0);
       const other = parseFloat(form.watch("sales_other") || 0);
       const other1 = parseFloat(form.watch("sales_other1") || 0);
 
-      const grandTotal = itemsTotal + tempo + loading + other + other1;
+      const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("sales_tax") || 0);
       const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
 
@@ -601,7 +604,7 @@ const SalesEdit = () => {
         ...data,
         sales_tempo: tempo.toString(),
         sales_loading: loading.toString(),
-        sales_unloading: "0",
+        sales_unloading: unloading.toString(),
         sales_other: other.toString(),
         sales_other1: other1.toString(),
         sales_tax: gstAmount.toString(),
@@ -665,11 +668,12 @@ const SalesEdit = () => {
   );
   const watchTempo = parseFloat(form.watch("sales_tempo") || 0);
   const watchLoading = parseFloat(form.watch("sales_loading") || 0);
+  const watchUnloading = parseFloat(form.watch("sales_unloading") || 0);
   const watchOther = parseFloat(form.watch("sales_other") || 0);
   const watchOther1 = parseFloat(form.watch("sales_other1") || 0);
 
   const displayGrandTotal =
-    itemsTotal + watchTempo + watchLoading + watchOther + watchOther1;
+    itemsTotal + watchTempo + watchLoading + watchUnloading + watchOther + watchOther1;
   const displayGst = parseFloat(form.watch("sales_tax") || 0);
   const displayFinalTotal = parseFloat(
     (displayGrandTotal + displayGst).toFixed(2),
@@ -707,7 +711,7 @@ const SalesEdit = () => {
           </div>
 
           <div className="mb-14">
-            <form onSubmit={handleFormSubmit} className="space-y-4">
+            <form id="purchase-edit-form" onSubmit={handleFormSubmit} className="space-y-4">
               {/* Customer Info */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <h3 className="font-medium mb-3">Customer Information</h3>
@@ -833,29 +837,34 @@ const SalesEdit = () => {
                                 Select
                               </Button>
                             </>
-                          ) : (
-                            <>
-                              <div className="flex-1">
-                                <MemoizedProductSelect
-                                  value={entry.sales_sub_item}
-                                  onChange={(value) =>
-                                    handleItemChange(index, "sales_sub_item", value)
-                                  }
-                                  options={productOptions}
-                                  placeholder="Select item..."
-                                />
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs whitespace-nowrap shrink-0"
-                                onClick={() => handleToggleCustomItem(index)}
-                              >
-                                NOT IN LIST
-                              </Button>
-                            </>
-                          )}
+                 ) : (
+                   <>
+                     <div className="flex-1 min-w-0">
+                       <MemoizedProductSelect
+                         value={entry.sales_sub_item}
+                         onChange={(value) =>
+                           handleItemChange(index, "sales_sub_item", value)
+                         }
+                         options={productOptions}
+                         placeholder="Select item"
+                       />
+                     </div>
+                     <Button
+                       type="button"
+                       variant="outline"
+                       size="sm"
+                       className="h-9 whitespace-nowrap shrink-0"
+                       onClick={() =>
+                         handleToggleCustomItem(index)
+                       }
+                     >
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                         <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
+                         <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z"/>
+                       </svg>
+                     </Button>
+                   </>
+                 )}
                         </div>
 
                         <div className="grid grid-cols-3 gap-1">
@@ -1004,21 +1013,37 @@ const SalesEdit = () => {
                     />
                   </div>
 
-                  {/* Labour Charges */}
+                  {/* Loading/Unloading */}
                   <div>
-                    <Label htmlFor="sales_loading">Labour Charges</Label>
-                    <Input
-                      id="sales_loading"
-                      type="tel"
-                      {...form.register("sales_loading")}
-                      onChange={(e) =>
-                        handleChargeChange("sales_loading", e.target.value)
-                      }
-                      maxLength={10}
-                      onKeyDown={handleKeyDown}
-                      className="mt-1"
-                      placeholder="0"
-                    />
+                    <Label>Labour Charges</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <SelectShadcn
+                        value={loadingType}
+                        onValueChange={setLoadingType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Loading Only">Loading Only</SelectItem>
+                          <SelectItem value="Loading and Unloading">Loading and Unloading</SelectItem>
+                        </SelectContent>
+                      </SelectShadcn>
+                      <Input
+                        id={loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading and Unloading" ? "sales_unloading" : "sales_loading"}
+                        type="tel"
+                        value={form.watch(loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading and Unloading" ? "sales_unloading" : "sales_loading") || ""}
+                        onChange={(e) => {
+                          handleChargeChange(
+                            loadingType === "Loading Only" ? "sales_loading" : loadingType === "Loading and Unloading" ? "sales_unloading" : "sales_loading",
+                            e.target.value,
+                          )
+                        }}
+                        maxLength={10}
+                        onKeyDown={handleKeyDown}
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
 
                   {/* Other 1 */}
@@ -1067,9 +1092,9 @@ const SalesEdit = () => {
                     </div>
                   </div>
 
-                  {/* Grand Total */}
+                  {/* Gross Total */}
                   <div>
-                    <Label>Grand Total</Label>
+                    <Label>Gross Total</Label>
                     <Input
                       type="text"
                       value={displayGrandTotal.toString()}
@@ -1081,19 +1106,7 @@ const SalesEdit = () => {
                   {/* GST Amount */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <Label>GST</Label>
-                      {gstEdited && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setGstEdited(false);
-                            calculateAndSetTotals(itemEntries);
-                          }}
-                          className="text-xs text-blue-600 hover:underline"
-                        >
-                          Reset to 18%
-                        </button>
-                      )}
+                      <Label>GST 18% ({displayGst.toFixed(2)})</Label>
                     </div>
                     <Input
                       type="tel"
@@ -1109,9 +1122,25 @@ const SalesEdit = () => {
                     />
                   </div>
 
-                  {/* Amount Received */}
+                  {/* Spacer */}
+                  <div className="h-8 bg-gray-100 rounded-md w-full"></div>
+
+                  {/* Net Total */}
                   <div>
-                    <Label>Amount Received</Label>
+                    <Label className="font-semibold text-blue-900">
+                      Net Total
+                    </Label>
+                    <Input
+                      type="text"
+                      value={displayFinalTotal.toString()}
+                      disabled
+                      className="mt-1 bg-blue-50 font-bold border-blue-200 text-blue-900"
+                    />
+                  </div>
+
+                  {/* Final Amount Received */}
+                  <div>
+                    <Label>Final Amount Received</Label>
                     <Input
                       type="tel"
                       {...form.register("sales_amount_received")}
@@ -1119,22 +1148,6 @@ const SalesEdit = () => {
                       className="mt-1"
                       maxLength={10}
                       placeholder="0"
-                    />
-                  </div>
-
-                  {/* Spacer */}
-                  <div className="h-8 bg-gray-100 rounded-md w-full"></div>
-
-                  {/* Final Total */}
-                  <div>
-                    <Label className="font-semibold text-blue-900">
-                      Final Total
-                    </Label>
-                    <Input
-                      type="text"
-                      value={displayFinalTotal.toString()}
-                      disabled
-                      className="mt-1 bg-blue-50 font-bold border-blue-200 text-blue-900"
                     />
                   </div>
                 </div>
@@ -1182,7 +1195,7 @@ const SalesEdit = () => {
             </CardHeader>
 
             <CardContent>
-              <form onSubmit={handleFormSubmit} className="space-y-2">
+              <form id="purchase-edit-form" onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
@@ -1300,9 +1313,8 @@ const SalesEdit = () => {
                             Qnty (pcs){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (sqr){" "}
-                            <span className="text-xs text-red-400 ">*</span>
+                    <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
+                            Qnty (sqft)
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Rate{" "}
@@ -1359,15 +1371,18 @@ const SalesEdit = () => {
                                           placeholder="Select item"
                                         />
                                       </div>
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-9 whitespace-nowrap shrink-0"
-                                        onClick={() => handleToggleCustomItem(index)}
-                                      >
-                                        NOT IN LIST
-                                      </Button>
+                                       <Button
+                                         type="button"
+                                         variant="outline"
+                                         size="sm"
+                                         className="h-9 whitespace-nowrap shrink-0"
+                                         onClick={() => handleToggleCustomItem(index)}
+                                       >
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                           <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
+                                           <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z"/>
+                                         </svg>
+                                       </Button>
                                     </>
                                   )}
                                 </div>
@@ -1488,21 +1503,38 @@ const SalesEdit = () => {
                         />
                       </div>
 
-                      {/* Labour Charges */}
+                      {/* Loading/Unloading */}
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="sales_loading">Labour Charges</Label>
-                        <Input
-                          className="w-1/2"
-                          id="sales_loading"
-                          type="tel"
-                          {...form.register("sales_loading")}
-                          onChange={(e) =>
-                            handleChargeChange("sales_loading", e.target.value)
-                          }
-                          maxLength={10}
-                          onKeyDown={handleKeyDown}
-                          placeholder="0"
-                        />
+                        <Label className="font-medium">Labour Charges</Label>
+                        <div className="flex w-1/2 gap-1">
+                          <SelectShadcn
+                            value={loadingType}
+                            onValueChange={setLoadingType}
+                          >
+                            <SelectTrigger className="w-1/2 h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Loading">Loading</SelectItem>
+                              <SelectItem value="Unloading">Unloading</SelectItem>
+                            </SelectContent>
+                          </SelectShadcn>
+                          <Input
+                            className="w-1/2 h-9 text-right"
+                            id={loadingType === "Loading" ? "sales_loading" : "sales_unloading"}
+                            type="tel"
+                            value={form.watch(loadingType === "Loading" ? "sales_loading" : "sales_unloading") || ""}
+                            onChange={(e) =>
+                              handleChargeChange(
+                                loadingType === "Loading" ? "sales_loading" : "sales_unloading",
+                                e.target.value,
+                              )
+                            }
+                            maxLength={10}
+                            onKeyDown={handleKeyDown}
+                            placeholder="0"
+                          />
+                        </div>
                       </div>
 
                       {/* Other 1 */}
@@ -1549,9 +1581,9 @@ const SalesEdit = () => {
                         />
                       </div>
 
-                      {/* Grand Total */}
+                      {/* Gross Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Grand Total</Label>
+                        <Label className="font-medium">Gross Total</Label>
                         <Input
                           className="w-1/2 bg-gray-100 font-medium"
                           type="text"
@@ -1562,21 +1594,7 @@ const SalesEdit = () => {
 
                       {/* GST Amount */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label className="font-medium">GST</Label>
-                          {gstEdited && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setGstEdited(false);
-                                calculateAndSetTotals(itemEntries);
-                              }}
-                              className="text-xs text-blue-600 hover:underline"
-                            >
-                              Reset to 18%
-                            </button>
-                          )}
-                        </div>
+                        <Label className="font-medium">GST 18% ({displayGst.toFixed(2)})</Label>
                         <Input
                           className="w-1/2"
                           type="tel"
@@ -1591,9 +1609,28 @@ const SalesEdit = () => {
                         />
                       </div>
 
-                      {/* Amount Received */}
+                      {/* Spacer */}
+                      {/* <div className="flex items-center justify-between h-9">
+                        <div className="w-1/2"></div>
+                        <div className="w-1/2 h-8 bg-gray-100 rounded-md"></div>
+                      </div> */}
+
+                      {/* Net Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Amount Received</Label>
+                        <Label className="font-semibold text-blue-900">
+                          Net Total
+                        </Label>
+                        <Input
+                          className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900"
+                          type="text"
+                          value={displayFinalTotal.toString()}
+                          disabled
+                        />
+                      </div>
+
+                      {/* Final Amount Received */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Final Amount Received</Label>
                         <Input
                           className="w-1/2"
                           type="tel"
@@ -1603,24 +1640,11 @@ const SalesEdit = () => {
                           placeholder="0"
                         />
                       </div>
-
-                      {/* Final Total */}
-                      <div className="flex items-center justify-between">
-                        <Label className="font-semibold text-blue-900">
-                          Final Total
-                        </Label>
-                        <Input
-                          className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900"
-                          type="text"
-                          value={displayFinalTotal.toString()}
-                          disabled
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                  {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-4 border-t">
                   <Button
                     type="button"
@@ -1629,6 +1653,19 @@ const SalesEdit = () => {
                     className="border-gray-300 hover:bg-gray-50"
                   >
                     Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const formElement = document.getElementById('purchase-edit-form');
+                      if (formElement) {
+                        formElement.requestSubmit();
+                      }
+                    }}
+                    className="border-gray-300 hover:bg-gray-50"
+                  >
+                    Save and Close
                   </Button>
                   <Button
                     type="submit"
