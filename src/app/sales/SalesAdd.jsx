@@ -1,33 +1,24 @@
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import moment from "moment";
-import { Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
+import moment from "moment";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 
-import {
-  Select as SelectShadcn,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
+import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
-import Page from "../dashboard/page";
-import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/useNumericInput";
-import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
+import Cookies from "js-cookie";
+import Page from "../dashboard/page";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -53,6 +44,7 @@ const formSchema = z.object({
   sales_advance: z.string(),
   sales_balance: z.string(),
   sales_temp_amount: z.string(),
+  sales_amount_received: z.string(),
 });
 
 const SalesAdd = () => {
@@ -94,6 +86,7 @@ const SalesAdd = () => {
       sales_advance: "",
       sales_balance: "",
       sales_temp_amount: "",
+      sales_amount_received: "",
     },
   });
   const [itemEntries, setItemEntries] = useState([
@@ -513,6 +506,7 @@ const SalesAdd = () => {
         sales_gross: finalTotal.toString(),
         sales_balance: finalTotal.toString(),
         sales_advance: "0",
+        sales_amount_received: data.sales_amount_received,
         sales_year: currentYear,
         sales_no_of_count: formattedItemEntries.length,
         sales_sub_data: formattedItemEntries,
@@ -696,7 +690,7 @@ const SalesAdd = () => {
                               </SelectContent>
                             </SelectShadcn>
                           </div> */}
-                          <div className="col-span-1">
+                          <div className={entry.sales_sub_item === "NOT IN THE LIST" ? "col-span-1" : "col-span-2"}>
                             <MemoizedProductSelect
                               value={entry.sales_sub_item}
                               onChange={(value) =>
@@ -705,23 +699,23 @@ const SalesAdd = () => {
                               options={productOptions}
                               placeholder="Select item..."
                             />
-                            {entry.sales_sub_item === "NOT IN THE LIST" && (
-                              <div className="mt-1">
-                                <Input
-                                  type="text"
-                                  value={customItems[index] || ""}
-                                  onChange={(e) =>
-                                    handleCustomItemChange(
-                                      index,
-                                      e.target.value,
-                                    )
-                                  }
-                                  className="h-8 text-sm"
-                                  placeholder="Enter custom item name"
-                                />
-                              </div>
-                            )}
                           </div>
+                          {entry.sales_sub_item === "NOT IN THE LIST" && (
+                            <div className="col-span-1">
+                              <Input
+                                type="text"
+                                value={customItems[index] || ""}
+                                onChange={(e) =>
+                                  handleCustomItemChange(
+                                    index,
+                                    e.target.value,
+                                  )
+                                }
+                                className="h-8 text-sm"
+                                placeholder="Enter name"
+                              />
+                            </div>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 mt-1 gap-1">
                           <div>
@@ -904,6 +898,19 @@ const SalesAdd = () => {
                     />
                   </div>
 
+                  {/* Amount Received */}
+                  <div>
+                    <Label>Amount Received</Label>
+                    <Input
+                      type="tel"
+                      {...form.register("sales_amount_received")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
+                      maxLength={10}
+                      placeholder="0"
+                    />
+                  </div>
+
                   {/* Spacer */}
                   {/* <div className="h-8 bg-gray-100 rounded-md w-full"></div> */}
 
@@ -1073,27 +1080,27 @@ const SalesAdd = () => {
                             Type{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th> */}
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
 
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs/box){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqft){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Rate{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
                             Amount
                           </th>
-                          <th className="text-left p-2 font-medium text-sm"></th>
+                          <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1129,34 +1136,36 @@ const SalesAdd = () => {
                               </SelectShadcn>
                             </td> */}
                             <td className="p-2">
-                              <div className="w-[12rem]">
-                                <MemoizedProductSelect
-                                  value={entry.sales_sub_item}
-                                  onChange={(value) =>
-                                    handleItemChange(
-                                      index,
-                                      "sales_sub_item",
-                                      value,
-                                    )
-                                  }
-                                  options={productOptions}
-                                  placeholder="Select item"
-                                />
+                              <div className="flex gap-2 items-start">
+                                <div className="flex-1 min-w-0">
+                                  <MemoizedProductSelect
+                                    value={entry.sales_sub_item}
+                                    onChange={(value) =>
+                                      handleItemChange(
+                                        index,
+                                        "sales_sub_item",
+                                        value,
+                                      )
+                                    }
+                                    options={productOptions}
+                                    placeholder="Select item"
+                                  />
+                                </div>
+                                {entry.sales_sub_item === "NOT IN THE LIST" && (
+                                  <Input
+                                    type="text"
+                                    className="h-9 w-[120px] shrink-0"
+                                    placeholder="Enter name"
+                                    value={customItems[index] || ""}
+                                    onChange={(e) =>
+                                      handleCustomItemChange(
+                                        index,
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
                               </div>
-                              {entry.sales_sub_item === "NOT IN THE LIST" && (
-                                <Input
-                                  type="text"
-                                  className="mt-1 h-9"
-                                  placeholder="Enter custom item name"
-                                  value={customItems[index] || ""}
-                                  onChange={(e) =>
-                                    handleCustomItemChange(
-                                      index,
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
                             </td>
 
                             <td className="p-2">
@@ -1376,6 +1385,19 @@ const SalesAdd = () => {
                         />
                       </div>
 
+                      {/* Amount Received */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Amount Received</Label>
+                        <Input
+                          className="w-1/2"
+                          type="tel"
+                          {...form.register("sales_amount_received")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
                       {/* Spacer */}
                       {/* <div className="flex items-center justify-between h-9">
                         <div className="w-1/2"></div>
@@ -1413,7 +1435,7 @@ const SalesAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Gaya"}
+                    {isSubmitting ? "Saving..." : "Save Sale"}
                   </Button>
                 </div>
               </form>

@@ -121,13 +121,17 @@ const PurchaseGraniteAdd = () => {
     },
   });
 
-  const productOptions = useMemo(() => [
-    ...product.map((item) => {
-      const name = item.item_name || item.product_type_group || item.product_type;
-      return { value: name, label: name };
-    }),
-    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
-  ], [product]);
+  const productOptions = useMemo(
+    () => [
+      ...product.map((item) => {
+        const name =
+          item.item_name || item.product_type_group || item.product_type;
+        return { value: name, label: name };
+      }),
+      { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
+    ],
+    [product],
+  );
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -616,7 +620,7 @@ const PurchaseGraniteAdd = () => {
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-11">
                         <div className="mb-1">
-                           <MemoizedProductSelect
+                          <MemoizedProductSelect
                             value={entry.purchase_sub_item}
                             onChange={(value) =>
                               handleItemChange(
@@ -906,7 +910,7 @@ const PurchaseGraniteAdd = () => {
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             <td className="p-2">
-                               <div className="w-[8rem]">
+                              <div className="w-[8rem]">
                                 <MemoizedProductSelect
                                   value={entry.purchase_sub_item}
                                   onChange={(value) =>
@@ -1043,7 +1047,7 @@ const PurchaseGraniteAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Aaya"}
+                    {isSubmitting ? "Saving..." : "Save Purchase"}
                   </Button>
                 </div>
               </form>

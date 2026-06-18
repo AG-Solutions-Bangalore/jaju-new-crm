@@ -37,6 +37,7 @@ const formSchema = z.object({
   sales_address: z.string(),
   sales_mobile: z.string(),
   sales_item_type: z.string(),
+  JFCBILLNO: z.string(),
   sales_tax: z.string(),
   sales_tempo: z.string(),
   sales_loading: z.string(),
@@ -49,6 +50,7 @@ const formSchema = z.object({
   sales_advance: z.string(),
   sales_balance: z.string(),
   sales_temp_amount: z.string(),
+  sales_amount_received: z.string(),
 });
 
 const SalesEdit = () => {
@@ -80,6 +82,7 @@ const SalesEdit = () => {
       sales_mobile: "",
 
       sales_item_type: "",
+      JFCBILLNO: "",
 
       sales_tax: "",
       sales_tempo: "",
@@ -93,6 +96,7 @@ const SalesEdit = () => {
       sales_advance: "",
       sales_balance: "",
       sales_temp_amount: "",
+      sales_amount_received: "",
     },
   });
   const [itemEntries, setItemEntries] = useState([
@@ -182,6 +186,7 @@ const SalesEdit = () => {
         sales_customer: sales.sales_customer || "",
         sales_address: sales.sales_address || "",
         sales_mobile: sales.sales_mobile || "",
+        JFCBILLNO: sales.JFCBILLNO || "",
         sales_other: sales.sales_other?.toString() || "",
         sales_other1: sales.sales_other1?.toString() || "",
         sales_other_label: sales.sales_other_label || "",
@@ -195,6 +200,7 @@ const SalesEdit = () => {
         sales_balance: sales.sales_balance || "",
         sales_no_of_count: sales.sales_no_of_count?.toString() || "1",
         sales_temp_amount: sales.sales_temp_amount?.toString() || "",
+        sales_amount_received: sales.sales_amount_received?.toString() || "",
       });
 
       if (sales.sales_gst_percentage) {
@@ -275,6 +281,23 @@ const SalesEdit = () => {
   const handleChargeChange = (field, value) => {
     form.setValue(field, value);
     calculateAndSetTotals(itemEntries);
+  };
+
+  const removeItemEntry = (index) => {
+    const updatedEntries = [...itemEntries];
+    updatedEntries.splice(index, 1);
+    setItemEntries(updatedEntries);
+
+    setCustomItems((prev) => {
+      const newCustom = { ...prev };
+      for (let i = index; i < updatedEntries.length; i++) {
+        newCustom[i] = newCustom[i + 1];
+      }
+      delete newCustom[updatedEntries.length];
+      return newCustom;
+    });
+
+    calculateAndSetTotals(updatedEntries);
   };
 
   const updateSalesMutation = useMutation({
@@ -549,6 +572,8 @@ const SalesEdit = () => {
         sales_gross: finalTotal.toString(),
         sales_balance: finalTotal.toString(),
         sales_advance: "0",
+        sales_amount_received: data.sales_amount_received,
+        JFCBILLNO: data.JFCBILLNO,
         sales_year: currentYear,
         sales_no_of_count: formattedItemEntries.length,
         sales_sub_data: formattedItemEntries,
@@ -652,6 +677,16 @@ const SalesEdit = () => {
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
                   <div>
+                    <Label htmlFor="JFCBILLNO">JFC Bill No</Label>
+                    <Input
+                      id="JFCBILLNO"
+                      {...form.register("JFCBILLNO")}
+                      className="mt-1"
+                      placeholder="Enter bill number"
+                      maxLength={50}
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="sales_date">Date</Label>
                     <Input
                       id="sales_date"
@@ -734,9 +769,9 @@ const SalesEdit = () => {
                     className="bg-gray-50 p-2 rounded-md border border-gray-200 mb-2"
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
-                      <div className="col-span-12">
-                        <div className="grid grid-cols-1 gap-1 mb-1">
-                          <div className="col-span-1">
+                      <div className="col-span-11">
+                        <div className={entry.sales_sub_item === "NOT IN THE LIST" ? "grid grid-cols-2 gap-1 mb-1" : "grid grid-cols-1 gap-1 mb-1"}>
+                          <div className={entry.sales_sub_item === "NOT IN THE LIST" ? "col-span-1" : "col-span-1"}>
                             <MemoizedProductSelect
                               value={entry.sales_sub_item}
                               onChange={(value) =>
@@ -745,23 +780,23 @@ const SalesEdit = () => {
                               options={productOptions}
                               placeholder="Select item..."
                             />
-                            {entry.sales_sub_item === "NOT IN THE LIST" && (
-                              <div className="mt-1">
-                                <Input
-                                  type="text"
-                                  value={customItems[index] || ""}
-                                  onChange={(e) =>
-                                    handleCustomItemChange(
-                                      index,
-                                      e.target.value,
-                                    )
-                                  }
-                                  className="h-8 text-sm"
-                                  placeholder="Enter custom item name"
-                                />
-                              </div>
-                            )}
                           </div>
+                          {entry.sales_sub_item === "NOT IN THE LIST" && (
+                            <div className="col-span-1">
+                              <Input
+                                type="text"
+                                value={customItems[index] || ""}
+                                onChange={(e) =>
+                                  handleCustomItemChange(
+                                    index,
+                                    e.target.value,
+                                  )
+                                }
+                                className="h-8 text-sm"
+                                placeholder="Enter name"
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-3 gap-1">
@@ -862,6 +897,18 @@ const SalesEdit = () => {
                             />
                           </div>
                         </div>
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItemEntry(index)}
+                          disabled={itemEntries.length <= 1}
+                          className="h-7 w-7 hover:bg-gray-200 text-red-500"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -993,6 +1040,19 @@ const SalesEdit = () => {
                     />
                   </div>
 
+                  {/* Amount Received */}
+                  <div>
+                    <Label>Amount Received</Label>
+                    <Input
+                      type="tel"
+                      {...form.register("sales_amount_received")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1"
+                      maxLength={10}
+                      placeholder="0"
+                    />
+                  </div>
+
                   {/* Spacer */}
                   <div className="h-8 bg-gray-100 rounded-md w-full"></div>
 
@@ -1055,7 +1115,20 @@ const SalesEdit = () => {
             <CardContent>
               <form onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="JFCBILLNO">
+                      JFC Bill No
+                      <span className="text-xs text-red-400 ">*</span>
+                    </Label>
+                    <Input
+                      id="JFCBILLNO"
+                      {...form.register("JFCBILLNO")}
+                      className="bg-white"
+                      placeholder="Enter bill number"
+                      maxLength={50}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="sales_date">
                       Date <span className="text-xs text-red-400 ">*</span>
@@ -1146,7 +1219,7 @@ const SalesEdit = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
@@ -1154,21 +1227,22 @@ const SalesEdit = () => {
                             Original Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th> */}
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqr){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Rate{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
                             Amount
                           </th>
+                          <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1176,10 +1250,10 @@ const SalesEdit = () => {
                           <tr key={index} className="border-b">
                             <td className="p-2">
                               {isLoadingItems ? (
-                                <div className="h-9 bg-gray-200 rounded animate-pulse w-[12rem]"></div>
+                                <div className="h-9 bg-gray-200 rounded animate-pulse"></div>
                               ) : (
-                                <>
-                                  <div className="w-[12rem]">
+                                <div className="flex gap-2 items-start">
+                                  <div className="flex-1 min-w-0">
                                     <MemoizedProductSelect
                                       value={entry.sales_sub_item}
                                       onChange={(value) =>
@@ -1193,12 +1267,11 @@ const SalesEdit = () => {
                                       placeholder="Select item"
                                     />
                                   </div>
-                                  {entry.sales_sub_item ===
-                                    "NOT IN THE LIST" && (
+                                  {entry.sales_sub_item === "NOT IN THE LIST" && (
                                     <Input
                                       type="text"
-                                      className="mt-1 h-9"
-                                      placeholder="Enter custom item name"
+                                      className="h-9 w-[120px] shrink-0"
+                                      placeholder="Enter name"
                                       value={customItems[index] || ""}
                                       onChange={(e) =>
                                         handleCustomItemChange(
@@ -1208,7 +1281,7 @@ const SalesEdit = () => {
                                       }
                                     />
                                   )}
-                                </>
+                                </div>
                               )}
                             </td>
 
@@ -1272,6 +1345,18 @@ const SalesEdit = () => {
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
                               />
+                            </td>
+                            <td className="p-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItemEntry(index)}
+                                disabled={itemEntries.length <= 1}
+                                className="h-9 w-9 text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -1404,6 +1489,20 @@ const SalesEdit = () => {
                           placeholder="0"
                         />
                       </div>
+
+                      {/* Amount Received */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Amount Received</Label>
+                        <Input
+                          className="w-1/2"
+                          type="tel"
+                          {...form.register("sales_amount_received")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
                       {/* Final Total */}
                       <div className="flex items-center justify-between">
                         <Label className="font-semibold text-blue-900">

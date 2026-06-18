@@ -138,13 +138,17 @@ const PurchaseGraniteEdit = () => {
     },
   });
 
-  const productOptions = useMemo(() => [
-    ...product.map((item) => {
-      const name = item.item_name || item.product_type_group || item.product_type;
-      return { value: name, label: name };
-    }),
-    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
-  ], [product]);
+  const productOptions = useMemo(
+    () => [
+      ...product.map((item) => {
+        const name =
+          item.item_name || item.product_type_group || item.product_type;
+        return { value: name, label: name };
+      }),
+      { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
+    ],
+    [product],
+  );
 
   useEffect(() => {
     if (purchaseByid) {
@@ -522,7 +526,7 @@ const PurchaseGraniteEdit = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Edit Aaya</h1>
+                <h1 className="text-base font-bold">Edit Purchase </h1>
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -656,7 +660,7 @@ const PurchaseGraniteEdit = () => {
                           {isLoadingItems ? (
                             <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
                           ) : (
-                             <MemoizedProductSelect
+                            <MemoizedProductSelect
                               value={entry.purchase_sub_item}
                               onChange={(value) =>
                                 handleItemChange(
@@ -786,7 +790,7 @@ const PurchaseGraniteEdit = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Edit Aaya</CardTitle>
+                  <CardTitle>Edit Purchase </CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -927,7 +931,7 @@ const PurchaseGraniteEdit = () => {
                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
                               ) : (
                                 <>
-                                   <div className="w-[8rem]">
+                                  <div className="w-[8rem]">
                                     <MemoizedProductSelect
                                       value={entry.purchase_sub_item}
                                       onChange={(value) =>

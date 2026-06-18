@@ -394,7 +394,7 @@ const PurchaseGraniteList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Aaya List
+            Purchase List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">

@@ -274,7 +274,7 @@ const SalesList = () => {
             <div className="flex flex-col gap-2">
               {/* Title + Add Button */}
               <div className="flex justify-between items-center px-2 py-2">
-                <h1 className="text-base font-bold text-gray-800">Gaya List</h1>
+                <h1 className="text-base font-bold text-gray-800">Sale List</h1>
                 <Button
                   size="sm"
                   className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
@@ -410,7 +410,7 @@ const SalesList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Gaya List
+            Sale List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
