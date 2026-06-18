@@ -31,22 +31,13 @@ import {
   Edit,
   Eye,
   Search,
-  SquarePlus,
-  Trash2,
+  SquarePlus
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  navigateTOPurchaseGraniteEdit,
-  navigateTOPurchaseGraniteView,
-  navigateTOPurchaseTilesEdit,
-  navigateTOPurchaseTilesView,
-  navigateTOSalesEdit,
-  navigateTOSalesView,
-  PURCHASE_GRANITE_LIST,
-  PURCHASE_TILES_LIST,
-  SALES_LIST,
+  SALES_LIST
 } from "@/api";
 import Loader from "@/components/loader/Loader";
 import {
@@ -56,8 +47,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import moment from "moment";
 import Cookies from "js-cookie";
+import moment from "moment";
 
 const SalesList = () => {
   const {
@@ -142,18 +133,18 @@ const SalesList = () => {
       header: "Gross",
       cell: ({ row }) => <div>{row.getValue("Gross")}</div>,
     },
-    {
-      accessorKey: "sales_advance",
-      id: "Advance",
-      header: "Advance",
-      cell: ({ row }) => <div>{row.getValue("Advance")}</div>,
-    },
-    {
-      accessorKey: "sales_balance",
-      id: "Balance",
-      header: "Balance",
-      cell: ({ row }) => <div>{row.getValue("Balance")}</div>,
-    },
+    // {
+    //   accessorKey: "sales_advance",
+    //   id: "Advance",
+    //   header: "Advance",
+    //   cell: ({ row }) => <div>{row.getValue("Advance")}</div>,
+    // },
+    // {
+    //   accessorKey: "sales_balance",
+    //   id: "Balance",
+    //   header: "Balance",
+    //   cell: ({ row }) => <div>{row.getValue("Balance")}</div>,
+    // },
 
     {
       id: "actions",
@@ -351,14 +342,14 @@ const SalesList = () => {
                       <div className="text-gray-500">Gross</div>
                       <div>{sale.sales_gross}</div>
                     </div>
-                    <div>
+                    {/* <div>
                       <div className="text-gray-500">Advance</div>
                       <div>{sale.sales_advance}</div>
                     </div>
                     <div>
                       <div className="text-gray-500">Balance</div>
                       <div>{sale.sales_balance}</div>
-                    </div>
+                    </div> */}
                   </div>
                 </Card>
               ))}

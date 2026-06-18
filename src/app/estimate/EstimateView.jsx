@@ -376,7 +376,7 @@ const EstimateView = () => {
                         Quantity
                       </TableHead>
                       <TableHead className="text-center text-black font-bold  border-r">
-                        Rate (₹)
+                        Rate 
                       </TableHead>
                       <TableHead className="text-center text-black font-bold">
                         Amount (₹)

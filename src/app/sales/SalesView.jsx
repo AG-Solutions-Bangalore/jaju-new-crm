@@ -167,9 +167,9 @@ const SalesView = () => {
         <>
           <div className="text-center border p-2 space-y-1 mb-3 text-xs">
             <h3 className="text-sm font-semibold">JAJU'S FLOORING CONCEPTS</h3>
-            <p className="text-xs">New 80 ft Sompura, Sriniwaspura Road</p>
+            {/* <p className="text-xs">New 80 ft Sompura, Sriniwaspura Road</p>
             <p className="text-xs">Bengaluru, Karnataka 560098</p>
-            <p className="text-xs">Phone: 097420 42097</p>
+            <p className="text-xs">Phone: 097420 42097</p> */}
             <h4 className="text-sm font-semibold mt-1">SALES</h4>
           </div>
 
@@ -188,9 +188,15 @@ const SalesView = () => {
             </div>
           </div>
 
-          <div className="border p-2 text-xs mb-3">
-            <span className="font-semibold">Customer:</span>{" "}
-            <span>{salesData?.sales?.sales_customer}</span>
+          <div className="border p-2 text-xs mb-3 flex justify-between items-center">
+            <div>
+              <span className="font-semibold">Customer:</span>{" "}
+              <span>{salesData?.sales?.sales_customer}</span>
+            </div>
+            <div>
+              <span className="font-semibold">Phone:</span>{" "}
+              <span>{salesData?.sales?.sales_mobile}</span>
+            </div>
           </div>
 
           <table className="w-full border-collapse text-xs mb-3">
@@ -330,9 +336,9 @@ const SalesView = () => {
             <div ref={tableRef} className="overflow-x-auto print:p-4">
               <div className="text-center border-l border-t border-r p-4 space-y-1">
                 <h3 className="text-2xl font-semibold">JAJU'S FLOORING CONCEPTS</h3>
-                <p className="text-sm">New 80 ft Sompura, Sriniwaspura Road, Banakshankari 6th Stage 11th Block, Srinivaspura, Bengaluru, Karnataka 560098</p>
+                {/* <p className="text-sm">New 80 ft Sompura, Sriniwaspura Road, Banakshankari 6th Stage 11th Block, Srinivaspura, Bengaluru, Karnataka 560098</p>
                 <p className="text-sm">Phone: 097420 42097</p>
-                <h4 className="text-xl font-semibold mt-2">SALES</h4>
+                <h4 className="text-xl font-semibold mt-2">SALES</h4> */}
               </div>
 
               <div className="grid grid-cols-2 border  m-0">
@@ -349,9 +355,15 @@ const SalesView = () => {
 </div>
 
 
-              <div className="border-l border-r p-2">
-                <span className="font-semibold">Customer:</span>{" "}
-                <span>{salesData?.sales?.sales_customer}</span>
+              <div className="border-l border-r p-2 flex justify-between items-center">
+                <div>
+                  <span className="font-semibold">Customer:</span>{" "}
+                  <span>{salesData?.sales?.sales_customer}</span>
+                </div>
+                <div>
+                  <span className="font-semibold">Phone:</span>{" "}
+                  <span>{salesData?.sales?.sales_mobile}</span>
+                </div>
               </div>
 
               <Table className="border">
@@ -360,8 +372,8 @@ const SalesView = () => {
                     <TableHead className="text-center text-black font-bold   border-r">Sl No</TableHead>
                     <TableHead className="text-center text-black font-bold  border-r">Item Name</TableHead>
                     <TableHead className="text-center text-black font-bold  border-r">Quantity</TableHead>
-                    <TableHead className="text-center text-black font-bold  border-r">Rate (₹)</TableHead>
-                    <TableHead className="text-center text-black font-bold ">Amount (₹)</TableHead>
+                    <TableHead className="text-center text-black font-bold  border-r">Rate </TableHead>
+                    <TableHead className="text-center text-black font-bold ">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

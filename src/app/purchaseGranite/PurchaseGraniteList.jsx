@@ -260,7 +260,7 @@ const PurchaseGraniteList = () => {
             <div className="flex flex-col gap-2">
               {/* Title + Add Button */}
               <div className="flex justify-between items-center px-2 py-2">
-                <h1 className="text-base font-bold text-gray-800">Add Aaya</h1>
+                <h1 className="text-base font-bold text-gray-800">Add</h1>
                 <Button
                   size="sm"
                   className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
@@ -442,7 +442,7 @@ const PurchaseGraniteList = () => {
                   navigate("/purchase/create");
                 }}
               >
-                <SquarePlus className="h-4 w-4" /> Add Aaya
+                <SquarePlus className="h-4 w-4" /> Add
               </Button>{" "}
             </div>
           </div>
