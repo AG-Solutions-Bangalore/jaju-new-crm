@@ -31,22 +31,13 @@ import {
   Edit,
   Eye,
   Search,
-  SquarePlus,
-  Trash2,
+  SquarePlus
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  navigateTOPurchaseGraniteEdit,
-  navigateTOPurchaseGraniteView,
-  navigateTOPurchaseTilesEdit,
-  navigateTOPurchaseTilesView,
-  navigateTOSalesEdit,
-  navigateTOSalesView,
-  PURCHASE_GRANITE_LIST,
-  PURCHASE_TILES_LIST,
-  SALES_LIST,
+  SALES_LIST
 } from "@/api";
 import Loader from "@/components/loader/Loader";
 import {
@@ -56,8 +47,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import moment from "moment";
 import Cookies from "js-cookie";
+import moment from "moment";
 
 const SalesList = () => {
   const {
@@ -118,9 +109,9 @@ const SalesList = () => {
     },
     {
       accessorKey: "sales_no",
-      id: "Estimate No",
-      header: "Estimate No",
-      cell: ({ row }) => <div>{row.getValue("Estimate No")}</div>,
+      id: "JFC Bill No",
+      header: "JFC Bill No",
+      cell: ({ row }) => <div>{row.getValue("JFC Bill No")}</div>,
     },
     {
       accessorKey: "sales_customer",
@@ -141,18 +132,6 @@ const SalesList = () => {
       id: "Gross",
       header: "Gross",
       cell: ({ row }) => <div>{row.getValue("Gross")}</div>,
-    },
-    {
-      accessorKey: "sales_advance",
-      id: "Advance",
-      header: "Advance",
-      cell: ({ row }) => <div>{row.getValue("Advance")}</div>,
-    },
-    {
-      accessorKey: "sales_balance",
-      id: "Balance",
-      header: "Balance",
-      cell: ({ row }) => <div>{row.getValue("Balance")}</div>,
     },
 
     {
@@ -274,7 +253,7 @@ const SalesList = () => {
             <div className="flex flex-col gap-2">
               {/* Title + Add Button */}
               <div className="flex justify-between items-center px-2 py-2">
-                <h1 className="text-base font-bold text-gray-800">Gaya List</h1>
+                <h1 className="text-base font-bold text-gray-800">Sale List</h1>
                 <Button
                   size="sm"
                   className={`h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
@@ -351,14 +330,6 @@ const SalesList = () => {
                       <div className="text-gray-500">Gross</div>
                       <div>{sale.sales_gross}</div>
                     </div>
-                    <div>
-                      <div className="text-gray-500">Advance</div>
-                      <div>{sale.sales_advance}</div>
-                    </div>
-                    <div>
-                      <div className="text-gray-500">Balance</div>
-                      <div>{sale.sales_balance}</div>
-                    </div>
                   </div>
                 </Card>
               ))}
@@ -410,7 +381,7 @@ const SalesList = () => {
 
         <div className="hidden sm:block">
           <div className="flex text-left text-2xl text-gray-800 font-[400]">
-            Gaya List
+            Sale List
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center py-4 gap-2">
@@ -458,7 +429,7 @@ const SalesList = () => {
                   navigate("/sales/create");
                 }}
               >
-                <SquarePlus className="h-4 w-4" /> Add Gaya
+                <SquarePlus className="h-4 w-4" /> Add Sales
               </Button>{" "}
             </div>
           </div>

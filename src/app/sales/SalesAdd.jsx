@@ -1,33 +1,31 @@
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import moment from "moment";
-import { Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
+import moment from "moment";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 
+import { useToast } from "@/hooks/use-toast";
+
+import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Select as SelectShadcn,
+  Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
-import Page from "../dashboard/page";
-import Cookies from "js-cookie";
 import useNumericInput from "@/hooks/useNumericInput";
-import { MemoizedProductSelect } from "@/components/common/MemoizedProductSelect";
+import Cookies from "js-cookie";
+import Page from "../dashboard/page";
 
 const typeOptions = [
   { value: "Granites", label: "Granites" },
@@ -40,6 +38,7 @@ const formSchema = z.object({
   sales_customer: z.string(),
   sales_address: z.string(),
   sales_mobile: z.string(),
+  JFCBILLNO: z.string(),
   sales_item_type: z.string(),
   sales_tax: z.string(),
   sales_tempo: z.string(),
@@ -53,12 +52,14 @@ const formSchema = z.object({
   sales_advance: z.string(),
   sales_balance: z.string(),
   sales_temp_amount: z.string(),
+  sales_amount_received: z.string(),
 });
 
 const SalesAdd = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gstEdited, setGstEdited] = useState(false);
   const handleKeyDown = useNumericInput();
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -78,6 +79,7 @@ const SalesAdd = () => {
       sales_customer: "",
       sales_address: "",
       sales_mobile: "",
+      JFCBILLNO: "",
 
       sales_item_type: "",
 
@@ -93,6 +95,7 @@ const SalesAdd = () => {
       sales_advance: "",
       sales_balance: "",
       sales_temp_amount: "",
+      sales_amount_received: "",
     },
   });
   const [itemEntries, setItemEntries] = useState([
@@ -106,10 +109,16 @@ const SalesAdd = () => {
       sales_sub_item_original: "",
     },
   ]);
+  const [loadingType, setLoadingType] = useState("Loading");
   const [customItems, setCustomItems] = useState({});
+  const [isCustomItem, setIsCustomItem] = useState({});
 
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
+
+  const handleToggleCustomItem = (index) => {
+    setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
   const { data: productTypeGroup = [] } = useQuery({
@@ -146,32 +155,45 @@ const SalesAdd = () => {
     },
   });
 
-  const productOptions = useMemo(() => [
-    ...product.map((item) => {
-      const name = item.item_name || item.product_type_group || item.product_type;
-      return { value: name, label: name };
-    }),
-    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
-  ], [product]);
-  const calculateAndSetTotals = (entries) => {
+  const productOptions = useMemo(
+    () => [
+      ...product.map((item) => {
+        const name =
+          item.item_name || item.product_type_group || item.product_type;
+        return { value: name, label: name };
+      }),
+    ],
+    [product],
+  );
+  const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
       0,
     );
     const tempo = parseFloat(form.watch("sales_tempo") || 0);
     const loading = parseFloat(form.watch("sales_loading") || 0);
+    const unloading = parseFloat(form.watch("sales_unloading") || 0);
     const other = parseFloat(form.watch("sales_other") || 0);
     const other1 = parseFloat(form.watch("sales_other1") || 0);
 
     const grandTotal = itemsTotal + tempo + loading + other + other1;
-    const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
-    const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
+    if (!skipGst && !gstEdited) {
+      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      form.setValue("sales_tax", gstAmount.toString());
+    }
+    const currentGst = parseFloat(form.watch("sales_tax") || 0);
+    const finalTotal = parseFloat((grandTotal + currentGst).toFixed(2));
 
-    form.setValue("sales_tax", gstAmount.toString());
     form.setValue("sales_gross", finalTotal.toString());
     form.setValue("sales_balance", finalTotal.toString());
     form.setValue("sales_advance", "0");
   };
+
+  useEffect(() => {
+    if (!gstEdited) {
+      calculateAndSetTotals(itemEntries);
+    }
+  }, [gstEdited]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -265,8 +287,7 @@ const SalesAdd = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
-        !entry.sales_sub_item ||
-        (entry.sales_sub_item === "NOT IN THE LIST" && !customItems[index])
+        !entry.sales_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
       qnty: !entry.sales_sub_qnty
@@ -469,10 +490,9 @@ const SalesAdd = () => {
       const formattedItemEntries = itemEntries.map((entry, index) => ({
         ...entry,
         sales_sub_pcs: entry.sales_sub_qnty,
-        sales_sub_item:
-          entry.sales_sub_item === "NOT IN THE LIST"
-            ? customItems[index]
-            : entry.sales_sub_item,
+        sales_sub_item: isCustomItem[index]
+          ? customItems[index]
+          : entry.sales_sub_item,
       }));
 
       const itemsTotal = itemEntries.reduce(
@@ -481,24 +501,27 @@ const SalesAdd = () => {
       );
       const tempo = parseFloat(form.watch("sales_tempo") || 0);
       const loading = parseFloat(form.watch("sales_loading") || 0);
+      const unloading = parseFloat(form.watch("sales_unloading") || 0);
       const other = parseFloat(form.watch("sales_other") || 0);
       const other1 = parseFloat(form.watch("sales_other1") || 0);
 
-      const grandTotal = itemsTotal + tempo + loading + other + other1;
-      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      const grandTotal =
+        itemsTotal + tempo + loading + unloading + other + other1;
+      const gstAmount = parseFloat(form.watch("sales_tax") || 0);
       const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
 
       const payload = {
         ...data,
         sales_tempo: tempo.toString(),
         sales_loading: loading.toString(),
-        sales_unloading: "0",
+        sales_unloading: unloading.toString(),
         sales_other: other.toString(),
         sales_other1: other1.toString(),
         sales_tax: gstAmount.toString(),
         sales_gross: finalTotal.toString(),
         sales_balance: finalTotal.toString(),
         sales_advance: "0",
+        sales_amount_received: data.sales_amount_received,
         sales_year: currentYear,
         sales_no_of_count: formattedItemEntries.length,
         sales_sub_data: formattedItemEntries,
@@ -526,12 +549,21 @@ const SalesAdd = () => {
   );
   const watchTempo = parseFloat(form.watch("sales_tempo") || 0);
   const watchLoading = parseFloat(form.watch("sales_loading") || 0);
+  const watchUnloading = parseFloat(form.watch("sales_unloading") || 0);
   const watchOther = parseFloat(form.watch("sales_other") || 0);
   const watchOther1 = parseFloat(form.watch("sales_other1") || 0);
 
-  const displayGrandTotal = itemsTotal + watchTempo + watchLoading + watchOther + watchOther1;
-  const displayGst = parseFloat((displayGrandTotal * 0.18).toFixed(2));
-  const displayFinalTotal = parseFloat((displayGrandTotal + displayGst).toFixed(2));
+  const displayGrandTotal =
+    itemsTotal +
+    watchTempo +
+    watchLoading +
+    watchUnloading +
+    watchOther +
+    watchOther1;
+  const displayGst = parseFloat(form.watch("sales_tax") || 0);
+  const displayFinalTotal = parseFloat(
+    (displayGrandTotal + displayGst).toFixed(2),
+  );
 
   return (
     <Page>
@@ -566,10 +598,26 @@ const SalesAdd = () => {
 
           <div className="mb-14">
             <form onSubmit={handleFormSubmit} className="space-y-4">
-              {/* Customer Info */}
+              Customer Info
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="JFCBILLNO">JFC Bill No</Label>
+                    <Input
+                      id="JFCBILLNO"
+                      {...form.register("JFCBILLNO")}
+                      className="mt-1 uppercase"
+                      placeholder="Enter bill number"
+                      maxLength={50}
+                      onChange={(e) => {
+                        form.setValue(
+                          "JFCBILLNO",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
+                    />
+                  </div>
                   <div>
                     <Label htmlFor="sales_date">Date</Label>
                     <Input
@@ -584,9 +632,15 @@ const SalesAdd = () => {
                     <Input
                       id="sales_customer"
                       {...form.register("sales_customer")}
-                      className="mt-1"
+                      className="mt-1 uppercase"
                       placeholder="Enter customer name"
                       maxLength={50}
+                      onChange={(e) => {
+                        form.setValue(
+                          "sales_customer",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
                     />
                   </div>
                   <div>
@@ -594,10 +648,16 @@ const SalesAdd = () => {
                     <Input
                       id="sales_mobile"
                       {...form.register("sales_mobile")}
-                      className="mt-1"
+                      className="mt-1 uppercase"
                       placeholder="Enter mobile number"
                       maxLength={10}
                       onKeyDown={handleKeyDown}
+                      onChange={(e) => {
+                        form.setValue(
+                          "sales_mobile",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
                     />
                   </div>
                   <div>
@@ -605,15 +665,21 @@ const SalesAdd = () => {
                     <Input
                       id="sales_address"
                       {...form.register("sales_address")}
-                      className="mt-1"
+                      className="mt-1 uppercase"
                       placeholder="Enter address"
                       maxLength={200}
+                      onChange={(e) => {
+                        form.setValue(
+                          "sales_address",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
                     />
                   </div>
                   {/* <div>
                     <Label htmlFor="sales_item_type">Item Type</Label>
 
-                    <SelectShadcn
+                    <Select
                       id="sales_item_type"
                       value={form.watch("sales_item_type")}
                       onValueChange={(value) => {
@@ -637,11 +703,10 @@ const SalesAdd = () => {
                           ))}
                         </SelectGroup>
                       </SelectContent>
-                    </SelectShadcn>
+                    </Select>
                   </div> */}
                 </div>
               </div>
-
               {/* Items */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-3">
@@ -654,75 +719,107 @@ const SalesAdd = () => {
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
                       <div className="col-span-11">
-                        <div className="grid grid-cols-2 gap-1 mb-1">
-                          {/* <div className="col-span-1">
-                            <SelectShadcn
-                              value={entry.sales_sub_type}
-                              onValueChange={(value) =>
-                                handleItemChange(index, "sales_sub_type", value)
-                              }
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectLabel>Item Types</SelectLabel>
-                                  {typeOptions.map((type) => (
-                                    <SelectItem
-                                      key={type.value}
-                                      value={type.value}
-                                    >
-                                      {type.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </SelectShadcn>
-                          </div> */}
-                          <div className="col-span-1">
-                             <MemoizedProductSelect
-                              value={entry.sales_sub_item}
-                              onChange={(value) =>
-                                handleItemChange(index, "sales_sub_item", value)
-                              }
-                              options={productOptions}
-                              placeholder="Select item..."
-                            />
-                            {entry.sales_sub_item === "NOT IN THE LIST" && (
-                              <div className="mt-1">
+                        <div className="flex gap-1 mb-1">
+                          {isCustomItem[index] ? (
+                            <>
+                              <div className="flex-1">
                                 <Input
                                   type="text"
+                                  className="h-8 text-sm uppercase"
+                                  placeholder="Enter item name"
                                   value={customItems[index] || ""}
                                   onChange={(e) =>
                                     handleCustomItemChange(
                                       index,
-                                      e.target.value,
+                                      e.target.value.toUpperCase(),
                                     )
                                   }
-                                  className="h-8 text-sm"
-                                  placeholder="Enter custom item name"
                                 />
                               </div>
-                            )}
-                          </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                Select
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex-1">
+                                <MemoizedProductSelect
+                                  value={entry.sales_sub_item}
+                                  onChange={(value) =>
+                                    handleItemChange(
+                                      index,
+                                      "sales_sub_item",
+                                      value,
+                                    )
+                                  }
+                                  options={productOptions}
+                                  placeholder="Select item..."
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
+                                  <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z" />
+                                </svg>
+                              </Button>
+                            </>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 mt-1 gap-1">
                           <div>
                             <Input
                               type="tel"
-                              value={entry.sales_sub_rate}
+                              value={entry.sales_sub_qnty}
                               onChange={(e) =>
                                 handleItemChange(
                                   index,
-                                  "sales_sub_rate",
+                                  "sales_sub_qnty",
                                   e.target.value,
                                 )
                               }
                               maxLength={10}
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
-                              placeholder="Rate"
+                              className="h-8 text-sm text-right"
+                              placeholder="Qnty (pcs/box)"
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              type="tel"
+                              value={entry.sales_sub_qnty_sqr}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  index,
+                                  "sales_sub_qnty_sqr",
+                                  e.target.value,
+                                )
+                              }
+                              maxLength={10}
+                              onKeyDown={handleKeyDown}
+                              className="h-8 text-sm text-right"
+                              placeholder="Qnty (sqft)"
                             />
                           </div>
                           <div>
@@ -731,7 +828,7 @@ const SalesAdd = () => {
                               value={entry.sales_sub_amount}
                               disabled
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm bg-gray-100"
+                              className="h-8 text-sm bg-gray-100 text-right"
                               placeholder="Amount"
                             />
                           </div>
@@ -763,11 +860,56 @@ const SalesAdd = () => {
                   Add Item
                 </Button>
               </div>
-
               {/* Charges and Totals */}
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-4">
                 <h3 className="font-medium">Charges & Totals</h3>
                 <div className="space-y-3">
+                  {/* Loading/Unloading */}
+                  <div>
+                    <Label>Labour Charges</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <Select
+                        value={loadingType}
+                        onValueChange={setLoadingType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Loading Only">Loading Only</SelectItem>
+                          <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id={
+                          loadingType === "Loading Only"
+                            ? "sales_loading"
+                            : "sales_unloading"
+                        }
+                        type="tel"
+                        value={
+                          form.watch(
+                            loadingType === "Loading Only"
+                              ? "sales_loading"
+                              : "sales_unloading",
+                          ) || ""
+                        }
+                        onChange={(e) =>
+                            handleChargeChange(
+                              loadingType === "Loading Only"
+                                ? "sales_loading"
+                                : "sales_unloading",
+                              e.target.value,
+                            )
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          className="text-right"
+                          placeholder="0"
+                        />
+                    </div>
+                  </div>
+
                   {/* Tempo Charges */}
                   <div>
                     <Label htmlFor="sales_tempo">Tempo Charges</Label>
@@ -779,26 +921,56 @@ const SalesAdd = () => {
                         handleChargeChange("sales_tempo", e.target.value)
                       }
                       onKeyDown={handleKeyDown}
-                      className="mt-1"
+                      className="mt-1 text-right"
                       placeholder="0"
                     />
                   </div>
 
-                  {/* Labour Charges */}
+                  {/* Loading/Unloading */}
                   <div>
-                    <Label htmlFor="sales_loading">Labour Charges</Label>
-                    <Input
-                      id="sales_loading"
-                      type="tel"
-                      {...form.register("sales_loading")}
-                      onChange={(e) =>
-                        handleChargeChange("sales_loading", e.target.value)
-                      }
-                      maxLength={10}
-                      onKeyDown={handleKeyDown}
-                      className="mt-1"
-                      placeholder="0"
-                    />
+                    <Label>Labour Charges</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <Select
+                        value={loadingType}
+                        onValueChange={setLoadingType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Loading Only">Loading Only</SelectItem>
+                          <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id={
+                          loadingType === "Loading Only"
+                            ? "sales_loading"
+                            : "sales_unloading"
+                        }
+                        type="tel"
+                        value={
+                          form.watch(
+                            loadingType === "Loading Only"
+                              ? "sales_loading"
+                              : "sales_unloading",
+                          ) || ""
+                        }
+                        onChange={(e) =>
+                            handleChargeChange(
+                              loadingType === "Loading Only"
+                                ? "sales_loading"
+                                : "sales_unloading",
+                              e.target.value,
+                            )
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          className="text-right"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Other 1 */}
@@ -819,6 +991,7 @@ const SalesAdd = () => {
                         }
                         maxLength={10}
                         onKeyDown={handleKeyDown}
+                        className="text-right"
                         placeholder="0"
                       />
                     </div>
@@ -842,49 +1015,71 @@ const SalesAdd = () => {
                         }
                         maxLength={10}
                         onKeyDown={handleKeyDown}
+                        className="text-right"
                         placeholder="0"
                       />
                     </div>
                   </div>
 
-                  {/* Grand Total */}
+                  {/* Gross Total */}
                   <div>
-                    <Label>Grand Total</Label>
+                    <Label>Gross Total</Label>
                     <Input
                       type="text"
-                      value={displayGrandTotal.toString()}
+                      value={Number(displayGrandTotal).toFixed(0)}
                       disabled
-                      className="mt-1 bg-gray-100 font-medium"
+                      className="mt-1 bg-gray-100 font-medium text-right"
                     />
                   </div>
 
-                  {/* GST 18% */}
+                  {/* GST Amount */}
                   <div>
-                    <Label>GST 18%</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>GST 18% ({Number(displayGst).toFixed(0)})</Label>
+                    </div>
                     <Input
-                      type="text"
-                      value={displayGst.toString()}
-                      disabled
-                      className="mt-1 bg-gray-100 font-medium"
+                      type="tel"
+                      value={Number(displayGst).toFixed(0)}
+                      onChange={(e) => {
+                        setGstEdited(true);
+                        form.setValue("sales_tax", e.target.value);
+                      }}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1 text-right"
+                      maxLength={10}
+                      placeholder="0"
                     />
                   </div>
 
                   {/* Spacer */}
-                  <div className="h-8 bg-gray-100 rounded-md w-full"></div>
+                  {/* <div className="h-8 bg-gray-100 rounded-md w-full"></div> */}
 
-                  {/* Final Total */}
+                  {/* Net Total */}
                   <div>
-                    <Label className="font-semibold text-blue-900">Final Total</Label>
+                    <Label className="font-semibold text-blue-900">
+                      Net Total
+                    </Label>
                     <Input
                       type="text"
-                      value={displayFinalTotal.toString()}
+                      value={Number(displayFinalTotal).toFixed(0)}
                       disabled
-                      className="mt-1 bg-blue-50 font-bold border-blue-200 text-blue-900"
+                      className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                    />
+                  </div>
+
+                  {/* Final Amount Received */}
+                  <div>
+                    <Label>Final Amount Received</Label>
+                    <Input
+                      type="tel"
+                      {...form.register("sales_amount_received")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1 text-right"
+                      maxLength={10}
+                      placeholder="0"
                     />
                   </div>
                 </div>
-              </div>
-
               {/* Action Buttons */}
               <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-2 flex justify-between">
                 <Button
@@ -921,7 +1116,7 @@ const SalesAdd = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Add Gaya</CardTitle>
+                  <CardTitle>Add Sales</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -929,7 +1124,26 @@ const SalesAdd = () => {
             <CardContent>
               <form onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Customer Information */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="JFCBILLNO">
+                      JFC Bill No
+                      <span className="text-xs text-red-400 ">*</span>
+                    </Label>
+                    <Input
+                      id="JFCBILLNO"
+                      {...form.register("JFCBILLNO")}
+                      className="bg-white uppercase"
+                      placeholder="Enter bill number"
+                      maxLength={50}
+                      onChange={(e) => {
+                        form.setValue(
+                          "JFCBILLNO",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="sales_date">
                       Date <span className="text-xs text-red-400 ">*</span>
@@ -950,9 +1164,15 @@ const SalesAdd = () => {
                     <Input
                       id="sales_customer"
                       {...form.register("sales_customer")}
-                      className="bg-white"
+                      className="bg-white uppercase"
                       placeholder="Enter customer name"
                       maxLength={50}
+                      onChange={(e) => {
+                        form.setValue(
+                          "sales_customer",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -960,10 +1180,16 @@ const SalesAdd = () => {
                     <Input
                       id="sales_mobile"
                       {...form.register("sales_mobile")}
-                      className="bg-white"
+                      className="bg-white uppercase"
                       placeholder="Enter mobile number"
                       maxLength={10}
                       onKeyDown={handleKeyDown}
+                      onChange={(e) => {
+                        form.setValue(
+                          "sales_mobile",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
                     />
                   </div>
 
@@ -972,7 +1198,7 @@ const SalesAdd = () => {
                       Item Type <span className="text-xs text-red-400 ">*</span>
                     </Label>
 
-                    <SelectShadcn
+                    <Select
                       id="sales_item_type"
                       value={form.watch("sales_item_type")}
                       onValueChange={(value) => {
@@ -996,16 +1222,22 @@ const SalesAdd = () => {
                           ))}
                         </SelectGroup>
                       </SelectContent>
-                    </SelectShadcn>
+                    </Select>
                   </div> */}
                   <div className="space-y-2 col-span-2 lg:col-span-3">
                     <Label htmlFor="sales_address">Address</Label>
                     <Input
                       id="sales_address"
                       {...form.register("sales_address")}
-                      className="bg-white"
+                      className="bg-white uppercase"
                       placeholder="Enter address"
                       maxLength={200}
+                      onChange={(e) => {
+                        form.setValue(
+                          "sales_address",
+                          e.target.value.toUpperCase(),
+                        );
+                      }}
                     />
                   </div>
                 </div>
@@ -1024,34 +1256,34 @@ const SalesAdd = () => {
                             Type{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th> */}
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[140px] min-w-[120px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
 
-                          <th className="text-left p-2 font-medium text-sm">
-                            Qnty (pcs){" "}
-                            <span className="text-xs text-red-400 ">*</span>
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
+                            Qnty (pcs/box)
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
-                            Qnty (sqr){" "}
-                            <span className="text-xs text-red-400 ">*</span>
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
+                            Qnty (sqft)
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
-                            Rate{" "}
-                            <span className="text-xs text-red-400 ">*</span>
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
+                            Qnty (sqft)
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
+                            Rate
+                          </th>
+                          <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
                             Amount
                           </th>
-                          <th className="text-left p-2 font-medium text-sm"></th>
+                          <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
                             {/* <td className="p-2">
-                              <SelectShadcn
+                              <Select
                                 value={entry.sales_sub_type}
                                 onValueChange={(value) =>
                                   handleItemChange(
@@ -1077,37 +1309,79 @@ const SalesAdd = () => {
                                     ))}
                                   </SelectGroup>
                                 </SelectContent>
-                              </SelectShadcn>
+                              </Select>
                             </td> */}
                             <td className="p-2">
-                               <div className="w-[12rem]">
-                                <MemoizedProductSelect
-                                  value={entry.sales_sub_item}
-                                  onChange={(value) =>
-                                    handleItemChange(
-                                      index,
-                                      "sales_sub_item",
-                                      value,
-                                    )
-                                  }
-                                  options={productOptions}
-                                  placeholder="Select item"
-                                />
+                              <div className="flex gap-2 items-start">
+                                {isCustomItem[index] ? (
+                                  <div className="flex-1 min-w-0 flex gap-2">
+                                    <Input
+                                      type="text"
+                                      className="h-9 uppercase"
+                                      placeholder="Enter item name"
+                                      value={customItems[index] || ""}
+                                      onChange={(e) =>
+                                        handleCustomItemChange(
+                                          index,
+                                          e.target.value.toUpperCase(),
+                                        )
+                                      }
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 whitespace-nowrap shrink-0"
+                                      onClick={() =>
+                                        handleToggleCustomItem(index)
+                                      }
+                                    >
+                                      Select
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0">
+                                      <MemoizedProductSelect
+                                        value={entry.sales_sub_item}
+                                        onChange={(value) =>
+                                          handleItemChange(
+                                            index,
+                                            "sales_sub_item",
+                                            value,
+                                          )
+                                        }
+                                        options={productOptions}
+                                        placeholder="Select item"
+                                      />
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 whitespace-nowrap shrink-0"
+                                      onClick={() =>
+                                        handleToggleCustomItem(index)
+                                      }
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
+                                        <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z" />
+                                      </svg>
+                                    </Button>
+                                  </>
+                                )}
                               </div>
-                              {entry.sales_sub_item === "NOT IN THE LIST" && (
-                                <Input
-                                  type="text"
-                                  className="mt-1 h-9"
-                                  placeholder="Enter custom item name"
-                                  value={customItems[index] || ""}
-                                  onChange={(e) =>
-                                    handleCustomItemChange(
-                                      index,
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
                             </td>
 
                             <td className="p-2">
@@ -1123,7 +1397,7 @@ const SalesAdd = () => {
                                 }
                                 maxLength={10}
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                               />
                             </td>
@@ -1140,7 +1414,7 @@ const SalesAdd = () => {
                                 }
                                 maxLength={10}
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                               />
                             </td>
@@ -1157,7 +1431,7 @@ const SalesAdd = () => {
                                 }
                                 maxLength={10}
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                               />
                             </td>
@@ -1166,7 +1440,7 @@ const SalesAdd = () => {
                                 type="tel"
                                 value={entry.sales_sub_amount}
                                 disabled
-                                className="h-9 bg-gray-100"
+                                className="h-9 bg-gray-100 text-right"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
                               />
@@ -1207,11 +1481,63 @@ const SalesAdd = () => {
                   <div></div>
                   <div className="border rounded-lg p-3 bg-white">
                     <div className="grid grid-cols-1 gap-2">
+                      {/* Loading/Unloading */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Labour Charges</Label>
+                        <div className="flex w-1/2 gap-1">
+                          <Select
+                            value={loadingType}
+                            onValueChange={setLoadingType}
+                          >
+                            <SelectTrigger className="w-1/2 h-9">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Loading Only">Loading Only</SelectItem>
+                              <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            className="w-1/2 h-9 text-right"
+                            id={
+                              loadingType === "Loading Only"
+                                ? "sales_loading"
+                                : loadingType === "Loading & Unloading"
+                                  ? "sales_unloading"
+                                  : "sales_loading"
+                            }
+                            type="tel"
+                            value={
+                              form.watch(
+                                loadingType === "Loading Only"
+                                  ? "sales_loading"
+                                  : loadingType === "Loading & Unloading"
+                                    ? "sales_unloading"
+                                    : "sales_loading",
+                              ) || ""
+                            }
+                            onChange={(e) => {
+                              handleChargeChange(
+                                loadingType === "Loading Only"
+                                  ? "sales_loading"
+                                  : loadingType === "Loading & Unloading"
+                                    ? "sales_unloading"
+                                    : "sales_loading",
+                                e.target.value,
+                              );
+                            }}
+                            maxLength={10}
+                            onKeyDown={handleKeyDown}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+
                       {/* Tempo Charges */}
                       <div className="flex items-center justify-between">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
                         <Input
-                          className="w-1/2"
+                          className="w-1/2 text-right"
                           id="sales_tempo"
                           type="tel"
                           {...form.register("sales_tempo")}
@@ -1224,28 +1550,11 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Labour Charges */}
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="sales_loading">Labour Charges</Label>
-                        <Input
-                          className="w-1/2"
-                          id="sales_loading"
-                          type="tel"
-                          {...form.register("sales_loading")}
-                          onChange={(e) =>
-                            handleChargeChange("sales_loading", e.target.value)
-                          }
-                          maxLength={10}
-                          onKeyDown={handleKeyDown}
-                          placeholder="0"
-                        />
-                      </div>
-
                       {/* Other 1 */}
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
-                          placeholder="Other Label 1"
+                          placeholder="Other  1"
                           className="w-1/2 h-9"
                           {...form.register("sales_other_label")}
                         />
@@ -1267,7 +1576,7 @@ const SalesAdd = () => {
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
-                          placeholder="Other Label 2"
+                          placeholder="Other 2"
                           className="w-1/2 h-9"
                           {...form.register("sales_other1_label")}
                         />
@@ -1285,42 +1594,67 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Grand Total */}
+                      {/* Gross Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Grand Total</Label>
+                        <Label className="font-medium">Gross Total</Label>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium"
+                          className="w-1/2 bg-gray-100 font-medium text-right"
                           type="text"
-                          value={displayGrandTotal.toString()}
+                          value={Number(displayGrandTotal).toFixed(0)}
                           disabled
                         />
                       </div>
 
-                      {/* GST 18% */}
+                      {/* GST Amount */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">GST 18%</Label>
+                        <Label className="font-medium">
+                          GST 18% ({Number(displayGst).toFixed(0)})
+                        </Label>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium"
-                          type="text"
-                          value={displayGst.toString()}
-                          disabled
+                          className="w-1/2 text-right"
+                          type="tel"
+                          value={Number(displayGst).toFixed(0)}
+                          onChange={(e) => {
+                            setGstEdited(true);
+                            form.setValue("sales_tax", e.target.value);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
                         />
                       </div>
 
                       {/* Spacer */}
-                      <div className="flex items-center justify-between h-9">
+                      {/* <div className="flex items-center justify-between h-9">
                         <div className="w-1/2"></div>
                         <div className="w-1/2 h-8 bg-gray-100 rounded-md"></div>
+                      </div> */}
+
+                      {/* Net Total */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-semibold text-blue-900">
+                          Net Total
+                        </Label>
+                        <Input
+                          className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                          type="text"
+                          value={Number(displayFinalTotal).toFixed(0)}
+                          disabled
+                        />
                       </div>
 
-                      {/* Final Total */}
+                      {/* Final Amount Received */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-semibold text-blue-900">Final Total</Label>
+                        <Label className="font-medium">
+                          Final Amount Received
+                        </Label>
                         <Input
-                          className="w-1/2 bg-blue-50 font-bold border-blue-200 text-blue-900"
-                          type="text"
-                          value={displayFinalTotal.toString()}
-                          disabled
+                          className="w-1/2 text-right"
+                          type="tel"
+                          {...form.register("sales_amount_received")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
                         />
                       </div>
                     </div>
@@ -1342,7 +1676,7 @@ const SalesAdd = () => {
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Saving..." : "Save Gaya"}
+                    {isSubmitting ? "Saving..." : "Save"}
                   </Button>
                 </div>
               </form>

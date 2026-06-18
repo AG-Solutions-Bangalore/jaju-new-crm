@@ -148,7 +148,7 @@ export function AppSidebar({ ...props }) {
       //   isActive: false,
       // },
       {
-        title: "Aaya",
+        title: "PURCHASE",
         url: "/purchase",
         icon: Mountain,
         isActive: false,
@@ -160,13 +160,13 @@ export function AppSidebar({ ...props }) {
       //   isActive: false,
       // },
       {
-        title: "Gaya",
+        title: "SALE",
         url: "/sales",
         icon: ShoppingCart,
         isActive: false,
       },
       {
-        title: "Stock",
+        title: "STOCK",
         url: "/stocks",
         icon: Warehouse,
         isActive: false,

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import moment from "moment";
-import { Trash2, Plus, ArrowLeft } from "lucide-react";
+import { Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
@@ -89,9 +89,14 @@ const PurchaseGraniteEdit = () => {
     },
   ]);
   const [customItems, setCustomItems] = useState({});
+  const [isCustomItem, setIsCustomItem] = useState({});
 
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
+  };
+
+  const handleToggleCustomItem = (index) => {
+    setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
   const {
@@ -138,13 +143,16 @@ const PurchaseGraniteEdit = () => {
     },
   });
 
-  const productOptions = useMemo(() => [
-    ...product.map((item) => {
-      const name = item.item_name || item.product_type_group || item.product_type;
-      return { value: name, label: name };
-    }),
-    { value: "NOT IN THE LIST", label: "NOT IN THE LIST" },
-  ], [product]);
+  const productOptions = useMemo(
+    () => [
+      ...product.map((item) => {
+        const name =
+          item.item_name || item.product_type_group || item.product_type;
+        return { value: name, label: name };
+      }),
+    ],
+    [product],
+  );
 
   useEffect(() => {
     if (purchaseByid) {
@@ -216,6 +224,63 @@ const PurchaseGraniteEdit = () => {
     form.setValue("purchase_amount", newTotal.toString());
   };
 
+  const removeItemEntry = (index) => {
+    const entry = itemEntries[index];
+    const updatedEntries = [...itemEntries];
+    updatedEntries.splice(index, 1);
+    setItemEntries(updatedEntries);
+
+    setCustomItems((prev) => {
+      const newCustom = { ...prev };
+      for (let i = index; i < updatedEntries.length; i++) {
+        newCustom[i] = newCustom[i + 1];
+      }
+      delete newCustom[updatedEntries.length];
+      return newCustom;
+    });
+
+    if (entry.id) {
+      const token = Cookies.get("token");
+      axios
+        .delete(`${BASE_URL}/api/web-delete-purchase-sub/${entry.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description:
+              error.response?.data?.message || "Failed to delete item",
+            variant: "destructive",
+          });
+        });
+    }
+
+    const itemsTotal = updatedEntries.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0,
+    );
+    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+  };
+
+  const addItemEntry = () => {
+    const newEntry = {
+      purchase_sub_item: "",
+      purchase_sub_qnty: "",
+      purchase_sub_qnty_sqr: "",
+      purchase_sub_rate: "",
+      purchase_sub_amount: "",
+    };
+    const updated = [...itemEntries, newEntry];
+    setItemEntries(updated);
+    const itemsTotal = updated.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0,
+    );
+    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+  };
+
   const updatePurchaseMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -238,7 +303,7 @@ const PurchaseGraniteEdit = () => {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to Update Aaya",
+        description: error.response?.data?.message || "Failed to Update",
         variant: "destructive",
       });
     },
@@ -256,7 +321,7 @@ const PurchaseGraniteEdit = () => {
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
         !entry.purchase_sub_item ||
-        (entry.purchase_sub_item === "NOT IN THE LIST" && !customItems[index])
+        (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
       qnty: !entry.purchase_sub_qnty
@@ -453,7 +518,7 @@ const PurchaseGraniteEdit = () => {
           ...entry,
           purchase_sub_pcs: entry.purchase_sub_qnty,
           purchase_sub_item:
-            entry.purchase_sub_item === "NOT IN THE LIST"
+            isCustomItem[index]
               ? customItems[index]
               : entry.purchase_sub_item,
         };
@@ -470,7 +535,7 @@ const PurchaseGraniteEdit = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to Update Aaya",
+        description: error.message || "Failed to Update",
         variant: "destructive",
       });
     } finally {
@@ -522,22 +587,8 @@ const PurchaseGraniteEdit = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Edit Aaya</h1>
+                <h1 className="text-base font-bold">Edit Purchase </h1>
               </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Total</p>
-                <p className="text-sm font-bold">
-                  {form.watch("purchase_amount") || 0}
-                </p>
-              </div>
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Other</p>
-                <p className="text-sm font-bold">
-                  {form.watch("purchase_other") || 0}
-                </p>
-              </div>
             </div>
           </div>
 
@@ -610,33 +661,6 @@ const PurchaseGraniteEdit = () => {
                       </SelectContent>
                     </SelectShadcn>
                   </div> */}
-                  <div>
-                    <Label htmlFor="purchase_other">
-                      Other Amount{" "}
-                      <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-                    <Input
-                      id="purchase_other"
-                      type="tel"
-                      {...form.register("purchase_other")}
-                      onChange={(e) => handleOtherChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="mt-1"
-                      placeholder="0"
-                      maxLength={10}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="purchase_amount">Total Amount</Label>
-                    <Input
-                      id="purchase_amount"
-                      type="tel"
-                      {...form.register("purchase_amount")}
-                      disabled
-                      className="mt-1 bg-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -651,34 +675,64 @@ const PurchaseGraniteEdit = () => {
                     className="bg-gray-50 p-2 rounded-md border border-gray-200 mb-2"
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
-                      <div className="col-span-12">
-                        <div className="mb-1">
-                          {isLoadingItems ? (
-                            <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
+                      <div className="col-span-11">
+                        <div className="flex gap-1 mb-1">
+                          {isCustomItem[index] ? (
+                            <>
+                              <div className="flex-1">
+                                <Input
+                                  type="text"
+                                  className="h-8 text-sm uppercase"
+                                  placeholder="Enter item name"
+                                  value={customItems[index] || ""}
+                                  onChange={(e) =>
+                                    handleCustomItemChange(
+                                      index,
+                                      e.target.value.toUpperCase(),
+                                    )
+                                  }
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                Select
+                              </Button>
+                            </>
                           ) : (
-                             <MemoizedProductSelect
-                              value={entry.purchase_sub_item}
-                              onChange={(value) =>
-                                handleItemChange(
-                                  index,
-                                  "purchase_sub_item",
-                                  value,
-                                )
-                              }
-                              options={productOptions}
-                              placeholder="Select item..."
-                            />
-                          )}
-                          {entry.purchase_sub_item === "NOT IN THE LIST" && (
-                            <Input
-                              type="text"
-                              className="mt-1 h-9"
-                              placeholder="Enter custom item name"
-                              value={customItems[index] || ""}
-                              onChange={(e) =>
-                                handleCustomItemChange(index, e.target.value)
-                              }
-                            />
+                            <>
+                              <div className="flex-1">
+                                {isLoadingItems ? (
+                                  <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
+                                ) : (
+                                  <MemoizedProductSelect
+                                    value={entry.purchase_sub_item}
+                                    onChange={(value) =>
+                                      handleItemChange(
+                                        index,
+                                        "purchase_sub_item",
+                                        value,
+                                      )
+                                    }
+                                    options={productOptions}
+                                    placeholder="Select item..."
+                                  />
+                                )}
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                onClick={() => handleToggleCustomItem(index)}
+                              >
+                                NOT IN LIST
+                              </Button>
+                            </>
                           )}
                         </div>
                         <div className="grid grid-cols-3 gap-1">
@@ -694,7 +748,7 @@ const PurchaseGraniteEdit = () => {
                                 )
                               }
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Qnty (pcs)"
                               maxLength={10}
                             />
@@ -711,7 +765,7 @@ const PurchaseGraniteEdit = () => {
                                 )
                               }
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Qnty (sqr)"
                               maxLength={10}
                             />
@@ -728,7 +782,7 @@ const PurchaseGraniteEdit = () => {
                                 )
                               }
                               onKeyDown={handleKeyDown}
-                              className="h-8 text-sm"
+                              className="h-8 text-sm text-right"
                               placeholder="Rate"
                               maxLength={10}
                             />
@@ -740,14 +794,67 @@ const PurchaseGraniteEdit = () => {
                             value={entry.purchase_sub_amount}
                             disabled
                             onKeyDown={handleKeyDown}
-                            className="h-8 text-sm bg-gray-100"
+                            className="h-8 text-sm bg-gray-100 text-right"
                             placeholder="Amount"
                           />
                         </div>
                       </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItemEntry(index)}
+                          disabled={itemEntries.length <= 1}
+                          className="h-7 w-7 hover:bg-gray-200 text-red-500"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addItemEntry}
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 text-xs h-8"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Item
+                </Button>
+              </div>
+
+              {/* Other Amount & Total */}
+              <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-3">
+                <div>
+                  <Label htmlFor="purchase_other">
+                    Other Amount{" "}
+                    <span className="text-xs text-red-400 ">*</span>
+                  </Label>
+                  <Input
+                    id="purchase_other"
+                    type="tel"
+                    {...form.register("purchase_other")}
+                    onChange={(e) => handleOtherChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right"
+                    placeholder="0"
+                    maxLength={10}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="purchase_amount">Total Amount</Label>
+                  <Input
+                    id="purchase_amount"
+                    type="tel"
+                    {...form.register("purchase_amount")}
+                    disabled
+                    className="mt-1 bg-gray-100 text-right"
+                    placeholder="0"
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -786,13 +893,13 @@ const PurchaseGraniteEdit = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Edit Aaya</CardTitle>
+                  <CardTitle>Edit Purchase </CardTitle>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent>
-              <form onSubmit={handleFormSubmit} className="space-y-2">
+                <CardContent>
+                  <form id="purchase-edit-form" onSubmit={handleFormSubmit} className="space-y-2">
                 {/* Purchase Information */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
@@ -858,33 +965,6 @@ const PurchaseGraniteEdit = () => {
                       </SelectContent>
                     </SelectShadcn>
                   </div> */}
-                  <div className="space-y-2">
-                    <Label htmlFor="purchase_other">
-                      Other Amount{" "}
-                      <span className="text-xs text-red-400 ">*</span>{" "}
-                    </Label>
-                    <Input
-                      id="purchase_other"
-                      type="tel"
-                      {...form.register("purchase_other")}
-                      onChange={(e) => handleOtherChange(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="bg-white"
-                      placeholder="0"
-                      maxLength={10}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="purchase_amount">Total Amount</Label>
-                    <Input
-                      id="purchase_amount"
-                      type="tel"
-                      {...form.register("purchase_amount")}
-                      disabled
-                      className="bg-gray-100"
-                      placeholder="0"
-                    />
-                  </div>
                 </div>
 
                 {/* Items Table */}
@@ -897,26 +977,26 @@ const PurchaseGraniteEdit = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqr){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Rate{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          <th className="text-left p-2 font-medium text-sm">
+                          <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
                             Amount
                           </th>
-                          <th className="text-left p-2 font-medium text-sm"></th>
+                          <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -926,37 +1006,56 @@ const PurchaseGraniteEdit = () => {
                               {isLoadingItems ? (
                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
                               ) : (
-                                <>
-                                   <div className="w-[8rem]">
-                                    <MemoizedProductSelect
-                                      value={entry.purchase_sub_item}
-                                      onChange={(value) =>
-                                        handleItemChange(
-                                          index,
-                                          "purchase_sub_item",
-                                          value,
-                                        )
-                                      }
-                                      options={productOptions}
-                                      placeholder="Select item"
-                                    />
-                                  </div>
-                                  {entry.purchase_sub_item ===
-                                    "NOT IN THE LIST" && (
-                                    <Input
-                                      type="text"
-                                      className="mt-1 h-9"
-                                      placeholder="Enter custom item name"
-                                      value={customItems[index] || ""}
-                                      onChange={(e) =>
-                                        handleCustomItemChange(
-                                          index,
-                                          e.target.value,
-                                        )
-                                      }
-                                    />
+                                <div className="flex gap-2 items-start">
+                                  {isCustomItem[index] ? (
+                                    <div className="flex-1 min-w-0 flex gap-2">
+                                      <Input
+                                        type="text"
+                                        className="h-9 uppercase"
+                                        placeholder="Enter item name"
+                                        value={customItems[index] || ""}
+                                        onChange={(e) =>
+                                          handleCustomItemChange(index, e.target.value.toUpperCase())
+                                        }
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-9 whitespace-nowrap shrink-0"
+                                        onClick={() => handleToggleCustomItem(index)}
+                                      >
+                                        Select
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div className="flex-1 min-w-0">
+                                        <MemoizedProductSelect
+                                          value={entry.purchase_sub_item}
+                                          onChange={(value) =>
+                                            handleItemChange(
+                                              index,
+                                              "purchase_sub_item",
+                                              value,
+                                            )
+                                          }
+                                          options={productOptions}
+                                          placeholder="Select item"
+                                        />
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-9 whitespace-nowrap shrink-0"
+                                        onClick={() => handleToggleCustomItem(index)}
+                                      >
+                                        NOT IN LIST
+                                      </Button>
+                                    </>
                                   )}
-                                </>
+                                </div>
                               )}
                             </td>
                             <td className="p-2">
@@ -971,7 +1070,7 @@ const PurchaseGraniteEdit = () => {
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                                 maxLength={10}
                               />
@@ -988,7 +1087,7 @@ const PurchaseGraniteEdit = () => {
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                                 maxLength={10}
                               />
@@ -1005,7 +1104,7 @@ const PurchaseGraniteEdit = () => {
                                   )
                                 }
                                 onKeyDown={handleKeyDown}
-                                className="h-9"
+                                className="h-9 text-right"
                                 placeholder="0"
                                 maxLength={10}
                               />
@@ -1021,16 +1120,73 @@ const PurchaseGraniteEdit = () => {
                                     e.target.value,
                                   )
                                 }
-                                className="h-9 "
+                                className="h-9 text-right"
                                 placeholder="0"
                                 onKeyDown={handleKeyDown}
                                 maxLength={10}
                               />
                             </td>
+                            <td className="p-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItemEntry(index)}
+                                disabled={itemEntries.length <= 1}
+                                className="h-9 w-9 text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addItemEntry}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Other Amount & Total */}
+                <div className="border rounded-lg p-3 bg-white">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div></div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
+                        <Input
+                          id="purchase_other"
+                          type="tel"
+                          {...form.register("purchase_other")}
+                          onChange={(e) => handleOtherChange(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className="w-1/2 bg-white text-right"
+                          placeholder="0"
+                          maxLength={10}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="purchase_amount">Total Amount</Label>
+                        <Input
+                          id="purchase_amount"
+                          type="tel"
+                          {...form.register("purchase_amount")}
+                          disabled
+                          className="w-1/2 bg-gray-100 text-right"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1045,11 +1201,24 @@ const PurchaseGraniteEdit = () => {
                     Cancel
                   </Button>
                   <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const formElement = document.getElementById('purchase-edit-form');
+                      if (formElement) {
+                        formElement.requestSubmit();
+                      }
+                    }}
+                    className="border-gray-300 hover:bg-gray-50"
+                  >
+                    Save and Close
+                  </Button>
+                  <Button
                     type="submit"
                     disabled={isSubmitting}
                     className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                   >
-                    {isSubmitting ? "Updating..." : "Update Aaya"}
+                    {isSubmitting ? "Updating..." : "Update"}
                   </Button>
                 </div>
               </form>

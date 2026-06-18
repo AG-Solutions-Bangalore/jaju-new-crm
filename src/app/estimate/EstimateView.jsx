@@ -41,7 +41,7 @@ const EstimateView = () => {
         `${BASE_URL}/api/web-fetch-estimate-by-id/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       return response.data;
     },
@@ -81,7 +81,7 @@ const EstimateView = () => {
           pdf.text(
             `Page ${i} of ${totalPages}`,
             pdf.internal.pageSize.getWidth() - 20,
-            pdf.internal.pageSize.getHeight() - 10
+            pdf.internal.pageSize.getHeight() - 10,
           );
         }
       })
@@ -97,7 +97,7 @@ const EstimateView = () => {
   const calculateTotal = (items) => {
     return items?.reduce(
       (total, item) => total + (parseFloat(item.estimate_sub_amount) || 0),
-      0
+      0,
     );
   };
 
@@ -148,8 +148,7 @@ const EstimateView = () => {
                       </button>
                     )}
                     content={() => tableRef.current}
-                     documentTitle="Estimate Report"
-                    
+                    documentTitle="Estimate Report"
                   />
                 </div>
               </div>
@@ -174,7 +173,7 @@ const EstimateView = () => {
                       <span className="font-medium">Date:</span>{" "}
                       <span className="ml-1">
                         {moment(estimateData?.estimate?.estimate_date).format(
-                          "DD-MMM-YYYY"
+                          "DD-MMM-YYYY",
                         )}
                       </span>
                     </div>
@@ -329,7 +328,7 @@ const EstimateView = () => {
                       </Button>
                     )}
                     content={() => tableRef.current}
-                     documentTitle="Estimate Report"
+                    documentTitle="Estimate Report"
                   />
                 </div>
               </div>
@@ -346,7 +345,7 @@ const EstimateView = () => {
                     <span className="font-medium">Date:</span>
                     <span className="ml-1">
                       {moment(estimateData?.estimate?.estimate_date).format(
-                        "DD-MMM-YYYY"
+                        "DD-MMM-YYYY",
                       )}
                     </span>
                   </div>
@@ -376,10 +375,10 @@ const EstimateView = () => {
                         Quantity
                       </TableHead>
                       <TableHead className="text-center text-black font-bold  border-r">
-                        Rate (₹)
+                        Rate
                       </TableHead>
                       <TableHead className="text-center text-black font-bold">
-                        Amount (₹)
+                        Amount
                       </TableHead>
                     </TableRow>
                   </TableHeader>
