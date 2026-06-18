@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import moment from "moment";
-import { Trash2, Plus, ArrowLeft } from "lucide-react";
+import { Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
@@ -218,6 +218,63 @@ const PurchaseGraniteEdit = () => {
     );
     const newTotal = itemsTotal + parseFloat(value || 0);
     form.setValue("purchase_amount", newTotal.toString());
+  };
+
+  const removeItemEntry = (index) => {
+    const entry = itemEntries[index];
+    const updatedEntries = [...itemEntries];
+    updatedEntries.splice(index, 1);
+    setItemEntries(updatedEntries);
+
+    setCustomItems((prev) => {
+      const newCustom = { ...prev };
+      for (let i = index; i < updatedEntries.length; i++) {
+        newCustom[i] = newCustom[i + 1];
+      }
+      delete newCustom[updatedEntries.length];
+      return newCustom;
+    });
+
+    if (entry.id) {
+      const token = Cookies.get("token");
+      axios
+        .delete(`${BASE_URL}/api/web-delete-purchase-sub/${entry.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description:
+              error.response?.data?.message || "Failed to delete item",
+            variant: "destructive",
+          });
+        });
+    }
+
+    const itemsTotal = updatedEntries.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0,
+    );
+    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+  };
+
+  const addItemEntry = () => {
+    const newEntry = {
+      purchase_sub_item: "",
+      purchase_sub_qnty: "",
+      purchase_sub_qnty_sqr: "",
+      purchase_sub_rate: "",
+      purchase_sub_amount: "",
+    };
+    const updated = [...itemEntries, newEntry];
+    setItemEntries(updated);
+    const itemsTotal = updated.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0,
+    );
+    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
   };
 
   const updatePurchaseMutation = useMutation({
@@ -655,34 +712,38 @@ const PurchaseGraniteEdit = () => {
                     className="bg-gray-50 p-2 rounded-md border border-gray-200 mb-2"
                   >
                     <div className="grid grid-cols-12 gap-1 items-center">
-                      <div className="col-span-12">
-                        <div className="mb-1">
-                          {isLoadingItems ? (
-                            <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
-                          ) : (
-                            <MemoizedProductSelect
-                              value={entry.purchase_sub_item}
-                              onChange={(value) =>
-                                handleItemChange(
-                                  index,
-                                  "purchase_sub_item",
-                                  value,
-                                )
-                              }
-                              options={productOptions}
-                              placeholder="Select item..."
-                            />
-                          )}
+                      <div className="col-span-11">
+                        <div className={entry.purchase_sub_item === "NOT IN THE LIST" ? "grid grid-cols-2 gap-1 mb-1" : "mb-1"}>
+                          <div className={entry.purchase_sub_item === "NOT IN THE LIST" ? "col-span-1" : ""}>
+                            {isLoadingItems ? (
+                              <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
+                            ) : (
+                              <MemoizedProductSelect
+                                value={entry.purchase_sub_item}
+                                onChange={(value) =>
+                                  handleItemChange(
+                                    index,
+                                    "purchase_sub_item",
+                                    value,
+                                  )
+                                }
+                                options={productOptions}
+                                placeholder="Select item..."
+                              />
+                            )}
+                          </div>
                           {entry.purchase_sub_item === "NOT IN THE LIST" && (
-                            <Input
-                              type="text"
-                              className="mt-1 h-9"
-                              placeholder="Enter custom item name"
-                              value={customItems[index] || ""}
-                              onChange={(e) =>
-                                handleCustomItemChange(index, e.target.value)
-                              }
-                            />
+                            <div className="col-span-1">
+                              <Input
+                                type="text"
+                                className="h-8 text-sm"
+                                placeholder="Enter name"
+                                value={customItems[index] || ""}
+                                onChange={(e) =>
+                                  handleCustomItemChange(index, e.target.value)
+                                }
+                              />
+                            </div>
                           )}
                         </div>
                         <div className="grid grid-cols-3 gap-1">
@@ -749,9 +810,31 @@ const PurchaseGraniteEdit = () => {
                           />
                         </div>
                       </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItemEntry(index)}
+                          disabled={itemEntries.length <= 1}
+                          className="h-7 w-7 hover:bg-gray-200 text-red-500"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addItemEntry}
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 text-xs h-8"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Item
+                </Button>
               </div>
 
               {/* Action Buttons */}
@@ -920,7 +1003,7 @@ const PurchaseGraniteEdit = () => {
                           <th className="text-left p-2 font-medium text-sm">
                             Amount
                           </th>
-                          <th className="text-left p-2 font-medium text-sm"></th>
+                          <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -930,8 +1013,8 @@ const PurchaseGraniteEdit = () => {
                               {isLoadingItems ? (
                                 <div className="h-9 bg-gray-200 rounded animate-pulse w-[8rem]"></div>
                               ) : (
-                                <>
-                                  <div className="w-[8rem]">
+                                <div className="flex gap-2 items-start">
+                                  <div className="flex-1 min-w-0">
                                     <MemoizedProductSelect
                                       value={entry.purchase_sub_item}
                                       onChange={(value) =>
@@ -949,8 +1032,8 @@ const PurchaseGraniteEdit = () => {
                                     "NOT IN THE LIST" && (
                                     <Input
                                       type="text"
-                                      className="mt-1 h-9"
-                                      placeholder="Enter custom item name"
+                                      className="h-9 w-[120px] shrink-0"
+                                      placeholder="Enter name"
                                       value={customItems[index] || ""}
                                       onChange={(e) =>
                                         handleCustomItemChange(
@@ -960,7 +1043,7 @@ const PurchaseGraniteEdit = () => {
                                       }
                                     />
                                   )}
-                                </>
+                                </div>
                               )}
                             </td>
                             <td className="p-2">
@@ -1031,10 +1114,34 @@ const PurchaseGraniteEdit = () => {
                                 maxLength={10}
                               />
                             </td>
+                            <td className="p-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItemEntry(index)}
+                                disabled={itemEntries.length <= 1}
+                                className="h-9 w-9 text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addItemEntry}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
                   </div>
                 </div>
 
