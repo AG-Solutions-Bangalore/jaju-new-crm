@@ -112,6 +112,20 @@ const SalesView = () => {
     );
   }
 
+  const subTotal = calculateSubTotal(salesData?.salesSub);
+  const tax = parseFloat(salesData?.sales?.sales_tax || 0);
+  const tempo = parseFloat(salesData?.sales?.sales_tempo || 0);
+  const loading = parseFloat(salesData?.sales?.sales_loading || 0);
+  const unloading = parseFloat(salesData?.sales?.sales_unloading || 0);
+  const other = parseFloat(salesData?.sales?.sales_other || 0);
+  const other1 = parseFloat(salesData?.sales?.sales_other1 || 0);
+  const gross = parseFloat(salesData?.sales?.sales_gross || 0);
+
+  const unroundedTotal = subTotal + tax + tempo + loading + unloading + other + other1;
+  const roundOff = salesData?.sales?.sales_amount_round !== undefined && salesData?.sales?.sales_amount_round !== null
+    ? parseFloat(salesData.sales.sales_amount_round)
+    : gross - parseFloat(salesData?.sales?.sales_temp_amount || unroundedTotal);
+
   return (
     <Page>
      <div className="w-full p-0 md:p-0">
@@ -266,6 +280,14 @@ const SalesView = () => {
                   {Number(salesData?.sales?.sales_other).toFixed(0)}
                 </td>
               </tr>
+              {Math.abs(Math.round(roundOff)) > 0 && (
+                <tr>
+                  <td className="border p-1 text-right font-medium">Round Off</td>
+                  <td className="border p-1 text-right">
+                    {Math.round(roundOff) > 0 ? `+${Math.round(roundOff)}` : Math.round(roundOff)}
+                  </td>
+                </tr>
+              )}
               <tr className="font-bold">
                 <td className="border p-1 text-right">Total</td>
                 <td className="border p-1 text-right">
@@ -428,6 +450,16 @@ const SalesView = () => {
                       {Number(salesData?.sales?.sales_other).toFixed(0)}
                     </TableCell>
                   </TableRow>
+                  {Math.abs(Math.round(roundOff)) > 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
+                        Round Off
+                      </TableCell>
+                      <TableCell className="text-right bg-white border-b pr-4">
+                        {Math.round(roundOff) > 0 ? `+${Math.round(roundOff)}` : Math.round(roundOff)}
+                      </TableCell>
+                    </TableRow>
+                  )}
                   <TableRow className="font-bold">
                     <TableCell colSpan={4} className="text-right bg-white border-r border-b">
                       Net Total

@@ -50,6 +50,7 @@ const formSchema = z.object({
   sales_advance: z.string(),
   sales_balance: z.string(),
   sales_temp_amount: z.string(),
+  sales_amount_round: z.string().optional(),
   sales_amount_received: z.string(),
 });
 
@@ -96,6 +97,7 @@ const SalesEdit = () => {
       sales_advance: "",
       sales_balance: "",
       sales_temp_amount: "",
+      sales_amount_round: "",
       sales_amount_received: "",
     },
   });
@@ -184,6 +186,18 @@ const SalesEdit = () => {
 
       const { sales, salesSub } = salesId;
 
+      const formatToInteger = (val) => {
+        if (val === undefined || val === null || val === "") return "";
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? "" : Math.round(parsed).toString();
+      };
+
+      const savedGross = parseFloat(sales.sales_gross || 0);
+      const savedTempAmount = parseFloat(sales.sales_temp_amount || sales.sales_gross || 0);
+      const savedRoundOff = sales.sales_amount_round !== undefined && sales.sales_amount_round !== null
+        ? Math.round(parseFloat(sales.sales_amount_round))
+        : Math.round(savedGross - savedTempAmount);
+
       form.reset({
         sales_date: moment(sales.sales_date).format("YYYY-MM-DD"),
         sales_year: sales.sales_year || currentYear,
@@ -192,20 +206,21 @@ const SalesEdit = () => {
         sales_address: sales.sales_address || "",
         sales_mobile: sales.sales_mobile || "",
         JFCBILLNO: sales.JFCBILLNO || "",
-        sales_other: sales.sales_other?.toString() || "",
-        sales_other1: sales.sales_other1?.toString() || "",
+        sales_other: formatToInteger(sales.sales_other),
+        sales_other1: formatToInteger(sales.sales_other1),
         sales_other_label: sales.sales_other_label || "",
         sales_other1_label: sales.sales_other1_label || "",
-        sales_tempo: sales.sales_tempo?.toString() || "",
-        sales_tax: sales.sales_tax?.toString() || "",
-        sales_gross: sales.sales_gross?.toString() || "",
-        sales_loading: sales.sales_loading || "",
-        sales_unloading: sales.sales_unloading || "",
-        sales_advance: sales.sales_advance || "",
-        sales_balance: sales.sales_balance || "",
+        sales_tempo: formatToInteger(sales.sales_tempo),
+        sales_tax: formatToInteger(sales.sales_tax),
+        sales_gross: formatToInteger(sales.sales_gross),
+        sales_loading: formatToInteger(sales.sales_loading),
+        sales_unloading: formatToInteger(sales.sales_unloading),
+        sales_advance: formatToInteger(sales.sales_advance),
+        sales_balance: formatToInteger(sales.sales_balance),
         sales_no_of_count: sales.sales_no_of_count?.toString() || "1",
-        sales_temp_amount: sales.sales_temp_amount?.toString() || "",
-        sales_amount_received: sales.sales_amount_received?.toString() || "",
+        sales_temp_amount: formatToInteger(savedTempAmount),
+        sales_amount_round: savedRoundOff === 0 ? "" : savedRoundOff.toString(),
+        sales_amount_received: formatToInteger(sales.sales_amount_received),
       });
 
       if (sales.sales_gst_percentage) {
@@ -220,8 +235,8 @@ const SalesEdit = () => {
           sales_sub_item: sub.sales_sub_item || "",
           sales_sub_qnty: sub.sales_sub_pcs?.toString() || "",
           sales_sub_qnty_sqr: sub.sales_sub_qnty_sqr?.toString() || "",
-          sales_sub_rate: sub.sales_sub_rate?.toString() || "",
-          sales_sub_amount: sub.sales_sub_amount?.toString() || "",
+          sales_sub_rate: formatToInteger(sub.sales_sub_rate),
+          sales_sub_amount: formatToInteger(sub.sales_sub_amount),
           sales_sub_item_original: sub.sales_sub_item_original || "",
         }));
         setItemEntries(mappedSub);
@@ -247,14 +262,16 @@ const SalesEdit = () => {
 
     const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
     if (!gstEdited) {
-      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      const gstAmount = Math.round(grandTotal * 0.18);
       form.setValue("sales_tax", gstAmount.toString());
     }
     const currentGst = parseFloat(form.watch("sales_tax") || 0);
-    const finalTotal = parseFloat((grandTotal + currentGst).toFixed(2));
+    const unrounded = Math.round(grandTotal + currentGst);
 
-    form.setValue("sales_gross", finalTotal.toString());
-    form.setValue("sales_balance", finalTotal.toString());
+    form.setValue("sales_temp_amount", unrounded.toString());
+    form.setValue("sales_amount_round", "");
+    form.setValue("sales_gross", unrounded.toString());
+    form.setValue("sales_balance", unrounded.toString());
     form.setValue("sales_advance", "0");
   };
 
@@ -274,7 +291,7 @@ const SalesEdit = () => {
       updatedEntries[index].sales_sub_qnty_sqr &&
       updatedEntries[index].sales_sub_rate
     ) {
-      updatedEntries[index].sales_sub_amount = (
+      updatedEntries[index].sales_sub_amount = Math.round(
         parseFloat(updatedEntries[index].sales_sub_qnty_sqr || 0) *
         parseFloat(updatedEntries[index].sales_sub_rate || 0)
       ).toString();
@@ -577,6 +594,7 @@ const SalesEdit = () => {
 
   const onSubmit = async (data) => {
     try {
+      const { sales_amount_round, ...restData } = data;
       const formattedItemEntries = itemEntries.map((entry, index) => ({
         ...entry,
         sales_sub_pcs: entry.sales_sub_qnty,
@@ -598,21 +616,25 @@ const SalesEdit = () => {
 
       const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("sales_tax") || 0);
-      const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
+      const tempAmount = parseFloat(form.watch("sales_temp_amount") || (grandTotal + gstAmount));
+      const roundOff = parseFloat(form.watch("sales_amount_round") || 0);
+      const finalTotal = Math.round(tempAmount + roundOff);
 
       const payload = {
-        ...data,
+        ...restData,
         sales_tempo: tempo.toString(),
         sales_loading: loading.toString(),
         sales_unloading: unloading.toString(),
         sales_other: other.toString(),
         sales_other1: other1.toString(),
         sales_tax: gstAmount.toString(),
+        sales_temp_amount: tempAmount.toString(),
         sales_gross: finalTotal.toString(),
         sales_balance: finalTotal.toString(),
+        sales_amount_round: roundOff.toString(),
         sales_advance: "0",
-        sales_amount_received: data.sales_amount_received,
-        JFCBILLNO: data.JFCBILLNO,
+        sales_amount_received: restData.sales_amount_received,
+        JFCBILLNO: restData.JFCBILLNO,
         sales_year: currentYear,
         sales_no_of_count: formattedItemEntries.length,
         sales_sub_data: formattedItemEntries,
@@ -675,9 +697,10 @@ const SalesEdit = () => {
   const displayGrandTotal =
     itemsTotal + watchTempo + watchLoading + watchUnloading + watchOther + watchOther1;
   const displayGst = parseFloat(form.watch("sales_tax") || 0);
-  const displayFinalTotal = parseFloat(
-    (displayGrandTotal + displayGst).toFixed(2),
-  );
+
+  const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
+  const watchRoundOff = parseFloat(form.watch("sales_amount_round") || 0);
+  const displayFinalTotal = Math.round(watchTempAmount + watchRoundOff);
 
   return (
     <Page>
@@ -1125,8 +1148,30 @@ const SalesEdit = () => {
                     />
                   </div>
 
-                  {/* Spacer */}
-                  <div className="h-8 bg-gray-100 rounded-md w-full"></div>
+                  {/* Amount to be Collected */}
+                  <div>
+                    <Label>Amount to be Collected</Label>
+                    <Input
+                      type="tel"
+                      {...form.register("sales_temp_amount")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1 text-right font-medium"
+                      maxLength={10}
+                      placeholder="0"
+                    />
+                  </div>
+
+                  {/* Round Off */}
+                  <div>
+                    <Label>Round Off</Label>
+                    <Input
+                      type="text"
+                      {...form.register("sales_amount_round")}
+                      className="mt-1 text-right font-medium"
+                      maxLength={10}
+                      placeholder="0"
+                    />
+                  </div>
 
                   {/* Net Total */}
                   <div>
@@ -1612,11 +1657,30 @@ const SalesEdit = () => {
                         />
                       </div>
 
-                      {/* Spacer */}
-                      {/* <div className="flex items-center justify-between h-9">
-                        <div className="w-1/2"></div>
-                        <div className="w-1/2 h-8 bg-gray-100 rounded-md"></div>
-                      </div> */}
+                      {/* Amount to be Collected */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Amount to be Collected</Label>
+                        <Input
+                          className="w-1/2 text-right font-medium"
+                          type="tel"
+                          {...form.register("sales_temp_amount")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Round Off */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Round Off</Label>
+                        <Input
+                          className="w-1/2 text-right font-medium"
+                          type="text"
+                          {...form.register("sales_amount_round")}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
 
                       {/* Net Total */}
                       <div className="flex items-center justify-between">

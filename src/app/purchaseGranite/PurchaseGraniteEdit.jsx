@@ -39,6 +39,7 @@ const formSchema = z.object({
   purchase_bill_no: z.string().min(1, "Bill number is required"),
   purchase_amount: z.string().min(1, "Total Amount is required"),
   purchase_other: z.string().min(1, "Other Amount is required"),
+  purchase_amount_round: z.string().optional(),
   purchase_estimate_ref: z.string(),
   purchase_no_of_count: z.string(),
 });
@@ -73,6 +74,7 @@ const PurchaseGraniteEdit = () => {
       purchase_bill_no: "",
       purchase_amount: "",
       purchase_other: "",
+      purchase_amount_round: "",
       purchase_estimate_ref: "",
       purchase_no_of_count: "1",
     },
@@ -157,6 +159,13 @@ const PurchaseGraniteEdit = () => {
   useEffect(() => {
     if (purchaseByid) {
       const { purchase: pId, purchaseSub: pSub } = purchaseByid;
+      
+      const formatToInteger = (val) => {
+        if (val === undefined || val === null || val === "") return "";
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? "" : Math.round(parsed).toString();
+      };
+
       const formValues = {
         purchase_date: moment(pId.purchase_date).format("YYYY-MM-DD"),
         purchase_year: pId.purchase_year || currentYear,
@@ -164,8 +173,9 @@ const PurchaseGraniteEdit = () => {
         purchase_item_type: pId.purchase_item_type || "",
         purchase_supplier: pId.purchase_supplier || "",
         purchase_bill_no: pId.purchase_bill_no || "",
-        purchase_amount: pId.purchase_amount?.toString() || "",
-        purchase_other: pId.purchase_other?.toString() || "",
+        purchase_amount: formatToInteger(pId.purchase_amount),
+        purchase_other: formatToInteger(pId.purchase_other),
+        purchase_amount_round: formatToInteger(pId.purchase_amount_round),
         purchase_estimate_ref: pId.purchase_estimate_ref || "",
         purchase_no_of_count: pId.purchase_no_of_count?.toString() || "1",
       };
@@ -177,8 +187,8 @@ const PurchaseGraniteEdit = () => {
           purchase_sub_item: sub.purchase_sub_item || "",
           purchase_sub_qnty: sub.purchase_sub_qnty?.toString() || "",
           purchase_sub_qnty_sqr: sub.purchase_sub_qnty_sqr?.toString() || "",
-          purchase_sub_rate: sub.purchase_sub_rate?.toString() || "",
-          purchase_sub_amount: sub.purchase_sub_amount?.toString() || "",
+          purchase_sub_rate: formatToInteger(sub.purchase_sub_rate),
+          purchase_sub_amount: formatToInteger(sub.purchase_sub_amount),
         }));
         setItemEntries(mappedData);
       }
@@ -196,7 +206,7 @@ const PurchaseGraniteEdit = () => {
       updatedEntries[index].purchase_sub_qnty_sqr &&
       updatedEntries[index].purchase_sub_rate
     ) {
-      updatedEntries[index].purchase_sub_amount = (
+      updatedEntries[index].purchase_sub_amount = Math.round(
         parseFloat(updatedEntries[index].purchase_sub_qnty_sqr || 0) *
         parseFloat(updatedEntries[index].purchase_sub_rate || 0)
       ).toString();
@@ -208,8 +218,9 @@ const PurchaseGraniteEdit = () => {
       0,
     );
     const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
 
-    const newTotal = itemsTotal + otherTotal;
+    const newTotal = Math.round(itemsTotal + otherTotal + roundOff);
     form.setValue("purchase_amount", newTotal.toString());
   };
 
@@ -220,7 +231,21 @@ const PurchaseGraniteEdit = () => {
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
       0,
     );
-    const newTotal = itemsTotal + parseFloat(value || 0);
+    const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+    const newTotal = Math.round(itemsTotal + parseFloat(value || 0) + roundOff);
+    form.setValue("purchase_amount", newTotal.toString());
+  };
+
+  const handleRoundOffChange = (value) => {
+    form.setValue("purchase_amount_round", value);
+
+    const itemsTotal = itemEntries.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0,
+    );
+    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
+    const roundOff = parseFloat(value || 0);
+    const newTotal = Math.round(itemsTotal + otherTotal + roundOff);
     form.setValue("purchase_amount", newTotal.toString());
   };
 
@@ -260,7 +285,8 @@ const PurchaseGraniteEdit = () => {
       0,
     );
     const otherTotal = parseFloat(form.watch("purchase_other") || 0);
-    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+    const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+    form.setValue("purchase_amount", Math.round(itemsTotal + otherTotal + roundOff).toString());
   };
 
   const addItemEntry = () => {
@@ -278,7 +304,8 @@ const PurchaseGraniteEdit = () => {
       0,
     );
     const otherTotal = parseFloat(form.watch("purchase_other") || 0);
-    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+    const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+    form.setValue("purchase_amount", Math.round(itemsTotal + otherTotal + roundOff).toString());
   };
 
   const updatePurchaseMutation = useMutation({
@@ -845,6 +872,17 @@ const PurchaseGraniteEdit = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="purchase_amount_round">Round Off</Label>
+                  <Input
+                    id="purchase_amount_round"
+                    type="text"
+                    {...form.register("purchase_amount_round")}
+                    onChange={(e) => handleRoundOffChange(e.target.value)}
+                    className="mt-1 text-right"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="purchase_amount">Total Amount</Label>
                   <Input
                     id="purchase_amount"
@@ -1173,6 +1211,17 @@ const PurchaseGraniteEdit = () => {
                           className="w-1/2 bg-white text-right"
                           placeholder="0"
                           maxLength={10}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="purchase_amount_round">Round Off</Label>
+                        <Input
+                          id="purchase_amount_round"
+                          type="text"
+                          {...form.register("purchase_amount_round")}
+                          onChange={(e) => handleRoundOffChange(e.target.value)}
+                          className="w-1/2 bg-white text-right"
+                          placeholder="0"
                         />
                       </div>
                       <div className="flex items-center justify-between">
