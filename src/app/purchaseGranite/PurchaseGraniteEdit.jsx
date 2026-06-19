@@ -38,7 +38,20 @@ const formSchema = z.object({
   purchase_supplier: z.string().min(1, "Supplier is required"),
   purchase_bill_no: z.string().min(1, "Bill number is required"),
   purchase_amount: z.string().min(1, "Total Amount is required"),
-  purchase_other: z.string().min(1, "Other Amount is required"),
+  purchase_other: z.string().optional(),
+  purchase_other1: z.string().optional(),
+  purchase_other_label: z.string().optional(),
+  purchase_other1_label: z.string().optional(),
+  purchase_amount_round: z.string().optional(),
+  purchase_tempo: z.string().optional(),
+  purchase_loading: z.string().optional(),
+  purchase_unloading: z.string().optional(),
+  purchase_tax: z.string().optional(),
+  purchase_gross: z.string().optional(),
+  purchase_advance: z.string().optional(),
+  purchase_balance: z.string().optional(),
+  purchase_amount_received: z.string().optional(),
+  purchase_temp_amount: z.string().optional(),
   purchase_estimate_ref: z.string(),
   purchase_no_of_count: z.string(),
 });
@@ -51,6 +64,8 @@ const PurchaseGraniteEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [loadingType, setLoadingType] = useState("Loading Only");
+  const [gstEdited, setGstEdited] = useState(false);
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -73,6 +88,19 @@ const PurchaseGraniteEdit = () => {
       purchase_bill_no: "",
       purchase_amount: "",
       purchase_other: "",
+      purchase_other1: "",
+      purchase_other_label: "",
+      purchase_other1_label: "",
+      purchase_amount_round: "",
+      purchase_tempo: "",
+      purchase_loading: "",
+      purchase_unloading: "",
+      purchase_tax: "",
+      purchase_gross: "",
+      purchase_advance: "0",
+      purchase_balance: "",
+      purchase_amount_received: "",
+      purchase_temp_amount: "",
       purchase_estimate_ref: "",
       purchase_no_of_count: "1",
     },
@@ -157,6 +185,19 @@ const PurchaseGraniteEdit = () => {
   useEffect(() => {
     if (purchaseByid) {
       const { purchase: pId, purchaseSub: pSub } = purchaseByid;
+      
+      const formatToInteger = (val) => {
+        if (val === undefined || val === null || val === "") return "";
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? "" : Math.round(parsed).toString();
+      };
+
+      const savedGross = parseFloat(pId.purchase_gross || pId.purchase_amount || 0);
+      const savedTempAmount = parseFloat(pId.purchase_temp_amount || pId.purchase_gross || pId.purchase_amount || 0);
+      const savedRoundOff = pId.purchase_amount_round !== undefined && pId.purchase_amount_round !== null
+        ? Math.round(parseFloat(pId.purchase_amount_round))
+        : Math.round(savedGross - savedTempAmount);
+
       const formValues = {
         purchase_date: moment(pId.purchase_date).format("YYYY-MM-DD"),
         purchase_year: pId.purchase_year || currentYear,
@@ -164,11 +205,35 @@ const PurchaseGraniteEdit = () => {
         purchase_item_type: pId.purchase_item_type || "",
         purchase_supplier: pId.purchase_supplier || "",
         purchase_bill_no: pId.purchase_bill_no || "",
-        purchase_amount: pId.purchase_amount?.toString() || "",
-        purchase_other: pId.purchase_other?.toString() || "",
+        purchase_amount: formatToInteger(pId.purchase_amount),
+        purchase_other: formatToInteger(pId.purchase_other),
+        purchase_other1: formatToInteger(pId.purchase_other1),
+        purchase_other_label: pId.purchase_other_label || "",
+        purchase_other1_label: pId.purchase_other1_label || "",
+        purchase_amount_round: savedRoundOff === 0 ? "" : savedRoundOff.toString(),
+        purchase_tempo: formatToInteger(pId.purchase_tempo),
+        purchase_loading: formatToInteger(pId.purchase_loading),
+        purchase_unloading: formatToInteger(pId.purchase_unloading),
+        purchase_tax: formatToInteger(pId.purchase_tax),
+        purchase_gross: formatToInteger(pId.purchase_gross),
+        purchase_advance: formatToInteger(pId.purchase_advance) || "0",
+        purchase_balance: formatToInteger(pId.purchase_balance),
+        purchase_amount_received: formatToInteger(pId.purchase_amount_received),
+        purchase_temp_amount: formatToInteger(savedTempAmount),
         purchase_estimate_ref: pId.purchase_estimate_ref || "",
         purchase_no_of_count: pId.purchase_no_of_count?.toString() || "1",
       };
+      
+      if (pId.purchase_unloading && parseFloat(pId.purchase_unloading) > 0) {
+        setLoadingType("Loading & Unloading");
+      } else {
+        setLoadingType("Loading Only");
+      }
+
+      if (pId.purchase_tax && parseFloat(pId.purchase_tax) > 0) {
+        setGstEdited(true);
+      }
+
       form.reset(formValues);
 
       if (pSub && pSub.length > 0) {
@@ -177,14 +242,54 @@ const PurchaseGraniteEdit = () => {
           purchase_sub_item: sub.purchase_sub_item || "",
           purchase_sub_qnty: sub.purchase_sub_qnty?.toString() || "",
           purchase_sub_qnty_sqr: sub.purchase_sub_qnty_sqr?.toString() || "",
-          purchase_sub_rate: sub.purchase_sub_rate?.toString() || "",
-          purchase_sub_amount: sub.purchase_sub_amount?.toString() || "",
+          purchase_sub_rate: formatToInteger(sub.purchase_sub_rate),
+          purchase_sub_amount: formatToInteger(sub.purchase_sub_amount),
         }));
         setItemEntries(mappedData);
+        setTimeout(() => {
+          calculateAndSetTotals(mappedData);
+        }, 100);
       }
       setIsInitialLoading(false);
     }
   }, [purchaseByid]);
+
+  const calculateAndSetTotals = (entries, skipGst = false) => {
+    const itemsTotal = entries.reduce(
+      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+      0,
+    );
+    const tempo = parseFloat(form.watch("purchase_tempo") || 0);
+    const loading = parseFloat(form.watch("purchase_loading") || 0);
+    const unloading = parseFloat(form.watch("purchase_unloading") || 0);
+    const other = parseFloat(form.watch("purchase_other") || 0);
+    const other1 = parseFloat(form.watch("purchase_other1") || 0);
+
+    const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
+    if (!skipGst && !gstEdited) {
+      const gstAmount = Math.round(grandTotal * 0.18);
+      form.setValue("purchase_tax", gstAmount.toString());
+    }
+    const currentGst = parseFloat(form.watch("purchase_tax") || 0);
+    const unrounded = Math.round(grandTotal + currentGst);
+
+    form.setValue("purchase_temp_amount", unrounded.toString());
+
+    // Preserve the typed round off values instead of resetting them
+    const roundOffStr = form.getValues("purchase_amount_round") || "";
+    const roundOff = parseFloat(roundOffStr) || 0;
+    const finalTotal = Math.round(unrounded + roundOff);
+
+    form.setValue("purchase_gross", finalTotal.toString());
+    form.setValue("purchase_balance", finalTotal.toString());
+    form.setValue("purchase_advance", "0");
+  };
+
+  useEffect(() => {
+    if (!gstEdited) {
+      calculateAndSetTotals(itemEntries);
+    }
+  }, [gstEdited]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -196,32 +301,19 @@ const PurchaseGraniteEdit = () => {
       updatedEntries[index].purchase_sub_qnty_sqr &&
       updatedEntries[index].purchase_sub_rate
     ) {
-      updatedEntries[index].purchase_sub_amount = (
+      updatedEntries[index].purchase_sub_amount = Math.round(
         parseFloat(updatedEntries[index].purchase_sub_qnty_sqr || 0) *
         parseFloat(updatedEntries[index].purchase_sub_rate || 0)
       ).toString();
       setItemEntries([...updatedEntries]);
     }
 
-    const itemsTotal = updatedEntries.reduce(
-      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0,
-    );
-    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
-
-    const newTotal = itemsTotal + otherTotal;
-    form.setValue("purchase_amount", newTotal.toString());
+    calculateAndSetTotals(updatedEntries);
   };
 
-  const handleOtherChange = (value) => {
-    form.setValue("purchase_other", value);
-
-    const itemsTotal = itemEntries.reduce(
-      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0,
-    );
-    const newTotal = itemsTotal + parseFloat(value || 0);
-    form.setValue("purchase_amount", newTotal.toString());
+  const handleChargeChange = (field, value) => {
+    form.setValue(field, value);
+    calculateAndSetTotals(itemEntries);
   };
 
   const removeItemEntry = (index) => {
@@ -255,12 +347,7 @@ const PurchaseGraniteEdit = () => {
         });
     }
 
-    const itemsTotal = updatedEntries.reduce(
-      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0,
-    );
-    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
-    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+    calculateAndSetTotals(updatedEntries);
   };
 
   const addItemEntry = () => {
@@ -273,12 +360,7 @@ const PurchaseGraniteEdit = () => {
     };
     const updated = [...itemEntries, newEntry];
     setItemEntries(updated);
-    const itemsTotal = updated.reduce(
-      (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-      0,
-    );
-    const otherTotal = parseFloat(form.watch("purchase_other") || 0);
-    form.setValue("purchase_amount", (itemsTotal + otherTotal).toString());
+    calculateAndSetTotals(updated);
   };
 
   const updatePurchaseMutation = useMutation({
@@ -524,8 +606,38 @@ const PurchaseGraniteEdit = () => {
         };
       });
 
+      const { purchase_amount_round, ...restData } = data;
+      const tempo = parseFloat(form.watch("purchase_tempo") || 0);
+      const loading = parseFloat(form.watch("purchase_loading") || 0);
+      const unloading = parseFloat(form.watch("purchase_unloading") || 0);
+      const other = parseFloat(form.watch("purchase_other") || 0);
+      const other1 = parseFloat(form.watch("purchase_other1") || 0);
+
+      const itemsTotal = itemEntries.reduce(
+        (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+        0,
+      );
+      const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
+      const gstAmount = parseFloat(form.watch("purchase_tax") || 0);
+      const tempAmount = parseFloat(form.watch("purchase_temp_amount") || (grandTotal + gstAmount));
+      const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+      const finalTotal = Math.round(tempAmount + roundOff);
+
       const payload = {
-        ...data,
+        ...restData,
+        purchase_tempo: tempo.toString(),
+        purchase_loading: loading.toString(),
+        purchase_unloading: unloading.toString(),
+        purchase_other: other.toString(),
+        purchase_other1: other1.toString(),
+        purchase_tax: gstAmount.toString(),
+        purchase_temp_amount: tempAmount.toString(),
+        purchase_gross: finalTotal.toString(),
+        purchase_balance: finalTotal.toString(),
+        purchase_amount_round: roundOff.toString(),
+        purchase_advance: "0",
+        purchase_amount_received: restData.purchase_amount_received || "0",
+        purchase_amount: finalTotal.toString(),
         purchase_year: currentYear,
         purchase_no_of_count: formattedItemEntries.length,
         purchase_sub_data: formattedItemEntries,
@@ -575,6 +687,29 @@ const PurchaseGraniteEdit = () => {
       </Page>
     );
   }
+  const itemsTotal = itemEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+    0,
+  );
+  const watchTempo = parseFloat(form.watch("purchase_tempo") || 0);
+  const watchLoading = parseFloat(form.watch("purchase_loading") || 0);
+  const watchUnloading = parseFloat(form.watch("purchase_unloading") || 0);
+  const watchOther = parseFloat(form.watch("purchase_other") || 0);
+  const watchOther1 = parseFloat(form.watch("purchase_other1") || 0);
+
+  const displayGrandTotal =
+    itemsTotal +
+    watchTempo +
+    watchLoading +
+    watchUnloading +
+    watchOther +
+    watchOther1;
+  const displayGst = parseFloat(form.watch("purchase_tax") || 0);
+
+  const watchTempAmount = parseFloat(form.watch("purchase_temp_amount") || 0);
+  const watchRoundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+  const displayFinalTotal = Math.round(watchTempAmount + watchRoundOff);
+
   return (
     <Page>
       <div className="w-full p-0 md:p-0">
@@ -589,6 +724,12 @@ const PurchaseGraniteEdit = () => {
                 <ArrowLeft className="h-5 w-5 mr-1" />
                 <h1 className="text-base font-bold">Edit Purchase </h1>
               </button>
+            </div>
+            <div className="bg-green-50 border border-green-100 rounded-md p-2">
+              <p className="text-xs text-green-800 font-medium">Net Total</p>
+              <p className="text-sm font-bold text-green-900">
+                {displayFinalTotal || 0}
+              </p>
             </div>
           </div>
 
@@ -828,30 +969,195 @@ const PurchaseGraniteEdit = () => {
 
               {/* Other Amount & Total */}
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-3">
+                {/* Labour Charges */}
                 <div>
-                  <Label htmlFor="purchase_other">
-                    Other Amount{" "}
-                    <span className="text-xs text-red-400 ">*</span>
-                  </Label>
+                  <Label>Labour Charges</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <SelectShadcn
+                      value={loadingType}
+                      onValueChange={(val) => {
+                        setLoadingType(val);
+                        if (val === "Loading Only") {
+                          form.setValue("purchase_unloading", "");
+                        } else {
+                          form.setValue("purchase_loading", "");
+                        }
+                        calculateAndSetTotals(itemEntries);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Loading Only">Loading Only</SelectItem>
+                        <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                      </SelectContent>
+                    </SelectShadcn>
+                    <Input
+                      id={loadingType === "Loading Only" ? "purchase_loading" : "purchase_unloading"}
+                      type="tel"
+                      value={
+                        form.watch(
+                          loadingType === "Loading Only"
+                            ? "purchase_loading"
+                            : "purchase_unloading",
+                        ) || ""
+                      }
+                      onChange={(e) =>
+                        handleChargeChange(
+                          loadingType === "Loading Only"
+                            ? "purchase_loading"
+                            : "purchase_unloading",
+                          e.target.value,
+                        )
+                      }
+                      maxLength={10}
+                      onKeyDown={handleKeyDown}
+                      className="text-right"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Tempo Charges */}
+                <div>
+                  <Label htmlFor="purchase_tempo">Tempo Charges</Label>
                   <Input
-                    id="purchase_other"
+                    id="purchase_tempo"
                     type="tel"
-                    {...form.register("purchase_other")}
-                    onChange={(e) => handleOtherChange(e.target.value)}
+                    {...form.register("purchase_tempo")}
+                    onChange={(e) =>
+                      handleChargeChange("purchase_tempo", e.target.value)
+                    }
                     onKeyDown={handleKeyDown}
                     className="mt-1 text-right"
                     placeholder="0"
-                    maxLength={10}
                   />
                 </div>
+
+                {/* Other 1 */}
+                <div className="space-y-1">
+                  <Label>Other Charges 1</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Other Label 1"
+                      {...form.register("purchase_other_label")}
+                    />
+                    <Input
+                      id="purchase_other"
+                      type="tel"
+                      {...form.register("purchase_other")}
+                      onChange={(e) => handleChargeChange("purchase_other", e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="text-right"
+                      placeholder="0"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+
+                {/* Other 2 */}
+                <div className="space-y-1">
+                  <Label>Other Charges 2</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Other Label 2"
+                      {...form.register("purchase_other1_label")}
+                    />
+                    <Input
+                      id="purchase_other1"
+                      type="tel"
+                      {...form.register("purchase_other1")}
+                      onChange={(e) => handleChargeChange("purchase_other1", e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="text-right"
+                      placeholder="0"
+                      maxLength={10}
+                    />
+                  </div>
+                </div>
+
+                {/* Gross Total */}
                 <div>
-                  <Label htmlFor="purchase_amount">Total Amount</Label>
+                  <Label>Gross Total</Label>
                   <Input
-                    id="purchase_amount"
-                    type="tel"
-                    {...form.register("purchase_amount")}
+                    type="text"
+                    value={Number(displayGrandTotal).toFixed(0)}
                     disabled
-                    className="mt-1 bg-gray-100 text-right"
+                    className="mt-1 bg-gray-100 font-medium text-right"
+                  />
+                </div>
+
+                {/* GST Amount */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label>GST 18% ({Number(displayGst).toFixed(0)})</Label>
+                  </div>
+                  <Input
+                    type="tel"
+                    value={Number(displayGst).toFixed(0)}
+                    onChange={(e) => {
+                      setGstEdited(true);
+                      form.setValue("purchase_tax", e.target.value);
+                      calculateAndSetTotals(itemEntries, true);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Amount to be Paid */}
+                <div>
+                  <Label>Amount to be Paid</Label>
+                  <Input
+                    type="tel"
+                    {...form.register("purchase_temp_amount")}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right font-medium"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Round Off */}
+                <div>
+                  <Label>Round Off</Label>
+                  <Input
+                    type="text"
+                    {...form.register("purchase_amount_round")}
+                    className="mt-1 text-right font-medium"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Net Total */}
+                <div>
+                  <Label className="font-semibold text-blue-900">
+                    Net Total
+                  </Label>
+                  <Input
+                    type="text"
+                    value={Number(displayFinalTotal).toFixed(0)}
+                    disabled
+                    className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                  />
+                </div>
+
+
+                {/* Final Amount Paid */}
+                <div>
+                  <Label>Final Amount Paid</Label>
+                  <Input
+                    type="tel"
+                    {...form.register("purchase_amount_received")}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right"
+                    maxLength={10}
                     placeholder="0"
                   />
                 </div>
@@ -1162,27 +1468,198 @@ const PurchaseGraniteEdit = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div></div>
                     <div className="space-y-2">
+                      {/* Labour Charges */}
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="purchase_other">Other Amount <span className="text-xs text-red-400 ">*</span></Label>
+                        <Label className="font-medium">Labour Charges</Label>
+                        <div className="flex w-1/2 gap-1">
+                          <SelectShadcn
+                            value={loadingType}
+                            onValueChange={(val) => {
+                              setLoadingType(val);
+                              if (val === "Loading Only") {
+                                form.setValue("purchase_unloading", "");
+                              } else {
+                                form.setValue("purchase_loading", "");
+                              }
+                              calculateAndSetTotals(itemEntries);
+                            }}
+                          >
+                            <SelectTrigger className="w-1/2 h-9">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Loading Only">Loading Only</SelectItem>
+                              <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                            </SelectContent>
+                          </SelectShadcn>
+                          <Input
+                            className="w-1/2 h-9 text-right"
+                            id={loadingType === "Loading Only" ? "purchase_loading" : "purchase_unloading"}
+                            type="tel"
+                            value={
+                              form.watch(
+                                loadingType === "Loading Only"
+                                  ? "purchase_loading"
+                                  : "purchase_unloading",
+                              ) || ""
+                            }
+                            onChange={(e) => {
+                              handleChargeChange(
+                                loadingType === "Loading Only"
+                                  ? "purchase_loading"
+                                  : "purchase_unloading",
+                                e.target.value,
+                              );
+                            }}
+                            maxLength={10}
+                            onKeyDown={handleKeyDown}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Tempo Charges */}
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="purchase_tempo">Tempo Charges</Label>
                         <Input
+                          className="w-1/2 text-right"
+                          id="purchase_tempo"
+                          type="tel"
+                          {...form.register("purchase_tempo")}
+                          onChange={(e) =>
+                            handleChargeChange("purchase_tempo", e.target.value)
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Other Charges 1 */}
+                      <div className="flex items-center justify-between gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Other Label 1"
+                          className="w-1/2 h-9"
+                          {...form.register("purchase_other_label")}
+                        />
+                        <Input
+                          className="w-1/2 h-9 text-right"
                           id="purchase_other"
                           type="tel"
                           {...form.register("purchase_other")}
-                          onChange={(e) => handleOtherChange(e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          className="w-1/2 bg-white text-right"
-                          placeholder="0"
+                          onChange={(e) =>
+                            handleChargeChange("purchase_other", e.target.value)
+                          }
                           maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
                         />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="purchase_amount">Total Amount</Label>
+
+                      {/* Other Charges 2 */}
+                      <div className="flex items-center justify-between gap-2">
                         <Input
-                          id="purchase_amount"
+                          type="text"
+                          placeholder="Other Label 2"
+                          className="w-1/2 h-9"
+                          {...form.register("purchase_other1_label")}
+                        />
+                        <Input
+                          className="w-1/2 h-9 text-right"
+                          id="purchase_other1"
                           type="tel"
-                          {...form.register("purchase_amount")}
+                          {...form.register("purchase_other1")}
+                          onChange={(e) =>
+                            handleChargeChange("purchase_other1", e.target.value)
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Gross Total */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Gross Total</Label>
+                        <Input
+                          className="w-1/2 bg-gray-100 font-medium text-right"
+                          type="text"
+                          value={Number(displayGrandTotal).toFixed(0)}
                           disabled
-                          className="w-1/2 bg-gray-100 text-right"
+                        />
+                      </div>
+
+                      {/* GST Amount */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">
+                          GST 18% ({Number(displayGst).toFixed(0)})
+                        </Label>
+                        <Input
+                          className="w-1/2 text-right"
+                          type="tel"
+                          value={Number(displayGst).toFixed(0)}
+                          onChange={(e) => {
+                            setGstEdited(true);
+                            form.setValue("purchase_tax", e.target.value);
+                            calculateAndSetTotals(itemEntries, true);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Amount to be Paid */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Amount to be Paid</Label>
+                        <Input
+                          className="w-1/2 text-right font-medium"
+                          type="tel"
+                          {...form.register("purchase_temp_amount")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Round Off */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Round Off</Label>
+                        <Input
+                          className="w-1/2 text-right font-medium"
+                          type="text"
+                          {...form.register("purchase_amount_round")}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Net Total */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-semibold text-blue-900">
+                          Net Total
+                        </Label>
+                        <Input
+                          className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                          type="text"
+                          value={Number(displayFinalTotal).toFixed(0)}
+                          disabled
+                        />
+                      </div>
+
+
+                      {/* Final Amount Paid */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">
+                          Final Amount Paid
+                        </Label>
+                        <Input
+                          className="w-1/2 text-right"
+                          type="tel"
+                          {...form.register("purchase_amount_received")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
                           placeholder="0"
                         />
                       </div>

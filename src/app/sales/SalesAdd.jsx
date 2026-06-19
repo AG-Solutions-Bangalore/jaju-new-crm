@@ -52,6 +52,7 @@ const formSchema = z.object({
   sales_advance: z.string(),
   sales_balance: z.string(),
   sales_temp_amount: z.string(),
+  sales_amount_round: z.string().optional(),
   sales_amount_received: z.string(),
 });
 
@@ -95,6 +96,7 @@ const SalesAdd = () => {
       sales_advance: "",
       sales_balance: "",
       sales_temp_amount: "",
+      sales_amount_round: "",
       sales_amount_received: "",
     },
   });
@@ -176,16 +178,18 @@ const SalesAdd = () => {
     const other = parseFloat(form.watch("sales_other") || 0);
     const other1 = parseFloat(form.watch("sales_other1") || 0);
 
-    const grandTotal = itemsTotal + tempo + loading + other + other1;
+    const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
     if (!skipGst && !gstEdited) {
-      const gstAmount = parseFloat((grandTotal * 0.18).toFixed(2));
+      const gstAmount = Math.round(grandTotal * 0.18);
       form.setValue("sales_tax", gstAmount.toString());
     }
     const currentGst = parseFloat(form.watch("sales_tax") || 0);
-    const finalTotal = parseFloat((grandTotal + currentGst).toFixed(2));
+    const unrounded = Math.round(grandTotal + currentGst);
 
-    form.setValue("sales_gross", finalTotal.toString());
-    form.setValue("sales_balance", finalTotal.toString());
+    form.setValue("sales_temp_amount", unrounded.toString());
+    form.setValue("sales_amount_round", "");
+    form.setValue("sales_gross", unrounded.toString());
+    form.setValue("sales_balance", unrounded.toString());
     form.setValue("sales_advance", "0");
   };
 
@@ -205,7 +209,7 @@ const SalesAdd = () => {
       updatedEntries[index].sales_sub_qnty_sqr &&
       updatedEntries[index].sales_sub_rate
     ) {
-      updatedEntries[index].sales_sub_amount = (
+      updatedEntries[index].sales_sub_amount = Math.round(
         parseFloat(updatedEntries[index].sales_sub_qnty_sqr || 0) *
         parseFloat(updatedEntries[index].sales_sub_rate || 0)
       ).toString();
@@ -487,6 +491,7 @@ const SalesAdd = () => {
 
   const onSubmit = async (data) => {
     try {
+      const { sales_amount_round, ...restData } = data;
       const formattedItemEntries = itemEntries.map((entry, index) => ({
         ...entry,
         sales_sub_pcs: entry.sales_sub_qnty,
@@ -508,20 +513,24 @@ const SalesAdd = () => {
       const grandTotal =
         itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("sales_tax") || 0);
-      const finalTotal = parseFloat((grandTotal + gstAmount).toFixed(2));
+      const tempAmount = parseFloat(form.watch("sales_temp_amount") || (grandTotal + gstAmount));
+      const roundOff = parseFloat(form.watch("sales_amount_round") || 0);
+      const finalTotal = Math.round(tempAmount + roundOff);
 
       const payload = {
-        ...data,
+        ...restData,
         sales_tempo: tempo.toString(),
         sales_loading: loading.toString(),
         sales_unloading: unloading.toString(),
         sales_other: other.toString(),
         sales_other1: other1.toString(),
         sales_tax: gstAmount.toString(),
+        sales_temp_amount: tempAmount.toString(),
         sales_gross: finalTotal.toString(),
         sales_balance: finalTotal.toString(),
+        sales_amount_round: roundOff.toString(),
         sales_advance: "0",
-        sales_amount_received: data.sales_amount_received,
+        sales_amount_received: restData.sales_amount_received,
         sales_year: currentYear,
         sales_no_of_count: formattedItemEntries.length,
         sales_sub_data: formattedItemEntries,
@@ -561,9 +570,10 @@ const SalesAdd = () => {
     watchOther +
     watchOther1;
   const displayGst = parseFloat(form.watch("sales_tax") || 0);
-  const displayFinalTotal = parseFloat(
-    (displayGrandTotal + displayGst).toFixed(2),
-  );
+
+  const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
+  const watchRoundOff = parseFloat(form.watch("sales_amount_round") || 0);
+  const displayFinalTotal = Math.round(watchTempAmount + watchRoundOff);
 
   return (
     <Page>
@@ -1051,8 +1061,30 @@ const SalesAdd = () => {
                     />
                   </div>
 
-                  {/* Spacer */}
-                  {/* <div className="h-8 bg-gray-100 rounded-md w-full"></div> */}
+                  {/* Amount to be Collected */}
+                  <div>
+                    <Label>Amount to be Collected</Label>
+                    <Input
+                      type="tel"
+                      {...form.register("sales_temp_amount")}
+                      onKeyDown={handleKeyDown}
+                      className="mt-1 text-right font-medium"
+                      maxLength={10}
+                      placeholder="0"
+                    />
+                  </div>
+
+                  {/* Round Off */}
+                  <div>
+                    <Label>Round Off</Label>
+                    <Input
+                      type="text"
+                      {...form.register("sales_amount_round")}
+                      className="mt-1 text-right font-medium"
+                      maxLength={10}
+                      placeholder="0"
+                    />
+                  </div>
 
                   {/* Net Total */}
                   <div>
@@ -1624,11 +1656,30 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Spacer */}
-                      {/* <div className="flex items-center justify-between h-9">
-                        <div className="w-1/2"></div>
-                        <div className="w-1/2 h-8 bg-gray-100 rounded-md"></div>
-                      </div> */}
+                      {/* Amount to be Collected */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Amount to be Collected</Label>
+                        <Input
+                          className="w-1/2 text-right font-medium"
+                          type="tel"
+                          {...form.register("sales_temp_amount")}
+                          onKeyDown={handleKeyDown}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
+
+                      {/* Round Off */}
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Round Off</Label>
+                        <Input
+                          className="w-1/2 text-right font-medium"
+                          type="text"
+                          {...form.register("sales_amount_round")}
+                          maxLength={10}
+                          placeholder="0"
+                        />
+                      </div>
 
                       {/* Net Total */}
                       <div className="flex items-center justify-between">

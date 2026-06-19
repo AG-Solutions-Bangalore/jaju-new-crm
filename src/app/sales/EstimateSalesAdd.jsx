@@ -172,6 +172,13 @@ const EstimateSalesAdd = () => {
   useEffect(() => {
     if (salesEstimateId) {
       const { estimate: sId, estimateSub: sSub } = salesEstimateId;
+
+      const formatToInteger = (val) => {
+        if (val === undefined || val === null || val === "") return "";
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? "" : Math.round(parsed).toString();
+      };
+
       const formValues = {
         sales_date: moment(sId.estimate_date).format("YYYY-MM-DD"),
         sales_year: sId.estimate_year || currentYear,
@@ -179,14 +186,14 @@ const EstimateSalesAdd = () => {
         sales_customer: sId.estimate_customer || "",
         sales_address: sId.estimate_address || "",
         sales_mobile: sId.estimate_mobile || "",
-        sales_other: sId.estimate_other?.toString() || "",
-        sales_tempo: sId.estimate_tempo?.toString() || "",
-        sales_tax: sId.estimate_tax?.toString() || "",
-        sales_gross: sId.estimate_gross?.toString() || "",
-        sales_loading: sId.estimate_loading || "",
-        sales_unloading: sId.estimate_unloading || "",
-        sales_advance: sId.estimate_advance || "",
-        sales_balance: sId.estimate_balance || "",
+        sales_other: formatToInteger(sId.estimate_other),
+        sales_tempo: formatToInteger(sId.estimate_tempo),
+        sales_tax: formatToInteger(sId.estimate_tax),
+        sales_gross: formatToInteger(sId.estimate_gross),
+        sales_loading: formatToInteger(sId.estimate_loading),
+        sales_unloading: formatToInteger(sId.estimate_unloading),
+        sales_advance: formatToInteger(sId.estimate_advance),
+        sales_balance: formatToInteger(sId.estimate_balance),
         sales_no_of_count: sId.estimate_no_of_count?.toString() || "1",
       };
       form.reset(formValues);
@@ -199,8 +206,8 @@ const EstimateSalesAdd = () => {
 
           estimate_sub_qnty: sub.estimate_sub_qnty?.toString() || "",
           estimate_sub_qnty_sqr: sub.estimate_sub_qnty_sqr?.toString() || "",
-          estimate_sub_rate: sub.estimate_sub_rate?.toString() || "",
-          estimate_sub_amount: sub.estimate_sub_amount?.toString() || "",
+          estimate_sub_rate: formatToInteger(sub.estimate_sub_rate),
+          estimate_sub_amount: formatToInteger(sub.estimate_sub_amount),
         }));
         setItemEntries(mappedData);
       }
@@ -218,7 +225,7 @@ const EstimateSalesAdd = () => {
       updatedEntries[index].estimate_sub_qnty_sqr &&
       updatedEntries[index].estimate_sub_rate
     ) {
-      updatedEntries[index].estimate_sub_amount = (
+      updatedEntries[index].estimate_sub_amount = Math.round(
         parseFloat(updatedEntries[index].estimate_sub_qnty_sqr || 0) *
         parseFloat(updatedEntries[index].estimate_sub_rate || 0)
       ).toString();
@@ -236,10 +243,10 @@ const EstimateSalesAdd = () => {
       parseFloat(form.watch("sales_unloading") || 0) +
       parseFloat(form.watch("sales_other") || 0);
 
-    const newGross = itemsTotal + chargesTotal;
+    const newGross = Math.round(itemsTotal + chargesTotal);
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = Math.round(newGross - parseFloat(form.watch("sales_advance") || 0));
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -257,17 +264,17 @@ const EstimateSalesAdd = () => {
       parseFloat(form.watch("sales_unloading") || 0) +
       parseFloat(form.watch("sales_other") || 0);
 
-    const newGross = itemsTotal + chargesTotal;
+    const newGross = Math.round(itemsTotal + chargesTotal);
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = Math.round(newGross - parseFloat(form.watch("sales_advance") || 0));
     form.setValue("sales_balance", newBalance.toString());
   };
 
   const handleAdvanceChange = (value) => {
     form.setValue("sales_advance", value);
     const newBalance =
-      parseFloat(form.watch("sales_gross") || 0) - parseFloat(value || 0);
+      Math.round(parseFloat(form.watch("sales_gross") || 0) - parseFloat(value || 0));
     form.setValue("sales_balance", newBalance.toString());
   };
 
@@ -302,10 +309,10 @@ const EstimateSalesAdd = () => {
       parseFloat(form.watch("sales_unloading") || 0) +
       parseFloat(form.watch("sales_other") || 0);
 
-    const newGross = itemsTotal + chargesTotal;
+    const newGross = Math.round(itemsTotal + chargesTotal);
     form.setValue("sales_gross", newGross.toString());
 
-    const newBalance = newGross - parseFloat(form.watch("sales_advance") || 0);
+    const newBalance = Math.round(newGross - parseFloat(form.watch("sales_advance") || 0));
     form.setValue("sales_balance", newBalance.toString());
   };
 
