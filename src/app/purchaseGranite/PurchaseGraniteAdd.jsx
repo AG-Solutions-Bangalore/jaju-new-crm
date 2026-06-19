@@ -186,17 +186,14 @@ const PurchaseGraniteAdd = () => {
 
     form.setValue("purchase_temp_amount", unrounded.toString());
 
-    // Preserve the typed round off and advance values instead of resetting them
+    // Preserve the typed round off values instead of resetting them
     const roundOffStr = form.getValues("purchase_amount_round") || "";
     const roundOff = parseFloat(roundOffStr) || 0;
     const finalTotal = Math.round(unrounded + roundOff);
 
-    const advanceStr = form.getValues("purchase_advance") || "0";
-    const advance = parseFloat(advanceStr) || 0;
-    const balance = Math.round(finalTotal - advance);
-
     form.setValue("purchase_gross", finalTotal.toString());
-    form.setValue("purchase_balance", balance.toString());
+    form.setValue("purchase_balance", finalTotal.toString());
+    form.setValue("purchase_advance", "0");
   };
 
   useEffect(() => {
@@ -520,8 +517,6 @@ const PurchaseGraniteAdd = () => {
       const tempAmount = parseFloat(form.watch("purchase_temp_amount") || (grandTotal + gstAmount));
       const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
       const finalTotal = Math.round(tempAmount + roundOff);
-      const advance = parseFloat(form.watch("purchase_advance") || 0);
-      const balance = Math.round(finalTotal - advance);
 
       const payload = {
         ...restData,
@@ -533,9 +528,9 @@ const PurchaseGraniteAdd = () => {
         purchase_tax: gstAmount.toString(),
         purchase_temp_amount: tempAmount.toString(),
         purchase_gross: finalTotal.toString(),
-        purchase_balance: balance.toString(),
+        purchase_balance: finalTotal.toString(),
         purchase_amount_round: roundOff.toString(),
-        purchase_advance: advance.toString(),
+        purchase_advance: "0",
         purchase_amount_received: restData.purchase_amount_received || "0",
         purchase_amount: finalTotal.toString(),
         purchase_year: currentYear,
@@ -581,8 +576,6 @@ const PurchaseGraniteAdd = () => {
   const watchTempAmount = parseFloat(form.watch("purchase_temp_amount") || 0);
   const watchRoundOff = parseFloat(form.watch("purchase_amount_round") || 0);
   const displayFinalTotal = Math.round(watchTempAmount + watchRoundOff);
-  const watchAdvance = parseFloat(form.watch("purchase_advance") || 0);
-  const displayBalance = Math.round(displayFinalTotal - watchAdvance);
 
   return (
     <Page>
@@ -599,19 +592,11 @@ const PurchaseGraniteAdd = () => {
                 <h1 className="text-base font-bold">Add Purchases</h1>
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-green-50 border border-green-100 rounded-md p-2">
-                <p className="text-xs text-green-800 font-medium">Gross</p>
-                <p className="text-sm font-bold">
-                  {displayFinalTotal || 0}
-                </p>
-              </div>
-              <div className="bg-red-50 border border-red-100 rounded-md p-2">
-                <p className="text-xs text-red-800 font-medium">Balance</p>
-                <p className="text-sm font-bold">
-                  {displayBalance || 0}
-                </p>
-              </div>
+            <div className="bg-green-50 border border-green-100 rounded-md p-2">
+              <p className="text-xs text-green-800 font-medium">Net Total</p>
+              <p className="text-sm font-bold text-green-900">
+                {displayFinalTotal || 0}
+              </p>
             </div>
           </div>
 
@@ -1024,30 +1009,6 @@ const PurchaseGraniteAdd = () => {
                     value={Number(displayFinalTotal).toFixed(0)}
                     disabled
                     className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
-                  />
-                </div>
-
-                {/* Advance Paid */}
-                <div>
-                  <Label>Advance Paid</Label>
-                  <Input
-                    type="tel"
-                    {...form.register("purchase_advance")}
-                    onKeyDown={handleKeyDown}
-                    className="mt-1 text-right"
-                    maxLength={10}
-                    placeholder="0"
-                  />
-                </div>
-
-                {/* Balance */}
-                <div>
-                  <Label className="font-semibold text-red-900">Balance</Label>
-                  <Input
-                    type="text"
-                    value={Number(displayBalance).toFixed(0)}
-                    disabled
-                    className="mt-1 bg-red-50 border-red-200 font-bold text-red-900 text-right rounded-md"
                   />
                 </div>
 
@@ -1545,31 +1506,6 @@ const PurchaseGraniteAdd = () => {
                         />
                       </div>
 
-                      {/* Advance Paid */}
-                      <div className="flex items-center justify-between">
-                        <Label className="font-medium">Advance Paid</Label>
-                        <Input
-                          className="w-1/2 text-right"
-                          type="tel"
-                          {...form.register("purchase_advance")}
-                          onKeyDown={handleKeyDown}
-                          maxLength={10}
-                          placeholder="0"
-                        />
-                      </div>
-
-                      {/* Balance */}
-                      <div className="flex items-center justify-between">
-                        <Label className="font-semibold text-red-900">
-                          Balance
-                        </Label>
-                        <Input
-                          className="w-1/2 bg-red-50 border-red-200 font-bold text-red-900 text-right rounded-md"
-                          type="text"
-                          value={Number(displayBalance).toFixed(0)}
-                          disabled
-                        />
-                      </div>
 
                       {/* Final Amount Paid */}
                       <div className="flex items-center justify-between">
