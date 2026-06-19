@@ -294,8 +294,8 @@ const StocksReport = () => {
                       <tr className="bg-gray-100">
                         <th className="border p-1 text-left">Item Name</th>
                         <th className="border p-1 text-right">Open</th>
-                        <th className="border p-1 text-right">Aaya</th>
-                        <th className="border p-1 text-right">Gaya</th>
+                        <th className="border p-1 text-right">Purchase</th>
+                        <th className="border p-1 text-right">Sale</th>
                         <th className="border p-1 text-right">Close</th>
                       </tr>
                     </thead>
@@ -495,10 +495,10 @@ const StocksReport = () => {
                             Open Balance
                           </TableHead>
                           <TableHead className="text-center text-black font-bold border-r">
-                            Aaya
+                            Purchase
                           </TableHead>
                           <TableHead className="text-center text-black font-bold border-r">
-                            Gaya
+                            Sale
                           </TableHead>
                           <TableHead className="text-center text-black font-bold">
                             Close Balance

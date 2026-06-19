@@ -218,7 +218,8 @@ const SalesView = () => {
               <tr className="bg-gray-100">
                 <th className="border p-1 text-left">Sl No</th>
                 <th className="border p-1 text-left">Item</th>
-                <th className="border p-1 text-right">Qty</th>
+                <th className="border p-1 text-right">Qty (pcs/box)</th>
+                <th className="border p-1 text-right">Qty (sqft)</th>
                 <th className="border p-1 text-right">Rate</th>
                 <th className="border p-1 text-right">Amount</th>
               </tr>
@@ -234,7 +235,10 @@ const SalesView = () => {
                     {item.sales_sub_item}
                   </td>
                   <td className="border p-1 text-right">
-                    {item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}
+                    {item.sales_sub_pcs}
+                  </td>
+                  <td className="border p-1 text-right">
+                    {parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr || 0}
                   </td>
                   <td className="border p-1 text-right">
                     {Number(item.sales_sub_rate).toFixed(0)}
@@ -257,7 +261,7 @@ const SalesView = () => {
                 </td>
               </tr>
               <tr>
-                <td className="border p-1 text-right font-medium">Tax</td>
+                <td className="border p-1 text-right font-medium">Tax (GST 18% = {Number(salesData?.sales?.sales_tax).toFixed(0)})</td>
                 <td className="border p-1 text-right">
                   {Number(salesData?.sales?.sales_tax).toFixed(0)}
                 </td>
@@ -289,7 +293,7 @@ const SalesView = () => {
                 </tr>
               )}
               <tr className="font-bold">
-                <td className="border p-1 text-right">Total</td>
+                <td className="border p-1 text-right">Amount to be Collected</td>
                 <td className="border p-1 text-right">
                   {Number(salesData?.sales?.sales_gross).toFixed(0)}
                 </td>
@@ -393,7 +397,8 @@ const SalesView = () => {
                   <TableRow className="bg-gray-100 hover:bg-gray-100">
                     <TableHead className="text-center text-black font-bold   border-r">Sl No</TableHead>
                     <TableHead className="text-center text-black font-bold  border-r">Item Name</TableHead>
-                    <TableHead className="text-center text-black font-bold  border-r">Quantity</TableHead>
+                    <TableHead className="text-center text-black font-bold  border-r">Qnty (pcs/box)</TableHead>
+                    <TableHead className="text-center text-black font-bold  border-r">Qnty (sqft)</TableHead>
                     <TableHead className="text-center text-black font-bold  border-r">Rate </TableHead>
                     <TableHead className="text-center text-black font-bold ">Amount</TableHead>
                   </TableRow>
@@ -403,7 +408,8 @@ const SalesView = () => {
                     <TableRow key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-white'}>
                       <TableCell className="text-left border-r pl-4">{index + 1}</TableCell>
                       <TableCell className="text-left border-r pl-4">{item.sales_sub_item}</TableCell>
-                      <TableCell className="text-right border-r pr-4">{item.sales_sub_pcs}/{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr}</TableCell>
+                      <TableCell className="text-right border-r pr-4">{item.sales_sub_pcs}</TableCell>
+                      <TableCell className="text-right border-r pr-4">{parseFloat(item.sales_sub_qnty_sqr) || item.sales_sub_qnty_sqr || 0}</TableCell>
                       <TableCell className="text-right border-r pr-4">{Number(item.sales_sub_rate).toFixed(0)}</TableCell>
                       <TableCell className="text-right pr-4">{Number(item.sales_sub_amount).toFixed(0)}</TableCell>
                     </TableRow>
@@ -411,7 +417,7 @@ const SalesView = () => {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
+                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
                       Sub-Total
                     </TableCell>
                     <TableCell className="text-right  bg-white border-b pr-4">
@@ -419,15 +425,15 @@ const SalesView = () => {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right bg-white  font-medium border-r border-b">
-                      Tax
+                    <TableCell colSpan={5} className="text-right bg-white  font-medium border-r border-b">
+                      Tax (GST 18% = {Number(salesData?.sales?.sales_tax).toFixed(0)})
                     </TableCell>
                     <TableCell className="text-right bg-white border-b pr-4">
                       {Number(salesData?.sales?.sales_tax).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right  bg-white font-medium border-r border-b">
+                    <TableCell colSpan={5} className="text-right  bg-white font-medium border-r border-b">
                       Tempo Charges
                     </TableCell>
                     <TableCell className="text-right  bg-white border-b pr-4">
@@ -435,7 +441,7 @@ const SalesView = () => {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
+                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
                       Loading/Unloading
                     </TableCell>
                     <TableCell className="text-right bg-white border-b pr-4">
@@ -443,7 +449,7 @@ const SalesView = () => {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
+                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
                       Other Charges
                     </TableCell>
                     <TableCell className="text-right bg-white border-b pr-4">
@@ -452,7 +458,7 @@ const SalesView = () => {
                   </TableRow>
                   {Math.abs(Math.round(roundOff)) > 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
+                      <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
                         Round Off
                       </TableCell>
                       <TableCell className="text-right bg-white border-b pr-4">
@@ -461,15 +467,15 @@ const SalesView = () => {
                     </TableRow>
                   )}
                   <TableRow className="font-bold">
-                    <TableCell colSpan={4} className="text-right bg-white border-r border-b">
-                      Net Total
+                    <TableCell colSpan={5} className="text-right bg-white border-r border-b">
+                      Amount to be Collected
                     </TableCell>
                     <TableCell className="text-right  bg-white border-b pr-4">
                       {Number(salesData?.sales?.sales_gross).toFixed(0)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-right bg-white font-medium border-r border-b">
+                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
                       Advance Received
                     </TableCell>
                     <TableCell className="text-right bg-white border-b pr-4">
@@ -477,7 +483,7 @@ const SalesView = () => {
                     </TableCell>
                   </TableRow>
                   <TableRow className="font-bold">
-                    <TableCell colSpan={4} className="text-right bg-white border-r">
+                    <TableCell colSpan={5} className="text-right bg-white border-r">
                       Balance
                     </TableCell>
                     <TableCell className="text-right bg-white pr-4">

@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import moment from "moment";
 import { Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import NotInListIcon from "@/components/common/NotInListIcon";
 
 import {
   Select as SelectShadcn,
@@ -274,14 +275,9 @@ const PurchaseGraniteEdit = () => {
     const unrounded = Math.round(grandTotal + currentGst);
 
     form.setValue("purchase_temp_amount", unrounded.toString());
-
-    // Preserve the typed round off values instead of resetting them
-    const roundOffStr = form.getValues("purchase_amount_round") || "";
-    const roundOff = parseFloat(roundOffStr) || 0;
-    const finalTotal = Math.round(unrounded + roundOff);
-
-    form.setValue("purchase_gross", finalTotal.toString());
-    form.setValue("purchase_balance", finalTotal.toString());
+    form.setValue("purchase_amount_round", "");
+    form.setValue("purchase_gross", unrounded.toString());
+    form.setValue("purchase_balance", unrounded.toString());
     form.setValue("purchase_advance", "0");
   };
 
@@ -290,6 +286,40 @@ const PurchaseGraniteEdit = () => {
       calculateAndSetTotals(itemEntries);
     }
   }, [gstEdited]);
+  const itemsTotal = itemEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
+    0,
+  );
+  const watchTempo = parseFloat(form.watch("purchase_tempo") || 0);
+  const watchLoading = parseFloat(form.watch("purchase_loading") || 0);
+  const watchUnloading = parseFloat(form.watch("purchase_unloading") || 0);
+  const watchOther = parseFloat(form.watch("purchase_other") || 0);
+  const watchOther1 = parseFloat(form.watch("purchase_other1") || 0);
+
+  const displayGrandTotal =
+    itemsTotal +
+    watchTempo +
+    watchLoading +
+    watchUnloading +
+    watchOther +
+    watchOther1;
+  const displayGst = parseFloat(form.watch("purchase_tax") || 0);
+
+  const watchTempAmount = parseFloat(form.watch("purchase_temp_amount") || 0);
+  const displayFinalTotal = watchTempAmount;
+
+  const watchTempAmountInput = form.watch("purchase_temp_amount");
+
+  useEffect(() => {
+    if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
+      const tempAmount = parseFloat(watchTempAmountInput || 0);
+      const sumOfAmount = Math.round(displayGrandTotal + displayGst);
+      const roundOff = Math.round(tempAmount - sumOfAmount);
+      if (form.getValues("purchase_amount_round") !== roundOff.toString()) {
+        form.setValue("purchase_amount_round", roundOff.toString());
+      }
+    }
+  }, [watchTempAmountInput, displayGrandTotal, displayGst]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -414,7 +444,7 @@ const PurchaseGraniteEdit = () => {
       qntySqr: !entry.purchase_sub_qnty_sqr
         ? "required"
         : isNaN(entry.purchase_sub_qnty_sqr)
-          ? "Quantity (sqr) must be a number"
+          ? "Quantity (sqft) must be a number"
           : "",
       rate: !entry.purchase_sub_rate
         ? "required"
@@ -540,10 +570,10 @@ const PurchaseGraniteEdit = () => {
                           Item
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                          Qty (pcs)
+                          Qty (pcs/box)
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
-                          Qty (sqr)
+                          Qty (sqft)
                         </th>
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Rate
@@ -621,7 +651,7 @@ const PurchaseGraniteEdit = () => {
       const gstAmount = parseFloat(form.watch("purchase_tax") || 0);
       const tempAmount = parseFloat(form.watch("purchase_temp_amount") || (grandTotal + gstAmount));
       const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
-      const finalTotal = Math.round(tempAmount + roundOff);
+      const finalTotal = tempAmount;
 
       const payload = {
         ...restData,
@@ -687,28 +717,6 @@ const PurchaseGraniteEdit = () => {
       </Page>
     );
   }
-  const itemsTotal = itemEntries.reduce(
-    (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
-    0,
-  );
-  const watchTempo = parseFloat(form.watch("purchase_tempo") || 0);
-  const watchLoading = parseFloat(form.watch("purchase_loading") || 0);
-  const watchUnloading = parseFloat(form.watch("purchase_unloading") || 0);
-  const watchOther = parseFloat(form.watch("purchase_other") || 0);
-  const watchOther1 = parseFloat(form.watch("purchase_other1") || 0);
-
-  const displayGrandTotal =
-    itemsTotal +
-    watchTempo +
-    watchLoading +
-    watchUnloading +
-    watchOther +
-    watchOther1;
-  const displayGst = parseFloat(form.watch("purchase_tax") || 0);
-
-  const watchTempAmount = parseFloat(form.watch("purchase_temp_amount") || 0);
-  const watchRoundOff = parseFloat(form.watch("purchase_amount_round") || 0);
-  const displayFinalTotal = Math.round(watchTempAmount + watchRoundOff);
 
   return (
     <Page>
@@ -726,7 +734,7 @@ const PurchaseGraniteEdit = () => {
               </button>
             </div>
             <div className="bg-green-50 border border-green-100 rounded-md p-2">
-              <p className="text-xs text-green-800 font-medium">Net Total</p>
+              <p className="text-xs text-green-800 font-medium">Amount to be Paid</p>
               <p className="text-sm font-bold text-green-900">
                 {displayFinalTotal || 0}
               </p>
@@ -756,7 +764,7 @@ const PurchaseGraniteEdit = () => {
                       id="purchase_supplier"
                       {...form.register("purchase_supplier")}
                       className="mt-1"
-                      placeholder="Enter supplier name"
+                      placeholder="Enter Supplier Name"
                       maxLength={50}
                     />
                   </div>
@@ -768,7 +776,7 @@ const PurchaseGraniteEdit = () => {
                       id="purchase_bill_no"
                       {...form.register("purchase_bill_no")}
                       className="mt-1"
-                      placeholder="Enter bill number"
+                      placeholder="Enter Bill Number"
                       maxLength={10}
                     />
                   </div>
@@ -823,8 +831,8 @@ const PurchaseGraniteEdit = () => {
                               <div className="flex-1">
                                 <Input
                                   type="text"
-                                  className="h-8 text-sm uppercase"
-                                  placeholder="Enter item name"
+                                  className="h-8 text-sm uppercase placeholder:normal-case"
+                                  placeholder="Enter Item Name"
                                   value={customItems[index] || ""}
                                   onChange={(e) =>
                                     handleCustomItemChange(
@@ -864,18 +872,15 @@ const PurchaseGraniteEdit = () => {
                                   />
                                 )}
                               </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs whitespace-nowrap shrink-0"
-                                onClick={() => handleToggleCustomItem(index)}
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
-                                  <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z"/>
-                                </svg>
-                              </Button>
+                               <Button
+                                 type="button"
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-8 text-xs whitespace-nowrap shrink-0"
+                                 onClick={() => handleToggleCustomItem(index)}
+                               >
+                                 <NotInListIcon className="h-4 w-4" />
+                               </Button>
                             </>
                           )}
                         </div>
@@ -893,7 +898,7 @@ const PurchaseGraniteEdit = () => {
                               }
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm text-right"
-                              placeholder="Qnty (pcs)"
+                              placeholder="Qnty (pcs/box)"
                               maxLength={10}
                             />
                           </div>
@@ -910,7 +915,7 @@ const PurchaseGraniteEdit = () => {
                               }
                               onKeyDown={handleKeyDown}
                               className="h-8 text-sm text-right"
-                              placeholder="Qnty (sqr)"
+                              placeholder="Qnty (sqft)"
                               maxLength={10}
                             />
                           </div>
@@ -1096,26 +1101,21 @@ const PurchaseGraniteEdit = () => {
                 {/* GST Amount */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <Label>GST 18% ({Number(displayGst).toFixed(0)})</Label>
+                    <Label>Tax (GST 18% = {Number(displayGst).toFixed(0)})</Label>
                   </div>
                   <Input
                     type="tel"
                     value={Number(displayGst).toFixed(0)}
-                    onChange={(e) => {
-                      setGstEdited(true);
-                      form.setValue("purchase_tax", e.target.value);
-                      calculateAndSetTotals(itemEntries, true);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    className="mt-1 text-right"
+                    disabled
+                    className="mt-1 text-right bg-gray-100 font-medium"
                     maxLength={10}
                     placeholder="0"
                   />
                 </div>
 
-                {/* Amount to be Paid */}
+                {/* Net Total */}
                 <div>
-                  <Label>Amount to be Paid</Label>
+                  <Label>Net Total</Label>
                   <Input
                     type="tel"
                     {...form.register("purchase_temp_amount")}
@@ -1132,16 +1132,17 @@ const PurchaseGraniteEdit = () => {
                   <Input
                     type="text"
                     {...form.register("purchase_amount_round")}
-                    className="mt-1 text-right font-medium"
+                    disabled
+                    className="mt-1 text-right font-medium bg-gray-100"
                     maxLength={10}
                     placeholder="0"
                   />
                 </div>
 
-                {/* Net Total */}
+                {/* Amount to be Paid */}
                 <div>
                   <Label className="font-semibold text-blue-900">
-                    Net Total
+                    Amount to be Paid
                   </Label>
                   <Input
                     type="text"
@@ -1228,7 +1229,7 @@ const PurchaseGraniteEdit = () => {
                       id="purchase_supplier"
                       {...form.register("purchase_supplier")}
                       className="bg-white"
-                      placeholder="Enter supplier name"
+                      placeholder="Enter Supplier Name"
                       maxLength={50}
                     />
                   </div>
@@ -1240,7 +1241,7 @@ const PurchaseGraniteEdit = () => {
                       id="purchase_bill_no"
                       {...form.register("purchase_bill_no")}
                       className="bg-white"
-                      placeholder="Enter bill number"
+                      placeholder="Enter Bill Number"
                       maxLength={10}
                     />
                   </div>
@@ -1291,11 +1292,11 @@ const PurchaseGraniteEdit = () => {
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (pcs){" "}
+                            Qnty (pcs/box){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (sqr){" "}
+                            Qnty (sqft){" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
@@ -1320,8 +1321,8 @@ const PurchaseGraniteEdit = () => {
                                     <div className="flex-1 min-w-0 flex gap-2">
                                       <Input
                                         type="text"
-                                        className="h-9 uppercase"
-                                        placeholder="Enter item name"
+                                        className="h-9 uppercase placeholder:normal-case"
+                                        placeholder="Enter Item Name"
                                         value={customItems[index] || ""}
                                         onChange={(e) =>
                                           handleCustomItemChange(index, e.target.value.toUpperCase())
@@ -1353,18 +1354,17 @@ const PurchaseGraniteEdit = () => {
                                           placeholder="Select item"
                                         />
                                       </div>
-                                       <Button
-                                         type="button"
-                                         variant="outline"
-                                         size="sm"
-                                         className="h-9 whitespace-nowrap shrink-0"
-                                         onClick={() => handleToggleCustomItem(index)}
-                                       >
-                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                           <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
-                                           <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z"/>
-                                         </svg>
-                                       </Button>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-9 whitespace-nowrap shrink-0"
+                                        onClick={() =>
+                                          handleToggleCustomItem(index)
+                                        }
+                                      >
+                                        <NotInListIcon className="h-4 w-4" />
+                                      </Button>
                                     </>
                                   )}
                                 </div>
@@ -1599,26 +1599,20 @@ const PurchaseGraniteEdit = () => {
                       {/* GST Amount */}
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">
-                          GST 18% ({Number(displayGst).toFixed(0)})
+                          Tax (GST 18% = {Number(displayGst).toFixed(0)})
                         </Label>
                         <Input
-                          className="w-1/2 text-right"
+                          className="w-1/2 text-right bg-gray-100 font-medium"
                           type="tel"
                           value={Number(displayGst).toFixed(0)}
-                          onChange={(e) => {
-                            setGstEdited(true);
-                            form.setValue("purchase_tax", e.target.value);
-                            calculateAndSetTotals(itemEntries, true);
-                          }}
-                          onKeyDown={handleKeyDown}
-                          maxLength={10}
+                          disabled
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Amount to be Paid */}
+                      {/* Net Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Amount to be Paid</Label>
+                        <Label className="font-medium">Net Total</Label>
                         <Input
                           className="w-1/2 text-right font-medium"
                           type="tel"
@@ -1633,18 +1627,18 @@ const PurchaseGraniteEdit = () => {
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">Round Off</Label>
                         <Input
-                          className="w-1/2 text-right font-medium"
+                          className="w-1/2 text-right font-medium bg-gray-100"
                           type="text"
                           {...form.register("purchase_amount_round")}
-                          maxLength={10}
+                          disabled
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Net Total */}
+                      {/* Amount to be Paid */}
                       <div className="flex items-center justify-between">
                         <Label className="font-semibold text-blue-900">
-                          Net Total
+                          Amount to be Paid
                         </Label>
                         <Input
                           className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"

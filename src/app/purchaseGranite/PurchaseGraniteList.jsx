@@ -120,9 +120,9 @@ const PurchaseGraniteList = () => {
     },
     {
       accessorKey: "purchase_bill_no",
-      id: "Ref Bill No",
-      header: "Ref Bill No",
-      cell: ({ row }) => <div>{row.getValue("Ref Bill No")}</div>,
+      id: "JFC Bill No",
+      header: "JFC Bill No",
+      cell: ({ row }) => <div>{row.getValue("JFC Bill No")}</div>,
     },
     {
       accessorKey: "purchase_amount",
@@ -503,7 +503,7 @@ const PurchaseGraniteList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Aaya : &nbsp;
+              Total Purchase : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
