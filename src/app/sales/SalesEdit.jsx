@@ -1022,13 +1022,13 @@ const SalesEdit = () => {
                 <div className="space-y-3">
                   {/* Loading/Unloading */}
                   <div>
-                    <Label>Labour Charges</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1">
+                      <Label className="whitespace-nowrap">Labour Charges</Label>
                       <SelectShadcn
                         value={loadingType}
                         onValueChange={setLoadingType}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-1/2">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1048,7 +1048,7 @@ const SalesEdit = () => {
                         }}
                         maxLength={10}
                         onKeyDown={handleKeyDown}
-                        className="text-right"
+                        className="w-1/3 text-right"
                         placeholder="0"
                       />
                     </div>
@@ -1536,13 +1536,13 @@ const SalesEdit = () => {
                     <div className="grid grid-cols-1 gap-2">
                       {/* Loading/Unloading */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Labour Charges</Label>
-                        <div className="flex w-1/2 gap-1">
+                        <div className="flex items-center gap-2">
+                          <Label className="font-medium whitespace-nowrap">Labour Charges</Label>
                           <SelectShadcn
                             value={loadingType}
                             onValueChange={setLoadingType}
                           >
-                            <SelectTrigger className="w-1/2 h-9">
+                            <SelectTrigger className="w-36 h-9">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1550,9 +1550,10 @@ const SalesEdit = () => {
                               <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
                             </SelectContent>
                           </SelectShadcn>
-                          <Input
-                            className="w-1/2 h-9 text-right"
-                            id={loadingType === "Loading Only" ? "sales_loading" : "sales_unloading"}
+                        </div>
+                        <Input
+                          className="w-1/4 h-9 text-right"
+                          id={loadingType === "Loading Only" ? "sales_loading" : "sales_unloading"}
                             type="tel"
                             value={form.watch(loadingType === "Loading Only" ? "sales_loading" : "sales_unloading") || ""}
                             onChange={(e) =>
@@ -1565,7 +1566,6 @@ const SalesEdit = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="0"
                           />
-                        </div>
                       </div>
 
                       {/* Tempo Charges */}
