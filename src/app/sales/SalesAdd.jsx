@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -688,7 +689,7 @@ const SalesAdd = () => {
                   </div>
                   <div>
                     <Label htmlFor="sales_address">Address</Label>
-                    <Input
+                    <Textarea
                       id="sales_address"
                       {...form.register("sales_address")}
                       className="mt-1 uppercase placeholder:normal-case"
@@ -700,6 +701,7 @@ const SalesAdd = () => {
                           e.target.value.toUpperCase(),
                         );
                       }}
+                      rows={2}
                     />
                   </div>
                   {/* <div>
@@ -1220,9 +1222,9 @@ const SalesAdd = () => {
                       </SelectContent>
                     </Select>
                   </div> */}
-                  <div className="space-y-2 col-span-2 lg:col-span-3">
+                  <div className="space-y-2 col-span-full">
                     <Label htmlFor="sales_address">Address</Label>
-                    <Input
+                    <Textarea
                       id="sales_address"
                       {...form.register("sales_address")}
                       className="bg-white uppercase placeholder:normal-case"
@@ -1234,6 +1236,7 @@ const SalesAdd = () => {
                           e.target.value.toUpperCase(),
                         );
                       }}
+                      rows={2}
                     />
                   </div>
                 </div>

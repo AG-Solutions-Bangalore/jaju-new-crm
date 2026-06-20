@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import BASE_URL from "@/config/BaseUrl";
 import Page from "../dashboard/page";
@@ -811,12 +812,13 @@ const SalesEdit = () => {
                   </div>
                   <div>
                     <Label htmlFor="sales_address">Address</Label>
-                    <Input
+                    <Textarea
                       id="sales_address"
                       {...form.register("sales_address")}
                       className="mt-1 placeholder:normal-case"
                       placeholder="Enter Address"
                       maxLength={200}
+                      rows={2}
                     />
                   </div>
                   {/* <div>
@@ -1383,14 +1385,15 @@ const SalesEdit = () => {
                       </SelectContent>
                     </SelectShadcn>
                   </div> */}
-                  <div className="space-y-2 col-span-2 lg:col-span-3">
+                  <div className="space-y-2 col-span-full">
                     <Label htmlFor="sales_address">Address</Label>
-                    <Input
+                    <Textarea
                       id="sales_address"
                       {...form.register("sales_address")}
                       className="bg-white"
                       placeholder="Enter address"
                       maxLength={200}
+                      rows={2}
                     />
                   </div>
                 </div>
