@@ -87,7 +87,7 @@ const PurchaseGraniteAdd = () => {
       purchase_other1: "",
       purchase_other_label: "",
       purchase_other1_label: "",
-      purchase_amount_round: "",
+      purchase_amount_round: "0",
       purchase_tempo: "",
       purchase_loading: "",
       purchase_unloading: "",
@@ -186,7 +186,7 @@ const PurchaseGraniteAdd = () => {
     const unrounded = Math.round(grandTotal + currentGst);
 
     form.setValue("purchase_temp_amount", unrounded.toString());
-    form.setValue("purchase_amount_round", "");
+    form.setValue("purchase_amount_round", "0");
     form.setValue("purchase_gross", unrounded.toString());
     form.setValue("purchase_balance", unrounded.toString());
     form.setValue("purchase_advance", "0");
