@@ -239,7 +239,7 @@ const EstimateView = () => {
                       </tr>
                       <tr>
                         <td className="border p-1 text-right font-medium">
-                          Tax
+                          Tax (GST 18% = {Number(estimateData?.estimate?.estimate_tax).toFixed(0)})
                         </td>
                         <td className="border p-1 text-right">
                           {estimateData?.estimate?.estimate_tax}
@@ -423,7 +423,7 @@ const EstimateView = () => {
                         colSpan={4}
                         className="text-right font-medium bg-white border-r border-b"
                       >
-                        Tax
+                        Tax (GST 18% = {Number(estimateData?.estimate?.estimate_tax).toFixed(0)})
                       </TableCell>
                       <TableCell className="text-right bg-white border-b">
                         {estimateData?.estimate?.estimate_tax}

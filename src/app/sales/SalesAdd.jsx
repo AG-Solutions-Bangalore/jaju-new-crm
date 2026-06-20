@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
+import NotInListIcon from "@/components/common/NotInListIcon";
 import moment from "moment";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -198,6 +199,41 @@ const SalesAdd = () => {
       calculateAndSetTotals(itemEntries);
     }
   }, [gstEdited]);
+  const itemsTotal = itemEntries.reduce(
+    (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
+    0,
+  );
+  const watchTempo = parseFloat(form.watch("sales_tempo") || 0);
+  const watchLoading = parseFloat(form.watch("sales_loading") || 0);
+  const watchUnloading = parseFloat(form.watch("sales_unloading") || 0);
+  const watchOther = parseFloat(form.watch("sales_other") || 0);
+  const watchOther1 = parseFloat(form.watch("sales_other1") || 0);
+
+  const displayGrandTotal =
+    itemsTotal +
+    watchTempo +
+    watchLoading +
+    watchUnloading +
+    watchOther +
+    watchOther1;
+  const displayGst = parseFloat(form.watch("sales_tax") || 0);
+
+  const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
+  const watchRoundOff = parseFloat(form.watch("sales_amount_round") || 0);
+  const displayFinalTotal = watchTempAmount;
+
+  const watchTempAmountInput = form.watch("sales_temp_amount");
+
+  useEffect(() => {
+    if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
+      const tempAmount = parseFloat(watchTempAmountInput || 0);
+      const sumOfAmount = Math.round(displayGrandTotal + displayGst);
+      const roundOff = Math.round(tempAmount - sumOfAmount);
+      if (form.getValues("sales_amount_round") !== roundOff.toString()) {
+        form.setValue("sales_amount_round", roundOff.toString());
+      }
+    }
+  }, [watchTempAmountInput, displayGrandTotal, displayGst]);
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -515,7 +551,7 @@ const SalesAdd = () => {
       const gstAmount = parseFloat(form.watch("sales_tax") || 0);
       const tempAmount = parseFloat(form.watch("sales_temp_amount") || (grandTotal + gstAmount));
       const roundOff = parseFloat(form.watch("sales_amount_round") || 0);
-      const finalTotal = Math.round(tempAmount + roundOff);
+      const finalTotal = tempAmount;
 
       const payload = {
         ...restData,
@@ -552,28 +588,6 @@ const SalesAdd = () => {
     navigate("/sales");
   };
 
-  const itemsTotal = itemEntries.reduce(
-    (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
-    0,
-  );
-  const watchTempo = parseFloat(form.watch("sales_tempo") || 0);
-  const watchLoading = parseFloat(form.watch("sales_loading") || 0);
-  const watchUnloading = parseFloat(form.watch("sales_unloading") || 0);
-  const watchOther = parseFloat(form.watch("sales_other") || 0);
-  const watchOther1 = parseFloat(form.watch("sales_other1") || 0);
-
-  const displayGrandTotal =
-    itemsTotal +
-    watchTempo +
-    watchLoading +
-    watchUnloading +
-    watchOther +
-    watchOther1;
-  const displayGst = parseFloat(form.watch("sales_tax") || 0);
-
-  const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
-  const watchRoundOff = parseFloat(form.watch("sales_amount_round") || 0);
-  const displayFinalTotal = Math.round(watchTempAmount + watchRoundOff);
 
   return (
     <Page>
@@ -617,8 +631,8 @@ const SalesAdd = () => {
                     <Input
                       id="JFCBILLNO"
                       {...form.register("JFCBILLNO")}
-                      className="mt-1 uppercase"
-                      placeholder="Enter bill number"
+                      className="mt-1 uppercase placeholder:normal-case"
+                      placeholder="Enter Bill Number"
                       maxLength={50}
                       onChange={(e) => {
                         form.setValue(
@@ -642,8 +656,8 @@ const SalesAdd = () => {
                     <Input
                       id="sales_customer"
                       {...form.register("sales_customer")}
-                      className="mt-1 uppercase"
-                      placeholder="Enter customer name"
+                      className="mt-1 uppercase placeholder:normal-case"
+                      placeholder="Enter Customer Name"
                       maxLength={50}
                       onChange={(e) => {
                         form.setValue(
@@ -658,8 +672,8 @@ const SalesAdd = () => {
                     <Input
                       id="sales_mobile"
                       {...form.register("sales_mobile")}
-                      className="mt-1 uppercase"
-                      placeholder="Enter mobile number"
+                      className="mt-1 uppercase placeholder:normal-case"
+                      placeholder="Enter Mobile Number"
                       maxLength={10}
                       onKeyDown={handleKeyDown}
                       onChange={(e) => {
@@ -675,8 +689,8 @@ const SalesAdd = () => {
                     <Input
                       id="sales_address"
                       {...form.register("sales_address")}
-                      className="mt-1 uppercase"
-                      placeholder="Enter address"
+                      className="mt-1 uppercase placeholder:normal-case"
+                      placeholder="Enter Address"
                       maxLength={200}
                       onChange={(e) => {
                         form.setValue(
@@ -775,24 +789,12 @@ const SalesAdd = () => {
                               <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
-                                className="h-8 text-xs whitespace-nowrap shrink-0"
+                                size="icon"
+                                className="h-8 w-8 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                                 onClick={() => handleToggleCustomItem(index)}
+                                title="Not in list"
                               >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
-                                  <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z" />
-                                </svg>
+                                <NotInListIcon className="h-4 w-4" />
                               </Button>
                             </>
                           )}
@@ -876,13 +878,13 @@ const SalesAdd = () => {
                 <div className="space-y-3">
                   {/* Loading/Unloading */}
                   <div>
-                    <Label>Labour Charges</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1">
+                      <Label className="whitespace-nowrap">Labour Charges</Label>
                       <Select
                         value={loadingType}
                         onValueChange={setLoadingType}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-1/2">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -914,7 +916,7 @@ const SalesAdd = () => {
                           }
                           maxLength={10}
                           onKeyDown={handleKeyDown}
-                          className="text-right"
+                          className="w-1/3 text-right"
                           placeholder="0"
                         />
                     </div>
@@ -1045,25 +1047,21 @@ const SalesAdd = () => {
                   {/* GST Amount */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <Label>GST 18% ({Number(displayGst).toFixed(0)})</Label>
+                      <Label>Tax (GST 18% = {Number(displayGst).toFixed(0)})</Label>
                     </div>
                     <Input
                       type="tel"
                       value={Number(displayGst).toFixed(0)}
-                      onChange={(e) => {
-                        setGstEdited(true);
-                        form.setValue("sales_tax", e.target.value);
-                      }}
-                      onKeyDown={handleKeyDown}
-                      className="mt-1 text-right"
+                      disabled
+                      className="mt-1 text-right bg-gray-100"
                       maxLength={10}
                       placeholder="0"
                     />
                   </div>
 
-                  {/* Amount to be Collected */}
+                  {/* Net Total */}
                   <div>
-                    <Label>Amount to be Collected</Label>
+                    <Label>Net Total</Label>
                     <Input
                       type="tel"
                       {...form.register("sales_temp_amount")}
@@ -1080,16 +1078,17 @@ const SalesAdd = () => {
                     <Input
                       type="text"
                       {...form.register("sales_amount_round")}
-                      className="mt-1 text-right font-medium"
+                      disabled
+                      className="mt-1 text-right font-medium bg-gray-100"
                       maxLength={10}
                       placeholder="0"
                     />
                   </div>
 
-                  {/* Net Total */}
+                  {/* Amount to be Collected */}
                   <div>
                     <Label className="font-semibold text-blue-900">
-                      Net Total
+                      Amount to be Collected
                     </Label>
                     <Input
                       type="text"
@@ -1300,9 +1299,6 @@ const SalesAdd = () => {
                             Qnty (sqft)
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (sqft)
-                          </th>
-                          <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Rate
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
@@ -1396,20 +1392,7 @@ const SalesAdd = () => {
                                         handleToggleCustomItem(index)
                                       }
                                     >
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="16"
-                                        height="16"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" />
-                                        <path d="M8.7 7.3a3 3 0 0 1 4.2 4.2L12 14l-1.3 1.3a1 1 0 0 1-1.4 0L9 13.4l-1.3 1.3a1 1 0 0 1-1.4-1.4L10.6 12 9.3 10.7a1 1 0 0 1 0-1.4Z" />
-                                      </svg>
+                                      <NotInListIcon className="h-4 w-4" />
                                     </Button>
                                   </>
                                 )}
@@ -1515,13 +1498,13 @@ const SalesAdd = () => {
                     <div className="grid grid-cols-1 gap-2">
                       {/* Loading/Unloading */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Labour Charges</Label>
-                        <div className="flex w-1/2 gap-1">
+                        <div className="flex items-center gap-2">
+                          <Label className="font-medium whitespace-nowrap">Labour Charges</Label>
                           <Select
                             value={loadingType}
                             onValueChange={setLoadingType}
                           >
-                            <SelectTrigger className="w-1/2 h-9">
+                            <SelectTrigger className="w-36 h-9">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1529,8 +1512,9 @@ const SalesAdd = () => {
                               <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Input
-                            className="w-1/2 h-9 text-right"
+                        </div>
+                        <Input
+                          className="w-1/4 h-9 text-right"
                             id={
                               loadingType === "Loading Only"
                                 ? "sales_loading"
@@ -1562,7 +1546,6 @@ const SalesAdd = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="0"
                           />
-                        </div>
                       </div>
 
                       {/* Tempo Charges */}
@@ -1637,28 +1620,24 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* GST Amount */}
+                       {/* GST Amount */}
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">
-                          GST 18% ({Number(displayGst).toFixed(0)})
+                          Tax (GST 18% = {Number(displayGst).toFixed(0)})
                         </Label>
                         <Input
-                          className="w-1/2 text-right"
+                          className="w-1/2 text-right bg-gray-100"
                           type="tel"
                           value={Number(displayGst).toFixed(0)}
-                          onChange={(e) => {
-                            setGstEdited(true);
-                            form.setValue("sales_tax", e.target.value);
-                          }}
-                          onKeyDown={handleKeyDown}
+                          disabled
                           maxLength={10}
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Amount to be Collected */}
+                      {/* Net Total */}
                       <div className="flex items-center justify-between">
-                        <Label className="font-medium">Amount to be Collected</Label>
+                        <Label className="font-medium">Net Total</Label>
                         <Input
                           className="w-1/2 text-right font-medium"
                           type="tel"
@@ -1673,18 +1652,19 @@ const SalesAdd = () => {
                       <div className="flex items-center justify-between">
                         <Label className="font-medium">Round Off</Label>
                         <Input
-                          className="w-1/2 text-right font-medium"
+                          className="w-1/2 text-right font-medium bg-gray-100"
                           type="text"
                           {...form.register("sales_amount_round")}
+                          disabled
                           maxLength={10}
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Net Total */}
+                      {/* Amount to be Collected */}
                       <div className="flex items-center justify-between">
                         <Label className="font-semibold text-blue-900">
-                          Net Total
+                          Amount to be Collected
                         </Label>
                         <Input
                           className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"

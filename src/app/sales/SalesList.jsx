@@ -26,19 +26,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import axios from "axios";
-import {
-  ChevronDown,
-  Edit,
-  Eye,
-  Search,
-  SquarePlus
-} from "lucide-react";
+import { ChevronDown, Edit, Eye, Search, SquarePlus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  SALES_LIST
-} from "@/api";
+import { SALES_LIST } from "@/api";
 import Loader from "@/components/loader/Loader";
 import {
   Tooltip,
@@ -490,7 +482,7 @@ const SalesList = () => {
           {/* row slection and pagintaion button  */}
           <div className="flex items-center justify-end space-x-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Total Gaya : &nbsp;
+              Total Sales : &nbsp;
               {table.getFilteredRowModel().rows.length}
             </div>
             <div className="space-x-2">
