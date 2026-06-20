@@ -171,24 +171,26 @@ const PurchaseGraniteAdd = () => {
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
       0,
     );
-    const tempo = parseFloat(form.watch("purchase_tempo") || 0);
-    const loading = parseFloat(form.watch("purchase_loading") || 0);
-    const unloading = parseFloat(form.watch("purchase_unloading") || 0);
-    const other = parseFloat(form.watch("purchase_other") || 0);
-    const other1 = parseFloat(form.watch("purchase_other1") || 0);
+    const tempo = parseFloat(form.getValues("purchase_tempo") || 0);
+    const loading = parseFloat(form.getValues("purchase_loading") || 0);
+    const unloading = parseFloat(form.getValues("purchase_unloading") || 0);
+    const other = parseFloat(form.getValues("purchase_other") || 0);
+    const other1 = parseFloat(form.getValues("purchase_other1") || 0);
 
     const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
     if (!skipGst && !gstEdited) {
-      const gstAmount = Math.round(grandTotal * 0.18);
-      form.setValue("purchase_tax", gstAmount.toString());
+      const gstAmount = grandTotal * 0.18;
+      form.setValue("purchase_tax", gstAmount.toFixed(2));
     }
-    const currentGst = parseFloat(form.watch("purchase_tax") || 0);
-    const unrounded = Math.round(grandTotal + currentGst);
+    const currentGst = parseFloat(form.getValues("purchase_tax") || 0);
+    const unroundedNetTotal = grandTotal + currentGst;
+    const roundedNetTotal = Math.ceil(unroundedNetTotal);
+    const roundOff = roundedNetTotal - unroundedNetTotal;
 
-    form.setValue("purchase_temp_amount", unrounded.toString());
-    form.setValue("purchase_amount_round", "0");
-    form.setValue("purchase_gross", unrounded.toString());
-    form.setValue("purchase_balance", unrounded.toString());
+    form.setValue("purchase_temp_amount", roundedNetTotal.toString());
+    form.setValue("purchase_amount_round", roundOff.toFixed(2));
+    form.setValue("purchase_gross", roundedNetTotal.toString());
+    form.setValue("purchase_balance", roundedNetTotal.toString());
     form.setValue("purchase_advance", "0");
   };
 
@@ -224,10 +226,10 @@ const PurchaseGraniteAdd = () => {
   useEffect(() => {
     if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
       const tempAmount = parseFloat(watchTempAmountInput || 0);
-      const sumOfAmount = Math.round(displayGrandTotal + displayGst);
-      const roundOff = Math.round(tempAmount - sumOfAmount);
-      if (form.getValues("purchase_amount_round") !== roundOff.toString()) {
-        form.setValue("purchase_amount_round", roundOff.toString());
+      const sumOfAmount = displayGrandTotal + displayGst;
+      const roundOff = tempAmount - sumOfAmount;
+      if (form.getValues("purchase_amount_round") !== roundOff.toFixed(2)) {
+        form.setValue("purchase_amount_round", roundOff.toFixed(2));
       }
     }
   }, [watchTempAmountInput, displayGrandTotal, displayGst]);
@@ -408,7 +410,7 @@ const PurchaseGraniteAdd = () => {
                       {formErrors.billNo && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                            Bill No
+                            JFC Bill No
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.billNo}
@@ -637,7 +639,7 @@ const PurchaseGraniteAdd = () => {
                   </div>
                   <div>
                     <Label htmlFor="purchase_bill_no">
-                      Bill No <span className="text-xs text-red-400 ">*</span>
+                      JFC Bill No <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
                       id="purchase_bill_no"
@@ -965,11 +967,11 @@ const PurchaseGraniteAdd = () => {
                 {/* GST Amount */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <Label>Tax (GST 18% = {Number(displayGst).toFixed(0)})</Label>
+                    <Label>Tax (GST 18% = {Number(displayGst).toFixed(2)})</Label>
                   </div>
                   <Input
                     type="tel"
-                    value={Number(displayGst).toFixed(0)}
+                    value={Number(displayGst).toFixed(2)}
                     disabled
                     className="mt-1 text-right bg-gray-100 font-medium"
                     maxLength={10}
@@ -1098,7 +1100,7 @@ const PurchaseGraniteAdd = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="purchase_bill_no">
-                      Bill No <span className="text-xs text-red-400 ">*</span>
+                      JFC Bill No <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
                       id="purchase_bill_no"
@@ -1331,9 +1333,9 @@ const PurchaseGraniteAdd = () => {
                     <div></div>
                     <div className="space-y-2">
                       {/* Labour Charges */}
-                      <div className="flex items-center justify-between">
-                        <Label className="font-medium">Labour Charges</Label>
-                        <div className="flex w-1/2 gap-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1">
+                          <Label className="font-medium shrink-0">Labour Charges</Label>
                           <SelectShadcn
                             value={loadingType}
                             onValueChange={(val) => {
@@ -1346,7 +1348,7 @@ const PurchaseGraniteAdd = () => {
                               calculateAndSetTotals(itemEntries);
                             }}
                           >
-                            <SelectTrigger className="w-1/2 h-9">
+                            <SelectTrigger className="h-9 w-full min-w-[120px]">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1354,37 +1356,37 @@ const PurchaseGraniteAdd = () => {
                               <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
                             </SelectContent>
                           </SelectShadcn>
-                          <Input
-                            className="w-1/2 h-9 text-right"
-                            id={loadingType === "Loading Only" ? "purchase_loading" : "purchase_unloading"}
-                            type="tel"
-                            value={
-                              form.watch(
-                                loadingType === "Loading Only"
-                                  ? "purchase_loading"
-                                  : "purchase_unloading",
-                              ) || ""
-                            }
-                            onChange={(e) => {
-                              handleChargeChange(
-                                loadingType === "Loading Only"
-                                  ? "purchase_loading"
-                                  : "purchase_unloading",
-                                e.target.value,
-                              );
-                            }}
-                            maxLength={10}
-                            onKeyDown={handleKeyDown}
-                            placeholder="0"
-                          />
                         </div>
+                        <Input
+                          className="w-[150px] h-9 text-right shrink-0"
+                          id={loadingType === "Loading Only" ? "purchase_loading" : "purchase_unloading"}
+                          type="tel"
+                          value={
+                            form.watch(
+                              loadingType === "Loading Only"
+                                ? "purchase_loading"
+                                : "purchase_unloading",
+                            ) || ""
+                          }
+                          onChange={(e) => {
+                            handleChargeChange(
+                              loadingType === "Loading Only"
+                                ? "purchase_loading"
+                                : "purchase_unloading",
+                              e.target.value,
+                            );
+                          }}
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
                       </div>
 
                       {/* Tempo Charges */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label htmlFor="purchase_tempo">Tempo Charges</Label>
                         <Input
-                          className="w-1/2 text-right"
+                          className="w-[150px] text-right shrink-0"
                           id="purchase_tempo"
                           type="tel"
                           {...form.register("purchase_tempo")}
@@ -1402,11 +1404,11 @@ const PurchaseGraniteAdd = () => {
                         <Input
                           type="text"
                           placeholder="Other Label 1"
-                          className="w-1/2 h-9"
+                          className="flex-1 h-9"
                           {...form.register("purchase_other_label")}
                         />
                         <Input
-                          className="w-1/2 h-9 text-right"
+                          className="w-[150px] h-9 text-right shrink-0"
                           id="purchase_other"
                           type="tel"
                           {...form.register("purchase_other")}
@@ -1424,11 +1426,11 @@ const PurchaseGraniteAdd = () => {
                         <Input
                           type="text"
                           placeholder="Other Label 2"
-                          className="w-1/2 h-9"
+                          className="flex-1 h-9"
                           {...form.register("purchase_other1_label")}
                         />
                         <Input
-                          className="w-1/2 h-9 text-right"
+                          className="w-[150px] h-9 text-right shrink-0"
                           id="purchase_other1"
                           type="tel"
                           {...form.register("purchase_other1")}
@@ -1442,10 +1444,10 @@ const PurchaseGraniteAdd = () => {
                       </div>
 
                       {/* Gross Total */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Gross Total</Label>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium text-right"
+                          className="w-[150px] bg-gray-100 font-medium text-right shrink-0"
                           type="text"
                           value={Number(displayGrandTotal).toFixed(0)}
                           disabled
@@ -1453,24 +1455,24 @@ const PurchaseGraniteAdd = () => {
                       </div>
 
                       {/* GST Amount */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
-                          Tax (GST 18% = {Number(displayGst).toFixed(0)})
+                          Tax (GST 18% = {Number(displayGst).toFixed(2)})
                         </Label>
                         <Input
-                          className="w-1/2 text-right bg-gray-100 font-medium"
+                          className="w-[150px] text-right bg-gray-100 font-medium shrink-0"
                           type="tel"
-                          value={Number(displayGst).toFixed(0)}
+                          value={Number(displayGst).toFixed(2)}
                           disabled
                           placeholder="0"
                         />
                       </div>
 
                       {/* Net Total */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Net Total</Label>
                         <Input
-                          className="w-1/2 text-right font-medium"
+                          className="w-[150px] text-right font-medium shrink-0"
                           type="tel"
                           {...form.register("purchase_temp_amount")}
                           onKeyDown={handleKeyDown}
@@ -1480,10 +1482,10 @@ const PurchaseGraniteAdd = () => {
                       </div>
 
                       {/* Round Off */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Round Off</Label>
                         <Input
-                          className="w-1/2 text-right font-medium bg-gray-100"
+                          className="w-[150px] text-right font-medium bg-gray-100 shrink-0"
                           type="text"
                           {...form.register("purchase_amount_round")}
                           disabled
@@ -1492,26 +1494,25 @@ const PurchaseGraniteAdd = () => {
                       </div>
 
                       {/* Amount to be Paid */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-semibold text-blue-900">
                           Amount to be Paid
                         </Label>
                         <Input
-                          className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                          className="w-[150px] bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md shrink-0"
                           type="text"
                           value={Number(displayFinalTotal).toFixed(0)}
                           disabled
                         />
                       </div>
 
-
                       {/* Final Amount Paid */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
                           Final Amount Paid
                         </Label>
                         <Input
-                          className="w-1/2 text-right"
+                          className="w-[150px] text-right shrink-0"
                           type="tel"
                           {...form.register("purchase_amount_received")}
                           onKeyDown={handleKeyDown}
@@ -1542,17 +1543,11 @@ const PurchaseGraniteAdd = () => {
                         formElement.requestSubmit();
                       }
                     }}
-                    className="border-gray-300 hover:bg-gray-50"
+                    className="border-gray-300 bg-blue-600 hover:bg-blue-700 text-white hover:text-white"
                   >
                     Save and Close
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
-                  >
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </Button>
+                 
                 </div>
               </form>
             </CardContent>
