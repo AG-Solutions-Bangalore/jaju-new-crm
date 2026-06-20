@@ -42,6 +42,11 @@ const StocksReport = () => {
   const tableRef = useRef(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState(null);
+  const formatStockValue = (value) => {
+    if (value === undefined || value === null || value === "") return "0";
+    const num = parseFloat(value);
+    return isNaN(num) ? value : parseFloat(num.toFixed(4));
+  };
   const hello = getTodayDate();
   console.log("stock date ", hello);
   const form = useForm({
@@ -517,19 +522,21 @@ const StocksReport = () => {
                               <TableCell className="text-left border-r">
                                 {item.item_name}
                               </TableCell>
-                              <TableCell className="text-center border-r">
-                                {item.openpurch - item.closesale}
+                               <TableCell className="text-center border-r">
+                                {formatStockValue(item.openpurch - item.closesale)}
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {item.purch}
+                                {formatStockValue(item.purch)}
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {item.sale}
+                                {formatStockValue(item.sale)}
                               </TableCell>
                               <TableCell className="text-center">
-                                {item.openpurch -
-                                  item.closesale +
-                                  (item.purch - item.sale)}
+                                {formatStockValue(
+                                  item.openpurch -
+                                    item.closesale +
+                                    (item.purch - item.sale),
+                                )}
                               </TableCell>
                             </TableRow>
                           ))
