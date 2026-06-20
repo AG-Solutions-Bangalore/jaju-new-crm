@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ const formSchema = z.object({
   sales_customer: z.string(),
   sales_address: z.string(),
   sales_mobile: z.string(),
-  JFCBILLNO: z.string(),
+  sales_no: z.string(),
   sales_item_type: z.string(),
   sales_tax: z.string(),
   sales_tempo: z.string(),
@@ -81,7 +82,7 @@ const SalesAdd = () => {
       sales_customer: "",
       sales_address: "",
       sales_mobile: "",
-      JFCBILLNO: "",
+      sales_no: "",
 
       sales_item_type: "",
 
@@ -173,24 +174,26 @@ const SalesAdd = () => {
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
       0,
     );
-    const tempo = parseFloat(form.watch("sales_tempo") || 0);
-    const loading = parseFloat(form.watch("sales_loading") || 0);
-    const unloading = parseFloat(form.watch("sales_unloading") || 0);
-    const other = parseFloat(form.watch("sales_other") || 0);
-    const other1 = parseFloat(form.watch("sales_other1") || 0);
+    const tempo = parseFloat(form.getValues("sales_tempo") || 0);
+    const loading = parseFloat(form.getValues("sales_loading") || 0);
+    const unloading = parseFloat(form.getValues("sales_unloading") || 0);
+    const other = parseFloat(form.getValues("sales_other") || 0);
+    const other1 = parseFloat(form.getValues("sales_other1") || 0);
 
     const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
     if (!skipGst && !gstEdited) {
-      const gstAmount = Math.round(grandTotal * 0.18);
-      form.setValue("sales_tax", gstAmount.toString());
+      const gstAmount = grandTotal * 0.18;
+      form.setValue("sales_tax", gstAmount.toFixed(2));
     }
-    const currentGst = parseFloat(form.watch("sales_tax") || 0);
-    const unrounded = Math.round(grandTotal + currentGst);
+    const currentGst = parseFloat(form.getValues("sales_tax") || 0);
+    const unroundedNetTotal = grandTotal + currentGst;
+    const roundedNetTotal = Math.ceil(unroundedNetTotal);
+    const roundOff = roundedNetTotal - unroundedNetTotal;
 
-    form.setValue("sales_temp_amount", unrounded.toString());
-    form.setValue("sales_amount_round", "");
-    form.setValue("sales_gross", unrounded.toString());
-    form.setValue("sales_balance", unrounded.toString());
+    form.setValue("sales_temp_amount", roundedNetTotal.toString());
+    form.setValue("sales_amount_round", roundOff.toFixed(2));
+    form.setValue("sales_gross", roundedNetTotal.toString());
+    form.setValue("sales_balance", roundedNetTotal.toString());
     form.setValue("sales_advance", "0");
   };
 
@@ -227,10 +230,10 @@ const SalesAdd = () => {
   useEffect(() => {
     if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
       const tempAmount = parseFloat(watchTempAmountInput || 0);
-      const sumOfAmount = Math.round(displayGrandTotal + displayGst);
-      const roundOff = Math.round(tempAmount - sumOfAmount);
-      if (form.getValues("sales_amount_round") !== roundOff.toString()) {
-        form.setValue("sales_amount_round", roundOff.toString());
+      const sumOfAmount = displayGrandTotal + displayGst;
+      const roundOff = tempAmount - sumOfAmount;
+      if (form.getValues("sales_amount_round") !== roundOff.toFixed(2)) {
+        form.setValue("sales_amount_round", roundOff.toFixed(2));
       }
     }
   }, [watchTempAmountInput, displayGrandTotal, displayGst]);
@@ -627,16 +630,16 @@ const SalesAdd = () => {
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="JFCBILLNO">JFC Bill No</Label>
+                    <Label htmlFor="sales_no">JFC Bill No</Label>
                     <Input
-                      id="JFCBILLNO"
-                      {...form.register("JFCBILLNO")}
+                      id="sales_no"
+                      {...form.register("sales_no")}
                       className="mt-1 uppercase placeholder:normal-case"
                       placeholder="Enter Bill Number"
                       maxLength={50}
                       onChange={(e) => {
                         form.setValue(
-                          "JFCBILLNO",
+                          "sales_no",
                           e.target.value.toUpperCase(),
                         );
                       }}
@@ -686,7 +689,7 @@ const SalesAdd = () => {
                   </div>
                   <div>
                     <Label htmlFor="sales_address">Address</Label>
-                    <Input
+                    <Textarea
                       id="sales_address"
                       {...form.register("sales_address")}
                       className="mt-1 uppercase placeholder:normal-case"
@@ -698,6 +701,7 @@ const SalesAdd = () => {
                           e.target.value.toUpperCase(),
                         );
                       }}
+                      rows={2}
                     />
                   </div>
                   {/* <div>
@@ -749,8 +753,8 @@ const SalesAdd = () => {
                               <div className="flex-1">
                                 <Input
                                   type="text"
-                                  className="h-8 text-sm uppercase"
-                                  placeholder="Enter item name"
+                                  className="h-8 text-sm uppercase placeholder:normal-case"
+                                  placeholder="Enter Item Name"
                                   value={customItems[index] || ""}
                                   onChange={(e) =>
                                     handleCustomItemChange(
@@ -876,51 +880,6 @@ const SalesAdd = () => {
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-4">
                 <h3 className="font-medium">Charges & Totals</h3>
                 <div className="space-y-3">
-                  {/* Loading/Unloading */}
-                  <div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Label className="whitespace-nowrap">Labour Charges</Label>
-                      <Select
-                        value={loadingType}
-                        onValueChange={setLoadingType}
-                      >
-                        <SelectTrigger className="w-1/2">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Loading Only">Loading Only</SelectItem>
-                          <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        id={
-                          loadingType === "Loading Only"
-                            ? "sales_loading"
-                            : "sales_unloading"
-                        }
-                        type="tel"
-                        value={
-                          form.watch(
-                            loadingType === "Loading Only"
-                              ? "sales_loading"
-                              : "sales_unloading",
-                          ) || ""
-                        }
-                        onChange={(e) =>
-                            handleChargeChange(
-                              loadingType === "Loading Only"
-                                ? "sales_loading"
-                                : "sales_unloading",
-                              e.target.value,
-                            )
-                          }
-                          maxLength={10}
-                          onKeyDown={handleKeyDown}
-                          className="w-1/3 text-right"
-                          placeholder="0"
-                        />
-                    </div>
-                  </div>
 
                   {/* Tempo Charges */}
                   <div>
@@ -944,10 +903,18 @@ const SalesAdd = () => {
                     <div className="grid grid-cols-2 gap-2 mt-1">
                       <Select
                         value={loadingType}
-                        onValueChange={setLoadingType}
+                        onValueChange={(val) => {
+                          setLoadingType(val);
+                          if (val === "Loading Only") {
+                            form.setValue("sales_unloading", "");
+                          } else {
+                            form.setValue("sales_loading", "");
+                          }
+                          calculateAndSetTotals(itemEntries);
+                        }}
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Loading Only">Loading Only</SelectItem>
@@ -991,7 +958,7 @@ const SalesAdd = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <Input
                         type="text"
-                        placeholder="Custom label 1"
+                        placeholder="Custom Label 1"
                         {...form.register("sales_other_label")}
                       />
                       <Input
@@ -1015,7 +982,7 @@ const SalesAdd = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <Input
                         type="text"
-                        placeholder="Custom label 2"
+                        placeholder="Custom Label 2"
                         {...form.register("sales_other1_label")}
                       />
                       <Input
@@ -1045,13 +1012,13 @@ const SalesAdd = () => {
                   </div>
 
                   {/* GST Amount */}
-                  <div>
+                   <div>
                     <div className="flex items-center justify-between">
-                      <Label>Tax (GST 18% = {Number(displayGst).toFixed(0)})</Label>
+                      <Label>Tax (GST 18% = {Number(displayGst).toFixed(2)})</Label>
                     </div>
                     <Input
                       type="tel"
-                      value={Number(displayGst).toFixed(0)}
+                      value={Number(displayGst).toFixed(2)}
                       disabled
                       className="mt-1 text-right bg-gray-100"
                       maxLength={10}
@@ -1157,19 +1124,19 @@ const SalesAdd = () => {
                 {/* Customer Information */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
-                    <Label htmlFor="JFCBILLNO">
+                    <Label htmlFor="sales_no">
                       JFC Bill No
                       <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
-                      id="JFCBILLNO"
-                      {...form.register("JFCBILLNO")}
-                      className="bg-white uppercase"
-                      placeholder="Enter bill number"
+                      id="sales_no"
+                      {...form.register("sales_no")}
+                      className="bg-white uppercase placeholder:normal-case"
+                      placeholder="Enter Bill Number"
                       maxLength={50}
                       onChange={(e) => {
                         form.setValue(
-                          "JFCBILLNO",
+                          "sales_no",
                           e.target.value.toUpperCase(),
                         );
                       }}
@@ -1195,8 +1162,8 @@ const SalesAdd = () => {
                     <Input
                       id="sales_customer"
                       {...form.register("sales_customer")}
-                      className="bg-white uppercase"
-                      placeholder="Enter customer name"
+                      className="bg-white uppercase placeholder:normal-case"
+                      placeholder="Enter Customer Name"
                       maxLength={50}
                       onChange={(e) => {
                         form.setValue(
@@ -1211,8 +1178,8 @@ const SalesAdd = () => {
                     <Input
                       id="sales_mobile"
                       {...form.register("sales_mobile")}
-                      className="bg-white uppercase"
-                      placeholder="Enter mobile number"
+                      className="bg-white uppercase placeholder:normal-case"
+                      placeholder="Enter Mobile Number"
                       maxLength={10}
                       onKeyDown={handleKeyDown}
                       onChange={(e) => {
@@ -1255,13 +1222,13 @@ const SalesAdd = () => {
                       </SelectContent>
                     </Select>
                   </div> */}
-                  <div className="space-y-2 col-span-2 lg:col-span-3">
+                  <div className="space-y-2 col-span-full">
                     <Label htmlFor="sales_address">Address</Label>
-                    <Input
+                    <Textarea
                       id="sales_address"
                       {...form.register("sales_address")}
-                      className="bg-white uppercase"
-                      placeholder="Enter address"
+                      className="bg-white uppercase placeholder:normal-case"
+                      placeholder="Enter Address"
                       maxLength={200}
                       onChange={(e) => {
                         form.setValue(
@@ -1269,6 +1236,7 @@ const SalesAdd = () => {
                           e.target.value.toUpperCase(),
                         );
                       }}
+                      rows={2}
                     />
                   </div>
                 </div>
@@ -1287,7 +1255,7 @@ const SalesAdd = () => {
                             Type{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th> */}
-                          <th className="text-left p-2 font-medium text-sm w-[140px] min-w-[120px]">
+                          <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
@@ -1345,8 +1313,8 @@ const SalesAdd = () => {
                                   <div className="flex-1 min-w-0 flex gap-2">
                                     <Input
                                       type="text"
-                                      className="h-9 uppercase"
-                                      placeholder="Enter item name"
+                                      className="h-9 uppercase placeholder:normal-case"
+                                      placeholder="Enter Item Name"
                                       value={customItems[index] || ""}
                                       onChange={(e) =>
                                         handleCustomItemChange(
@@ -1496,15 +1464,23 @@ const SalesAdd = () => {
                   <div></div>
                   <div className="border rounded-lg p-3 bg-white">
                     <div className="grid grid-cols-1 gap-2">
-                      {/* Loading/Unloading */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label className="font-medium whitespace-nowrap">Labour Charges</Label>
+                      {/* Labour Charges */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1">
+                          <Label className="font-medium shrink-0">Labour Charges</Label>
                           <Select
                             value={loadingType}
-                            onValueChange={setLoadingType}
+                            onValueChange={(val) => {
+                              setLoadingType(val);
+                              if (val === "Loading Only") {
+                                form.setValue("sales_unloading", "");
+                              } else {
+                                form.setValue("sales_loading", "");
+                              }
+                              calculateAndSetTotals(itemEntries);
+                            }}
                           >
-                            <SelectTrigger className="w-36 h-9">
+                            <SelectTrigger className="h-9 w-full min-w-[120px]">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1514,45 +1490,35 @@ const SalesAdd = () => {
                           </Select>
                         </div>
                         <Input
-                          className="w-1/4 h-9 text-right"
-                            id={
+                          className="w-[150px] h-9 text-right shrink-0"
+                          id={loadingType === "Loading Only" ? "sales_loading" : "sales_unloading"}
+                          type="tel"
+                          value={
+                            form.watch(
                               loadingType === "Loading Only"
                                 ? "sales_loading"
-                                : loadingType === "Loading & Unloading"
-                                  ? "sales_unloading"
-                                  : "sales_loading"
-                            }
-                            type="tel"
-                            value={
-                              form.watch(
-                                loadingType === "Loading Only"
-                                  ? "sales_loading"
-                                  : loadingType === "Loading & Unloading"
-                                    ? "sales_unloading"
-                                    : "sales_loading",
-                              ) || ""
-                            }
-                            onChange={(e) => {
-                              handleChargeChange(
-                                loadingType === "Loading Only"
-                                  ? "sales_loading"
-                                  : loadingType === "Loading & Unloading"
-                                    ? "sales_unloading"
-                                    : "sales_loading",
-                                e.target.value,
-                              );
-                            }}
-                            maxLength={10}
-                            onKeyDown={handleKeyDown}
-                            placeholder="0"
-                          />
+                                : "sales_unloading",
+                            ) || ""
+                          }
+                          onChange={(e) => {
+                            handleChargeChange(
+                              loadingType === "Loading Only"
+                                ? "sales_loading"
+                                : "sales_unloading",
+                              e.target.value,
+                            );
+                          }}
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
                       </div>
 
                       {/* Tempo Charges */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
                         <Input
-                          className="w-1/2 text-right"
+                          className="w-[150px] text-right shrink-0"
                           id="sales_tempo"
                           type="tel"
                           {...form.register("sales_tempo")}
@@ -1569,12 +1535,12 @@ const SalesAdd = () => {
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
-                          placeholder="Other  1"
-                          className="w-1/2 h-9"
+                          placeholder="Other 1"
+                          className="flex-1 h-9"
                           {...form.register("sales_other_label")}
                         />
                         <Input
-                          className="w-1/2 h-9 text-right"
+                          className="w-[150px] h-9 text-right shrink-0"
                           id="sales_other"
                           type="tel"
                           {...form.register("sales_other")}
@@ -1592,11 +1558,11 @@ const SalesAdd = () => {
                         <Input
                           type="text"
                           placeholder="Other 2"
-                          className="w-1/2 h-9"
+                          className="flex-1 h-9"
                           {...form.register("sales_other1_label")}
                         />
                         <Input
-                          className="w-1/2 h-9 text-right"
+                          className="w-[150px] h-9 text-right shrink-0"
                           id="sales_other1"
                           type="tel"
                           {...form.register("sales_other1")}
@@ -1610,10 +1576,10 @@ const SalesAdd = () => {
                       </div>
 
                       {/* Gross Total */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Gross Total</Label>
                         <Input
-                          className="w-1/2 bg-gray-100 font-medium text-right"
+                          className="w-[150px] bg-gray-100 font-medium text-right shrink-0"
                           type="text"
                           value={Number(displayGrandTotal).toFixed(0)}
                           disabled
@@ -1621,25 +1587,24 @@ const SalesAdd = () => {
                       </div>
 
                        {/* GST Amount */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
-                          Tax (GST 18% = {Number(displayGst).toFixed(0)})
+                          Tax (GST 18% = {Number(displayGst).toFixed(2)})
                         </Label>
                         <Input
-                          className="w-1/2 text-right bg-gray-100"
+                          className="w-[150px] text-right bg-gray-100 shrink-0"
                           type="tel"
-                          value={Number(displayGst).toFixed(0)}
+                          value={Number(displayGst).toFixed(2)}
                           disabled
-                          maxLength={10}
                           placeholder="0"
                         />
                       </div>
 
                       {/* Net Total */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Net Total</Label>
                         <Input
-                          className="w-1/2 text-right font-medium"
+                          className="w-[150px] text-right font-medium shrink-0"
                           type="tel"
                           {...form.register("sales_temp_amount")}
                           onKeyDown={handleKeyDown}
@@ -1649,25 +1614,24 @@ const SalesAdd = () => {
                       </div>
 
                       {/* Round Off */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Round Off</Label>
                         <Input
-                          className="w-1/2 text-right font-medium bg-gray-100"
+                          className="w-[150px] text-right font-medium bg-gray-100 shrink-0"
                           type="text"
                           {...form.register("sales_amount_round")}
                           disabled
-                          maxLength={10}
                           placeholder="0"
                         />
                       </div>
 
                       {/* Amount to be Collected */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-semibold text-blue-900">
                           Amount to be Collected
                         </Label>
                         <Input
-                          className="w-1/2 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                          className="w-[150px] bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md shrink-0"
                           type="text"
                           value={Number(displayFinalTotal).toFixed(0)}
                           disabled
@@ -1675,12 +1639,12 @@ const SalesAdd = () => {
                       </div>
 
                       {/* Final Amount Received */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
                           Final Amount Received
                         </Label>
                         <Input
-                          className="w-1/2 text-right"
+                          className="w-[150px] text-right shrink-0"
                           type="tel"
                           {...form.register("sales_amount_received")}
                           onKeyDown={handleKeyDown}
