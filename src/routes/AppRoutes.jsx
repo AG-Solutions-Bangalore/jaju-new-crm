@@ -29,6 +29,8 @@ import SalesAdd from "@/app/sales/SalesAdd";
 import SalesEdit from "@/app/sales/SalesEdit";
 import EstimateSalesAdd from "@/app/sales/EstimateSalesAdd";
 import ChangeLedger from "@/app/changeLedger/ChangeLedger";
+import PiaeceReport from "@/app/stocks/PiaeceReport";
+import SaleDashboard from "@/app/home/SaleDashboard";
 
 function AppRoutes() {
   return (
@@ -45,10 +47,12 @@ function AppRoutes() {
         <Route path="/add-daybook" element={<AddDayBook />} />
         <Route path="/home" element={<Home />} />
         <Route path="/estimate" element={<EstimateList />} />
+        <Route path="/sale-dashboard" element={<SaleDashboard />} />
         <Route path="/estimate/create" element={<EstimateAdd />} />
         <Route path="/estimate/view/:id" element={<EstimateView />} />
         <Route path="/day-book" element={<DayBookReport />} />
         <Route path="/ledger" element={<LedgerReport />} />
+        <Route path="/stocks-piece" element={<PiaeceReport />} />
         <Route path="/change-ledger-name" element={<ChangeLedger />} />
         <Route path="/trial-balance" element={<TrialBalanceReport />} />
         <Route path="/product" element={<ProductList />} />

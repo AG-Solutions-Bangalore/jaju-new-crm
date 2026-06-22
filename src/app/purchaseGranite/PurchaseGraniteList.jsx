@@ -97,10 +97,10 @@ const PurchaseGraniteList = () => {
   // Define columns for the table
   const columns = [
     {
-      id: "Sl No",
-      accessorKey: "index",
-      header: "Sl No",
-      cell: ({ row }) => <div>{row.index + 1}</div>,
+      accessorKey: "purchase_bill_no",
+      id: "JFC Bill No",
+      header: "JFC Bill No",
+      cell: ({ row }) => <div>{row.getValue("JFC Bill No")}</div>,
     },
 
     {
@@ -118,12 +118,7 @@ const PurchaseGraniteList = () => {
       header: "Supplier",
       cell: ({ row }) => <div>{row.getValue("Supplier")}</div>,
     },
-    {
-      accessorKey: "purchase_bill_no",
-      id: "JFC Bill No",
-      header: "JFC Bill No",
-      cell: ({ row }) => <div>{row.getValue("JFC Bill No")}</div>,
-    },
+
     {
       accessorKey: "purchase_amount",
       id: "Amount",

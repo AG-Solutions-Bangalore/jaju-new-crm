@@ -148,6 +148,13 @@ export function AppSidebar({ ...props }) {
       //   isActive: false,
       // },
       {
+        title: "DASHBOARD",
+        url: "/sale-dashboard",
+        icon: LayoutDashboard,
+        isActive: false,
+      },
+
+      {
         title: "PURCHASE",
         url: "/purchase",
         icon: Mountain,
@@ -167,9 +174,20 @@ export function AppSidebar({ ...props }) {
       },
       {
         title: "STOCK",
-        url: "/stocks",
         icon: Warehouse,
         isActive: false,
+        items: [
+          {
+            title: "Box",
+            url: "/stocks",
+            icon: Box,
+          },
+          {
+            title: "Piece",
+            url: "/stocks-piece",
+            icon: Package,
+          },
+        ],
       },
     ],
   };

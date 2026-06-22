@@ -234,7 +234,10 @@ const SalesEdit = () => {
       });
 
       if (sales.sales_gst_percentage) {
-        form.setValue("sales_gst_percentage", sales.sales_gst_percentage.toString());
+        form.setValue(
+          "sales_gst_percentage",
+          sales.sales_gst_percentage.toString(),
+        );
       }
 
       // setTimeout(() => {
@@ -272,12 +275,14 @@ const SalesEdit = () => {
 
     const grandTotal =
       itemsTotal + tempo + loading + unloading + other + other1;
-    
+
     // Always compute auto GST at 18% for reference display
     setAutoGst18(grandTotal * 0.18);
-    
+
     if (!gstEdited) {
-      const chargeablePct = parseFloat(form.getValues("sales_gst_percentage") || 18);
+      const chargeablePct = parseFloat(
+        form.getValues("sales_gst_percentage") || 18,
+      );
       const chargeableGst = grandTotal * (chargeablePct / 100);
       form.setValue("sales_tax", chargeableGst.toFixed(2));
     }
@@ -341,8 +346,10 @@ const SalesEdit = () => {
 
     if (
       (field === "sales_sub_qnty_sqr" || field === "sales_sub_rate") &&
-      updatedEntries[index].sales_sub_qnty_sqr !== "" && updatedEntries[index].sales_sub_qnty_sqr != null &&
-      updatedEntries[index].sales_sub_rate !== "" && updatedEntries[index].sales_sub_rate != null
+      updatedEntries[index].sales_sub_qnty_sqr !== "" &&
+      updatedEntries[index].sales_sub_qnty_sqr != null &&
+      updatedEntries[index].sales_sub_rate !== "" &&
+      updatedEntries[index].sales_sub_rate != null
     ) {
       updatedEntries[index].sales_sub_amount = Math.round(
         parseFloat(updatedEntries[index].sales_sub_qnty_sqr || 0) *
@@ -447,14 +454,17 @@ const SalesEdit = () => {
         !entry.sales_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
-      qnty: entry.sales_sub_qnty !== "" && entry.sales_sub_qnty != null && isNaN(entry.sales_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
-      qntySqr: entry.sales_sub_qnty_sqr === "" || entry.sales_sub_qnty_sqr == null
-        ? "required"
-        : isNaN(entry.sales_sub_qnty_sqr)
-          ? "Quantity (sqr) must be a number"
+      qnty:
+        entry.sales_sub_qnty !== "" &&
+        entry.sales_sub_qnty != null &&
+        isNaN(entry.sales_sub_qnty)
+          ? "Quantity must be a number"
           : "",
+      // qntySqr: entry.sales_sub_qnty_sqr === "" || entry.sales_sub_qnty_sqr == null
+      //   ? "required"
+      //   : isNaN(entry.sales_sub_qnty_sqr)
+      //     ? "Quantity (sqr) must be a number"
+      //     : "",
       rate: !entry.sales_sub_rate
         ? "required"
         : isNaN(entry.sales_sub_rate)
@@ -779,7 +789,7 @@ const SalesEdit = () => {
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="sales_no">Bill No</Label>
+                    <Label htmlFor="sales_no">JFC Bill No</Label>
                     <Input
                       id="sales_no"
                       {...form.register("sales_no")}
@@ -1194,7 +1204,9 @@ const SalesEdit = () => {
 
                   {/* Auto GST Reference */}
                   <div>
-                    <Label className="text-xs text-gray-500">Auto GST @ 18% = {Number(autoGst18).toFixed(2)}</Label>
+                    <Label className="text-xs text-gray-500">
+                      Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                    </Label>
                   </div>
 
                   {/* Chargeable GST % */}
@@ -1218,7 +1230,8 @@ const SalesEdit = () => {
                   <div>
                     <div className="flex items-center justify-between">
                       <Label>
-                        Tax (GST {form.watch("sales_gst_percentage") || 18}% = {Number(displayGst).toFixed(2)})
+                        Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
+                        {Number(displayGst).toFixed(2)})
                       </Label>
                     </div>
                     <Input
@@ -1336,7 +1349,7 @@ const SalesEdit = () => {
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
                     <Label htmlFor="sales_no">
-                      Bill No
+                      JFC Bill No
                       <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
@@ -1629,7 +1642,9 @@ const SalesEdit = () => {
                       {/* Labour Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
-                          <Label className="font-medium shrink-0">Labour Charges</Label>
+                          <Label className="font-medium shrink-0">
+                            Labour Charges
+                          </Label>
                           <SelectShadcn
                             value={loadingType}
                             onValueChange={(val) => {
@@ -1773,17 +1788,21 @@ const SalesEdit = () => {
                           maxLength={5}
                           placeholder="18"
                           onChange={(e) => {
-                            form.setValue("sales_gst_percentage", e.target.value);
+                            form.setValue(
+                              "sales_gst_percentage",
+                              e.target.value,
+                            );
                             setGstEdited(false);
                             calculateAndSetTotals(itemEntries);
                           }}
                         />
                       </div>
 
-                       {/* GST Amount */}
+                      {/* GST Amount */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
-                          Tax (GST {form.watch("sales_gst_percentage") || 18}% = {Number(displayGst).toFixed(2)})
+                          Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
+                          {Number(displayGst).toFixed(2)})
                         </Label>
                         <Input
                           className="w-[150px] text-right bg-gray-100 shrink-0"

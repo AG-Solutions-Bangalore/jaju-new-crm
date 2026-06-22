@@ -448,11 +448,6 @@ const PurchaseGraniteEdit = () => {
         !entry.purchase_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
-      qnty: !entry.purchase_sub_qnty
-        ? "required"
-        : isNaN(entry.purchase_sub_qnty)
-          ? "Quantity must be a number"
-          : "",
       qntySqr: !entry.purchase_sub_qnty_sqr
         ? "required"
         : isNaN(entry.purchase_sub_qnty_sqr)
@@ -525,7 +520,7 @@ const PurchaseGraniteEdit = () => {
                       {formErrors.billNo && (
                         <tr className="bg-white hover:bg-gray-50">
                           <td className="px-2 py-1.5 text-gray-600 border-b border-gray-200 font-medium">
-                           JFC Bill No
+                            JFC Bill No
                           </td>
                           <td className="px-2 py-1.5 text-red-600 border-b border-gray-200 break-all">
                             {formErrors.billNo}
@@ -786,7 +781,8 @@ const PurchaseGraniteEdit = () => {
                   </div>
                   <div>
                     <Label htmlFor="purchase_bill_no">
-                      JFC Bill No <span className="text-xs text-red-400 ">*</span>
+                      JFC Bill No{" "}
+                      <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
                       id="purchase_bill_no"
@@ -1268,7 +1264,8 @@ const PurchaseGraniteEdit = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="purchase_bill_no">
-                     JFC Bill No <span className="text-xs text-red-400 ">*</span>
+                      JFC Bill No{" "}
+                      <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
                       id="purchase_bill_no"
@@ -1326,7 +1323,6 @@ const PurchaseGraniteEdit = () => {
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs/box){" "}
-                            <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqft){" "}
@@ -1515,7 +1511,9 @@ const PurchaseGraniteEdit = () => {
                       {/* Labour Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
-                          <Label className="font-medium shrink-0">Labour Charges</Label>
+                          <Label className="font-medium shrink-0">
+                            Labour Charges
+                          </Label>
                           <SelectShadcn
                             value={loadingType}
                             onValueChange={(val) => {
@@ -1532,14 +1530,22 @@ const PurchaseGraniteEdit = () => {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Loading Only">Loading Only</SelectItem>
-                              <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                              <SelectItem value="Loading Only">
+                                Loading Only
+                              </SelectItem>
+                              <SelectItem value="Loading & Unloading">
+                                Loading & Unloading
+                              </SelectItem>
                             </SelectContent>
                           </SelectShadcn>
                         </div>
                         <Input
                           className="w-[150px] h-9 text-right shrink-0"
-                          id={loadingType === "Loading Only" ? "purchase_loading" : "purchase_unloading"}
+                          id={
+                            loadingType === "Loading Only"
+                              ? "purchase_loading"
+                              : "purchase_unloading"
+                          }
                           type="tel"
                           value={
                             form.watch(
@@ -1717,7 +1723,6 @@ const PurchaseGraniteEdit = () => {
                   </Button>
                   <Button
                     type="button"
-                    
                     onClick={() => {
                       const formElement =
                         document.getElementById("purchase-edit-form");
