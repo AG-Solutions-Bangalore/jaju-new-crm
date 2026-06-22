@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import moment from "moment";
-import { Printer, FileText, ChevronLeft } from "lucide-react";
+import { Printer, FileText, ChevronLeft, Edit } from "lucide-react";
 import html2pdf from "html2pdf.js";
 
 import {
@@ -149,6 +149,12 @@ const SalesView = () => {
         </div>
         <div className="flex gap-[2px]">
           <button
+            className={`sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white text-sm p-3 rounded-b-md`}
+            onClick={() => navigate(`/sales/edit/${id}`)}
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
             className={`sm:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm p-3 rounded-b-md`}
             onClick={handleDownloadPDF}
           >
@@ -180,7 +186,7 @@ const SalesView = () => {
       ) : (
         <>
           <div className="text-center border p-2 space-y-1 mb-3 text-xs">
-            <h3 className="text-sm font-semibold">JAHAJ ESTIMATE</h3>
+            <h3 className="text-sm font-semibold">JAJU'S ESTIMATE</h3>
             {/* <p className="text-xs">New 80 ft Sompura, Sriniwaspura Road</p>
             <p className="text-xs">Bengaluru, Karnataka 560098</p>
             <p className="text-xs">Phone: 097420 42097</p> */}
@@ -261,7 +267,7 @@ const SalesView = () => {
                 </td>
               </tr>
               <tr>
-                <td className="border p-1 text-right font-medium">Tax (GST 18% = {Number(salesData?.sales?.sales_tax).toFixed(0)})</td>
+                <td className="border p-1 text-right font-medium">Tax (GST {salesData?.sales?.sales_gst_percentage || 18}% = {Number(salesData?.sales?.sales_tax).toFixed(0)})</td>
                 <td className="border p-1 text-right">
                   {Number(salesData?.sales?.sales_tax).toFixed(0)}
                 </td>
@@ -273,17 +279,33 @@ const SalesView = () => {
                 </td>
               </tr>
               <tr>
-                <td className="border p-1 text-right font-medium">Loading/Unloading</td>
+                <td className="border p-1 text-right font-medium">Loading</td>
                 <td className="border p-1 text-right">
                   {Number(salesData?.sales?.sales_loading).toFixed(0)}
                 </td>
               </tr>
+              {Number(salesData?.sales?.sales_unloading || 0) > 0 && (
+              <tr>
+                <td className="border p-1 text-right font-medium">Unloading</td>
+                <td className="border p-1 text-right">
+                  {Number(salesData?.sales?.sales_unloading).toFixed(0)}
+                </td>
+              </tr>
+              )}
               <tr>
                 <td className="border p-1 text-right font-medium">Other Charges</td>
                 <td className="border p-1 text-right">
                   {Number(salesData?.sales?.sales_other).toFixed(0)}
                 </td>
               </tr>
+              {Number(salesData?.sales?.sales_other1 || 0) > 0 && (
+              <tr>
+                <td className="border p-1 text-right font-medium">{salesData?.sales?.sales_other1_label || "Other Charges 2"}</td>
+                <td className="border p-1 text-right">
+                  {Number(salesData?.sales?.sales_other1).toFixed(0)}
+                </td>
+              </tr>
+              )}
               {Math.abs(Math.round(roundOff)) > 0 && (
                 <tr>
                   <td className="border p-1 text-right font-medium">Round Off</td>
@@ -298,18 +320,7 @@ const SalesView = () => {
                   {Number(salesData?.sales?.sales_gross).toFixed(0)}
                 </td>
               </tr>
-              <tr>
-                <td className="border p-1 text-right font-medium">Advance Received</td>
-                <td className="border p-1 text-right">
-                  {Number(salesData?.sales?.sales_advance).toFixed(0)}
-                </td>
-              </tr>
-              <tr className="font-bold">
-                <td className="border p-1 text-right">Balance</td>
-                <td className="border p-1 text-right">
-                  {Number(salesData?.sales?.sales_balance).toFixed(0)}
-                </td>
-              </tr>
+
             </tbody>
           </table>
         </>
@@ -336,6 +347,14 @@ const SalesView = () => {
                 <CardTitle className="text-xl">Sales Details</CardTitle>
               </div>
               <div className="flex justify-end gap-2 ">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/sales/edit/${id}`)}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -375,7 +394,7 @@ const SalesView = () => {
     </span>
   </div>
   <div className="flex items-center justify-center py-2 px-3">
-    <span className="font-medium">	JFC Bill No:</span>
+    <span className="font-medium">Bill No:</span>
     <span className="ml-1">{salesData?.sales?.sales_no}</span>
   </div>
 </div>
@@ -426,7 +445,7 @@ const SalesView = () => {
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={5} className="text-right bg-white  font-medium border-r border-b">
-                      Tax (GST 18% = {Number(salesData?.sales?.sales_tax).toFixed(0)})
+                      Tax (GST {salesData?.sales?.sales_gst_percentage || 18}% = {Number(salesData?.sales?.sales_tax).toFixed(0)})
                     </TableCell>
                     <TableCell className="text-right bg-white border-b pr-4">
                       {Number(salesData?.sales?.sales_tax).toFixed(0)}
@@ -442,12 +461,22 @@ const SalesView = () => {
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
-                      Loading/Unloading
+                      Loading
                     </TableCell>
                     <TableCell className="text-right bg-white border-b pr-4">
                       {Number(salesData?.sales?.sales_loading).toFixed(0)}
                     </TableCell>
                   </TableRow>
+                  {Number(salesData?.sales?.sales_unloading || 0) > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
+                      Unloading
+                    </TableCell>
+                    <TableCell className="text-right bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_unloading).toFixed(0)}
+                    </TableCell>
+                  </TableRow>
+                  )}
                   <TableRow>
                     <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
                       Other Charges
@@ -456,6 +485,16 @@ const SalesView = () => {
                       {Number(salesData?.sales?.sales_other).toFixed(0)}
                     </TableCell>
                   </TableRow>
+                  {Number(salesData?.sales?.sales_other1 || 0) > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
+                      {salesData?.sales?.sales_other1_label || "Other Charges 2"}
+                    </TableCell>
+                    <TableCell className="text-right bg-white border-b pr-4">
+                      {Number(salesData?.sales?.sales_other1).toFixed(0)}
+                    </TableCell>
+                  </TableRow>
+                  )}
                   {Math.abs(Math.round(roundOff)) > 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
@@ -474,22 +513,7 @@ const SalesView = () => {
                       {Number(salesData?.sales?.sales_gross).toFixed(0)}
                     </TableCell>
                   </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-right bg-white font-medium border-r border-b">
-                      Advance Received
-                    </TableCell>
-                    <TableCell className="text-right bg-white border-b pr-4">
-                      {Number(salesData?.sales?.sales_advance).toFixed(0)}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow className="font-bold">
-                    <TableCell colSpan={5} className="text-right bg-white border-r">
-                      Balance
-                    </TableCell>
-                    <TableCell className="text-right bg-white pr-4">
-                      {Number(salesData?.sales?.sales_balance).toFixed(0)}
-                    </TableCell>
-                  </TableRow>
+
                 </TableFooter>
               </Table>
             </div>

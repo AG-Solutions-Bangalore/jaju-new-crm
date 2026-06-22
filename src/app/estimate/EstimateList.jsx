@@ -34,11 +34,20 @@ import {
   SquarePlus,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 import { ESTIMATE_LIST, navigateTOEstimateView } from "@/api";
 import Loader from "@/components/loader/Loader";
+import BASE_URL from "@/config/BaseUrl";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +57,6 @@ import {
 import { ButtonConfig } from "@/config/ButtonConfig";
 import moment from "moment";
 import StatusToggle from "@/components/toggle/StatusToggle";
-import Cookies from "js-cookie";
 
 const EstimateList = () => {
   const {
@@ -67,20 +75,42 @@ const EstimateList = () => {
     },
   });
 
+  const { data: currentYear } = useQuery({
+    queryKey: ["currentYear"],
+    queryFn: async () => {
+      const token = Cookies.get("token");
+      const response = await axios.get(`${BASE_URL}/api/web-fetch-year`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data.year?.current_year;
+    },
+  });
+
   // State for table management
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+
+  useEffect(() => {
+    if (currentYear && !yearFilter) {
+      setYearFilter(currentYear);
+    }
+  }, [currentYear]);
 
   const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
+  const yearFilteredEstimates = yearFilter && yearFilter !== "all"
+    ? estimate?.filter((est) => est.estimate_year === yearFilter) || []
+    : estimate || [];
+
   const filteredEstimates =
-    estimate?.filter((est) => {
+    yearFilteredEstimates?.filter((est) => {
       if (!searchQuery) return true;
       return (
         est.estimate_customer
@@ -188,7 +218,7 @@ const EstimateList = () => {
 
   // Create the table instance
   const table = useReactTable({
-    data: estimate || [],
+    data: yearFilteredEstimates || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -265,18 +295,31 @@ const EstimateList = () => {
                 </Button>
               </div>
 
-              {/* Search Input */}
-              <div className="relative px-2 pb-2">
-                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-500" />
-                <Input
-                  placeholder="Search Estimate..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(0);
-                  }}
-                  className="pl-9 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-xs h-8"
-                />
+              {/* Search Input & Year Filter */}
+              <div className="flex gap-2 px-2 pb-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-500" />
+                  <Input
+                    placeholder="Search Estimate..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(0);
+                    }}
+                    className="pl-9 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full text-xs h-8"
+                  />
+                </div>
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger className="w-[130px] h-8 text-xs">
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentYear && (
+                      <SelectItem value={currentYear}>{currentYear}</SelectItem>
+                    )}
+                    <SelectItem value="all">All Data</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -433,6 +476,17 @@ const EstimateList = () => {
                 className="pl-8 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-200 w-full"
               />
             </div>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {currentYear && (
+                  <SelectItem value={currentYear}>{currentYear}</SelectItem>
+                )}
+                <SelectItem value="all">All Data</SelectItem>
+              </SelectContent>
+            </Select>
 
             {/* Dropdown Menu & Sales Button */}
             <div className="flex flex-col md:flex-row md:ml-auto gap-2 w-full md:w-auto">
