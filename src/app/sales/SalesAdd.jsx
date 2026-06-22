@@ -95,10 +95,8 @@ const SalesAdd = () => {
       sales_address: "",
       sales_mobile: "",
       sales_no: "",
-
       sales_item_type: "",
       sales_gst_percentage: "18",
-
       sales_tax: "",
       sales_tempo: "",
       sales_loading: "",
@@ -138,7 +136,6 @@ const SalesAdd = () => {
   const [loadingType, setLoadingType] = useState("Loading");
   const [customItems, setCustomItems] = useState({});
   const [isCustomItem, setIsCustomItem] = useState({});
-
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
   };
@@ -202,13 +199,16 @@ const SalesAdd = () => {
     const other = parseFloat(form.getValues("sales_other") || 0);
     const other1 = parseFloat(form.getValues("sales_other1") || 0);
 
-    const grandTotal = itemsTotal + tempo + loading + unloading + other + other1;
-    
+    const grandTotal =
+      itemsTotal + tempo + loading + unloading + other + other1;
+
     // Always compute auto GST at 18% for reference display
     setAutoGst18(grandTotal * 0.18);
-    
+
     if (!skipGst && !gstEdited) {
-      const chargeablePct = parseFloat(form.getValues("sales_gst_percentage") || 18);
+      const chargeablePct = parseFloat(
+        form.getValues("sales_gst_percentage") || 18,
+      );
       const chargeableGst = grandTotal * (chargeablePct / 100);
       form.setValue("sales_tax", chargeableGst.toFixed(2));
     }
@@ -272,12 +272,14 @@ const SalesAdd = () => {
 
     if (
       (field === "sales_sub_qnty_sqr" || field === "sales_sub_rate") &&
-      updatedEntries[index].sales_sub_qnty_sqr !== "" && updatedEntries[index].sales_sub_qnty_sqr != null &&
-      updatedEntries[index].sales_sub_rate !== "" && updatedEntries[index].sales_sub_rate != null
+      updatedEntries[index].sales_sub_qnty_sqr !== "" &&
+      updatedEntries[index].sales_sub_qnty_sqr != null &&
+      updatedEntries[index].sales_sub_rate !== "" &&
+      updatedEntries[index].sales_sub_rate != null
     ) {
       updatedEntries[index].sales_sub_amount = Math.round(
         parseFloat(updatedEntries[index].sales_sub_qnty_sqr || 0) *
-        parseFloat(updatedEntries[index].sales_sub_rate || 0)
+          parseFloat(updatedEntries[index].sales_sub_rate || 0),
       ).toString();
       setItemEntries([...updatedEntries]);
     }
@@ -360,14 +362,13 @@ const SalesAdd = () => {
         !entry.sales_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
-      qnty: entry.sales_sub_qnty !== "" && entry.sales_sub_qnty != null && isNaN(entry.sales_sub_qnty)
-        ? "Quantity must be a number"
-        : "",
-      qntySqr: entry.sales_sub_qnty_sqr === "" || entry.sales_sub_qnty_sqr == null
-        ? "required"
-        : isNaN(entry.sales_sub_qnty_sqr)
-          ? "Quantity (sqr) must be a number"
+      qnty:
+        entry.sales_sub_qnty !== "" &&
+        entry.sales_sub_qnty != null &&
+        isNaN(entry.sales_sub_qnty)
+          ? "Quantity must be a number"
           : "",
+
       rate: !entry.sales_sub_rate
         ? "required"
         : isNaN(entry.sales_sub_rate)
@@ -577,7 +578,9 @@ const SalesAdd = () => {
       const grandTotal =
         itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("sales_tax") || 0);
-      const tempAmount = parseFloat(form.watch("sales_temp_amount") || (grandTotal + gstAmount));
+      const tempAmount = parseFloat(
+        form.watch("sales_temp_amount") || grandTotal + gstAmount,
+      );
       const roundOff = parseFloat(form.watch("sales_amount_round") || 0);
       const finalTotal = tempAmount;
 
@@ -617,7 +620,6 @@ const SalesAdd = () => {
     navigate("/sales");
   };
 
-
   return (
     <Page>
       <div className="w-full p-0 md:p-0">
@@ -656,7 +658,7 @@ const SalesAdd = () => {
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="sales_no">Bill No</Label>
+                    <Label htmlFor="sales_no">JFC Bill No</Label>
                     <Input
                       id="sales_no"
                       {...form.register("sales_no")}
@@ -901,7 +903,6 @@ const SalesAdd = () => {
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-4">
                 <h3 className="font-medium">Charges & Totals</h3>
                 <div className="space-y-3">
-
                   {/* Tempo Charges */}
                   <div>
                     <Label htmlFor="sales_tempo">Tempo Charges</Label>
@@ -938,8 +939,12 @@ const SalesAdd = () => {
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Loading Only">Loading Only</SelectItem>
-                          <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                          <SelectItem value="Loading Only">
+                            Loading Only
+                          </SelectItem>
+                          <SelectItem value="Loading & Unloading">
+                            Loading & Unloading
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <Input
@@ -957,37 +962,12 @@ const SalesAdd = () => {
                           ) || ""
                         }
                         onChange={(e) =>
-                            handleChargeChange(
-                              loadingType === "Loading Only"
-                                ? "sales_loading"
-                                : "sales_unloading",
-                              e.target.value,
-                            )
-                          }
-                          maxLength={10}
-                          onKeyDown={handleKeyDown}
-                          className="text-right"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Other 1 */}
-                  <div className="space-y-1">
-                    <Label>Other Charges 1</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Custom Label 1"
-                        {...form.register("sales_other_label")}
-                      />
-                      <Input
-                        id="sales_other"
-                        type="tel"
-                        {...form.register("sales_other")}
-                        onChange={(e) =>
-                          handleChargeChange("sales_other", e.target.value)
+                          handleChargeChange(
+                            loadingType === "Loading Only"
+                              ? "sales_loading"
+                              : "sales_unloading",
+                            e.target.value,
+                          )
                         }
                         maxLength={10}
                         onKeyDown={handleKeyDown}
@@ -996,131 +976,161 @@ const SalesAdd = () => {
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* Other 2 */}
-                  <div className="space-y-1">
-                    <Label>Other Charges 2</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        type="text"
-                        placeholder="Custom Label 2"
-                        {...form.register("sales_other1_label")}
-                      />
-                      <Input
-                        id="sales_other1"
-                        type="tel"
-                        {...form.register("sales_other1")}
-                        onChange={(e) =>
-                          handleChargeChange("sales_other1", e.target.value)
-                        }
-                        maxLength={10}
-                        onKeyDown={handleKeyDown}
-                        className="text-right"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Gross Total */}
-                  <div>
-                    <Label>Gross Total</Label>
+                {/* Other 1 */}
+                <div className="space-y-1">
+                  <Label>Other Charges 1</Label>
+                  <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="text"
-                      value={Number(displayGrandTotal).toFixed(0)}
-                      disabled
-                      className="mt-1 bg-gray-100 font-medium text-right"
+                      placeholder="Custom Label 1"
+                      {...form.register("sales_other_label")}
                     />
-                  </div>
-
-                  {/* Auto GST Reference */}
-                  <div>
-                    <Label className="text-xs text-gray-500">Auto GST @ 18% = {Number(autoGst18).toFixed(2)}</Label>
-                  </div>
-
-                  {/* Chargeable GST % */}
-                  <div>
-                    <Label>Chargeable GST %</Label>
                     <Input
+                      id="sales_other"
                       type="tel"
-                      {...form.register("sales_gst_percentage")}
-                      className="mt-1 text-right"
-                      maxLength={5}
-                      placeholder="18"
-                      onChange={(e) => {
-                        form.setValue("sales_gst_percentage", e.target.value);
-                        setGstEdited(false);
-                        calculateAndSetTotals(itemEntries);
-                      }}
-                    />
-                  </div>
-
-                  {/* GST Amount */}
-                   <div>
-                    <div className="flex items-center justify-between">
-                      <Label>Tax (GST {form.watch("sales_gst_percentage") || 18}% = {Number(displayGst).toFixed(2)})</Label>
-                    </div>
-                    <Input
-                      type="tel"
-                      value={Number(displayGst).toFixed(2)}
-                      disabled
-                      className="mt-1 text-right bg-gray-100"
+                      {...form.register("sales_other")}
+                      onChange={(e) =>
+                        handleChargeChange("sales_other", e.target.value)
+                      }
                       maxLength={10}
-                      placeholder="0"
-                    />
-                  </div>
-
-                  {/* Net Total */}
-                  <div>
-                    <Label>Net Total</Label>
-                    <Input
-                      type="tel"
-                      {...form.register("sales_temp_amount")}
                       onKeyDown={handleKeyDown}
-                      className="mt-1 text-right font-medium"
-                      maxLength={10}
-                      placeholder="0"
-                    />
-                  </div>
-
-                  {/* Round Off */}
-                  <div>
-                    <Label>Round Off</Label>
-                    <Input
-                      type="text"
-                      {...form.register("sales_amount_round")}
-                      disabled
-                      className="mt-1 text-right font-medium bg-gray-100"
-                      maxLength={10}
-                      placeholder="0"
-                    />
-                  </div>
-
-                  {/* Amount to be Collected */}
-                  <div>
-                    <Label className="font-semibold text-blue-900">
-                      Amount to be Collected
-                    </Label>
-                    <Input
-                      type="text"
-                      value={Number(displayFinalTotal).toFixed(0)}
-                      disabled
-                      className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
-                    />
-                  </div>
-
-                  {/* Final Amount Received */}
-                  <div>
-                    <Label>Final Amount Received</Label>
-                    <Input
-                      type="tel"
-                      {...form.register("sales_amount_received")}
-                      onKeyDown={handleKeyDown}
-                      className="mt-1 text-right"
-                      maxLength={10}
+                      className="text-right"
                       placeholder="0"
                     />
                   </div>
                 </div>
+
+                {/* Other 2 */}
+                <div className="space-y-1">
+                  <Label>Other Charges 2</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Custom Label 2"
+                      {...form.register("sales_other1_label")}
+                    />
+                    <Input
+                      id="sales_other1"
+                      type="tel"
+                      {...form.register("sales_other1")}
+                      onChange={(e) =>
+                        handleChargeChange("sales_other1", e.target.value)
+                      }
+                      maxLength={10}
+                      onKeyDown={handleKeyDown}
+                      className="text-right"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Gross Total */}
+                <div>
+                  <Label>Gross Total</Label>
+                  <Input
+                    type="text"
+                    value={Number(displayGrandTotal).toFixed(0)}
+                    disabled
+                    className="mt-1 bg-gray-100 font-medium text-right"
+                  />
+                </div>
+
+                {/* Auto GST Reference */}
+                <div>
+                  <Label className="text-xs text-gray-500">
+                    Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                  </Label>
+                </div>
+
+                {/* Chargeable GST % */}
+                <div>
+                  <Label>Chargeable GST %</Label>
+                  <Input
+                    type="tel"
+                    {...form.register("sales_gst_percentage")}
+                    className="mt-1 text-right"
+                    maxLength={5}
+                    placeholder="18"
+                    onChange={(e) => {
+                      form.setValue("sales_gst_percentage", e.target.value);
+                      setGstEdited(false);
+                      calculateAndSetTotals(itemEntries);
+                    }}
+                  />
+                </div>
+
+                {/* GST Amount */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label>
+                      Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
+                      {Number(displayGst).toFixed(2)})
+                    </Label>
+                  </div>
+                  <Input
+                    type="tel"
+                    value={Number(displayGst).toFixed(2)}
+                    disabled
+                    className="mt-1 text-right bg-gray-100"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Net Total */}
+                <div>
+                  <Label>Net Total</Label>
+                  <Input
+                    type="tel"
+                    {...form.register("sales_temp_amount")}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right font-medium"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Round Off */}
+                <div>
+                  <Label>Round Off</Label>
+                  <Input
+                    type="text"
+                    {...form.register("sales_amount_round")}
+                    disabled
+                    className="mt-1 text-right font-medium bg-gray-100"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+
+                {/* Amount to be Collected */}
+                <div>
+                  <Label className="font-semibold text-blue-900">
+                    Amount to be Collected
+                  </Label>
+                  <Input
+                    type="text"
+                    value={Number(displayFinalTotal).toFixed(0)}
+                    disabled
+                    className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
+                  />
+                </div>
+
+                {/* Final Amount Received */}
+                <div>
+                  <Label>Final Amount Received</Label>
+                  <Input
+                    type="tel"
+                    {...form.register("sales_amount_received")}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right"
+                    maxLength={10}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
               {/* Action Buttons */}
               <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-2 flex justify-between">
                 <Button
@@ -1168,7 +1178,7 @@ const SalesAdd = () => {
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 bg-blue-50 p-3 rounded-lg">
                   <div className="space-y-2">
                     <Label htmlFor="sales_no">
-                      Bill No
+                      JFC Bill No
                       <span className="text-xs text-red-400 ">*</span>
                     </Label>
                     <Input
@@ -1302,13 +1312,16 @@ const SalesAdd = () => {
                             Qnty (pcs/box)
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (sqft)
+                            Qnty (sqft){" "}
+                            <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Rate
+                            Rate{" "}
+                            <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[110px] min-w-[90px]">
-                            Amount
+                            Amount{" "}
+                            <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[50px]"></th>
                         </tr>
@@ -1505,7 +1518,9 @@ const SalesAdd = () => {
                       {/* Labour Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
-                          <Label className="font-medium shrink-0">Labour Charges</Label>
+                          <Label className="font-medium shrink-0">
+                            Labour Charges
+                          </Label>
                           <Select
                             value={loadingType}
                             onValueChange={(val) => {
@@ -1522,14 +1537,22 @@ const SalesAdd = () => {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Loading Only">Loading Only</SelectItem>
-                              <SelectItem value="Loading & Unloading">Loading & Unloading</SelectItem>
+                              <SelectItem value="Loading Only">
+                                Loading Only
+                              </SelectItem>
+                              <SelectItem value="Loading & Unloading">
+                                Loading & Unloading
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <Input
                           className="w-[150px] h-9 text-right shrink-0"
-                          id={loadingType === "Loading Only" ? "sales_loading" : "sales_unloading"}
+                          id={
+                            loadingType === "Loading Only"
+                              ? "sales_loading"
+                              : "sales_unloading"
+                          }
                           type="tel"
                           value={
                             form.watch(
@@ -1641,17 +1664,21 @@ const SalesAdd = () => {
                           maxLength={5}
                           placeholder="18"
                           onChange={(e) => {
-                            form.setValue("sales_gst_percentage", e.target.value);
+                            form.setValue(
+                              "sales_gst_percentage",
+                              e.target.value,
+                            );
                             setGstEdited(false);
                             calculateAndSetTotals(itemEntries);
                           }}
                         />
                       </div>
 
-                       {/* GST Amount */}
+                      {/* GST Amount */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
-                          Tax (GST {form.watch("sales_gst_percentage") || 18}% = {Number(displayGst).toFixed(2)})
+                          Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
+                          {Number(displayGst).toFixed(2)})
                         </Label>
                         <Input
                           className="w-[150px] text-right bg-gray-100 shrink-0"

@@ -53,7 +53,7 @@ const formSchema = z.object({
   to_date: z.string().min(1, "To date is required"),
 });
 
-const StocksReport = () => {
+const PiaeceReport = () => {
   const { toast } = useToast();
   const tableRef = useRef(null);
   const navigate = useNavigate();
@@ -334,7 +334,7 @@ const StocksReport = () => {
               {/* Title + Print Button */}
               <div className="flex justify-between items-center">
                 <h1 className="text-base font-bold text-gray-800 px-2">
-                  Stocks Box Report
+                  Stocks Piece Report
                 </h1>
                 <div className="flex gap-[2px]">
                   <button
@@ -447,7 +447,7 @@ const StocksReport = () => {
               ) : (
                 <>
                   <div className="text-center font-semibold text-sm mb-2">
-                    Stocks Box Report
+                    Stocks Piece Report
                   </div>
                   <div className="text-center text-xs mb-3">
                     From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
@@ -485,18 +485,18 @@ const StocksReport = () => {
                               </span>
                             </td>
                             <td className="border p-1 text-right">
-                              {item.openpurch - item.closesale}
+                              {item.openpurch_pcs - item.closesale_pcs}
                             </td>
                             <td className="border p-1 text-right">
-                              {item.purch}
+                              {item.purch_pcs}
                             </td>
                             <td className="border p-1 text-right">
-                              {item.sale}
+                              {item.sale_pcs}
                             </td>
                             <td className="border p-1 text-right">
-                              {item.openpurch -
-                                item.closesale +
-                                (item.purch - item.sale)}
+                              {item.openpurch_pcs -
+                                item.closesale_pcs +
+                                (item.purch_pcs - item.sale_pcs)}
                             </td>
                           </tr>
                         ))
@@ -527,7 +527,7 @@ const StocksReport = () => {
                 {/* Title Section */}
                 <div className="w-[30%] shrink-0">
                   <h1 className="text-xl font-bold text-gray-800 truncate">
-                    Stocks Box Report
+                    Stocks Piece Report
                   </h1>
                 </div>
 
@@ -659,7 +659,7 @@ const StocksReport = () => {
                 <CardContent>
                   <div ref={tableRef} className="overflow-x-auto print:p-4">
                     <div className="text-center mb-4 font-semibold">
-                      Stocks Box Report
+                      Stocks Piece Report
                     </div>
                     <div className="text-center text-sm mb-6">
                       From{" "}
@@ -711,20 +711,20 @@ const StocksReport = () => {
                               </TableCell>
                               <TableCell className="text-center border-r">
                                 {formatStockValue(
-                                  item.openpurch - item.closesale,
+                                  item.openpurch_pcs - item.closesale_pcs,
                                 )}
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {formatStockValue(item.purch)}
+                                {formatStockValue(item.purch_pcs)}
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {formatStockValue(item.sale)}
+                                {formatStockValue(item.sale_pcs)}
                               </TableCell>
                               <TableCell className="text-center">
                                 {formatStockValue(
-                                  item.openpurch -
-                                    item.closesale +
-                                    (item.purch - item.sale),
+                                  item.openpurch_pcs -
+                                    item.closesale_pcs +
+                                    (item.purch_pcs - item.sale_pcs),
                                 )}
                               </TableCell>
                             </TableRow>
@@ -846,4 +846,4 @@ const StocksReport = () => {
   );
 };
 
-export default StocksReport;
+export default PiaeceReport;

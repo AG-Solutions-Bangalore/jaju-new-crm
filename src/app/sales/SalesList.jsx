@@ -84,12 +84,11 @@ const SalesList = () => {
   // Define columns for the table
   const columns = [
     {
-      id: "Sl No",
-      accessorKey: "index",
-      header: "Sl No",
-      cell: ({ row }) => <div>{row.index + 1}</div>,
+      accessorKey: "sales_no",
+      id: "Bill No",
+      header: "JFC Bill No",
+      cell: ({ row }) => <div>{row.getValue("Bill No")}</div>,
     },
-
     {
       accessorKey: "sales_date",
       id: "Date",
@@ -99,12 +98,7 @@ const SalesList = () => {
         return moment(date).format("DD-MMM-YYYY");
       },
     },
-    {
-      accessorKey: "sales_no",
-      id: "Bill No",
-      header: "Bill No",
-      cell: ({ row }) => <div>{row.getValue("Bill No")}</div>,
-    },
+
     {
       accessorKey: "sales_customer",
       id: "Customer",

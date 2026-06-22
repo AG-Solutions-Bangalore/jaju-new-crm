@@ -137,7 +137,7 @@ export default function LoginAuth() {
         Cookies.set("email", UserInfo.user.email, cookieOptions);
 
         const redirectPath =
-          window.innerWidth < 768 ? "/estimate" : "/estimate";
+          window.innerWidth < 768 ? "/sale-dashboard" : "/sale-dashboard";
         console.log(`✅ Login successful! Redirecting to ${redirectPath}...`);
         navigate(redirectPath);
       } else {
