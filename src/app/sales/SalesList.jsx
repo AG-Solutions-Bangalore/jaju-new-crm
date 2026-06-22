@@ -101,9 +101,9 @@ const SalesList = () => {
     },
     {
       accessorKey: "sales_no",
-      id: "JFC Bill No",
-      header: "JFC Bill No",
-      cell: ({ row }) => <div>{row.getValue("JFC Bill No")}</div>,
+      id: "Bill No",
+      header: "Bill No",
+      cell: ({ row }) => <div>{row.getValue("Bill No")}</div>,
     },
     {
       accessorKey: "sales_customer",
@@ -114,9 +114,9 @@ const SalesList = () => {
 
     {
       accessorKey: "sales_no_of_count",
-      id: "No Of Items",
-      header: "No Of Items",
-      cell: ({ row }) => <div>{row.getValue("No Of Items")}</div>,
+      id: "Items",
+      header: "Items",
+      cell: ({ row }) => <div>{row.getValue("Items")}</div>,
     },
 
     {
