@@ -40,7 +40,6 @@ const formSchema = z.object({
   sales_mobile: z.string(),
   sales_item_type: z.string(),
   sales_no: z.string(),
-  sales_gst_percentage: z.string().optional(),
   sales_tax: z.string(),
   sales_tempo: z.string(),
   sales_loading: z.string(),
@@ -85,11 +84,8 @@ const SalesEdit = () => {
       sales_customer: "",
       sales_address: "",
       sales_mobile: "",
-
       sales_item_type: "",
       sales_no: "",
-      sales_gst_percentage: "18",
-
       sales_tax: "",
       sales_tempo: "",
       sales_loading: "",
@@ -230,17 +226,8 @@ const SalesEdit = () => {
         sales_temp_amount: formatToInteger(savedTempAmount),
         sales_amount_round: savedRoundOff === 0 ? "" : savedRoundOff.toString(),
         sales_amount_received: formatToInteger(sales.sales_amount_received),
-        sales_gst_percentage: sales.sales_gst_percentage?.toString() || "18",
       });
 
-      if (sales.sales_gst_percentage) {
-        form.setValue(
-          "sales_gst_percentage",
-          sales.sales_gst_percentage.toString(),
-        );
-      }
-
-      // setTimeout(() => {
       if (salesSub?.length > 0) {
         const mappedSub = salesSub.map((sub) => ({
           id: sub.id || "",
@@ -258,11 +245,10 @@ const SalesEdit = () => {
         }, 100);
       }
       setIsInitialLoading(false);
-      // }, 100);
     }
   }, [salesId, form, currentYear]);
 
-  const calculateAndSetTotals = (entries) => {
+  const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
       0,
@@ -277,14 +263,12 @@ const SalesEdit = () => {
       itemsTotal + tempo + loading + unloading + other + other1;
 
     // Always compute auto GST at 18% for reference display
-    setAutoGst18(grandTotal * 0.18);
+    const autoGst = grandTotal * 0.18;
+    setAutoGst18(autoGst);
 
-    if (!gstEdited) {
-      const chargeablePct = parseFloat(
-        form.getValues("sales_gst_percentage") || 18,
-      );
-      const chargeableGst = grandTotal * (chargeablePct / 100);
-      form.setValue("sales_tax", chargeableGst.toFixed(2));
+    if (!skipGst && !gstEdited) {
+      // Auto-calculate tax as 18% of grandTotal (fixed)
+      form.setValue("sales_tax", autoGst.toFixed(2));
     }
     const currentGst = parseFloat(form.getValues("sales_tax") || 0);
     const unroundedNetTotal = grandTotal + currentGst;
@@ -303,6 +287,7 @@ const SalesEdit = () => {
       calculateAndSetTotals(itemEntries);
     }
   }, [gstEdited]);
+
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
     0,
@@ -323,7 +308,6 @@ const SalesEdit = () => {
   const displayGst = parseFloat(form.watch("sales_tax") || 0);
 
   const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
-  const watchRoundOff = parseFloat(form.watch("sales_amount_round") || 0);
   const displayFinalTotal = watchTempAmount;
 
   const watchTempAmountInput = form.watch("sales_temp_amount");
@@ -364,6 +348,13 @@ const SalesEdit = () => {
   const handleChargeChange = (field, value) => {
     form.setValue(field, value);
     calculateAndSetTotals(itemEntries);
+  };
+
+  const handleTaxChange = (e) => {
+    const value = e.target.value;
+    form.setValue("sales_tax", value);
+    setGstEdited(true);
+    calculateAndSetTotals(itemEntries, true);
   };
 
   const removeItemEntry = (index) => {
@@ -442,6 +433,7 @@ const SalesEdit = () => {
       });
     },
   });
+
   const validateForm = (data) => {
     const formErrors = {
       date: !data.sales_date ? "Date is required" : "",
@@ -460,11 +452,6 @@ const SalesEdit = () => {
         isNaN(entry.sales_sub_qnty)
           ? "Quantity must be a number"
           : "",
-      // qntySqr: entry.sales_sub_qnty_sqr === "" || entry.sales_sub_qnty_sqr == null
-      //   ? "required"
-      //   : isNaN(entry.sales_sub_qnty_sqr)
-      //     ? "Quantity (sqr) must be a number"
-      //     : "",
       rate: !entry.sales_sub_rate
         ? "required"
         : isNaN(entry.sales_sub_rate)
@@ -684,7 +671,6 @@ const SalesEdit = () => {
 
       const payload = {
         ...restData,
-        sales_gst_percentage: form.getValues("sales_gst_percentage") || "18",
         sales_tempo: tempo.toString(),
         sales_loading: loading.toString(),
         sales_unloading: unloading.toString(),
@@ -839,35 +825,6 @@ const SalesEdit = () => {
                       rows={2}
                     />
                   </div>
-                  {/* <div>
-                    <Label htmlFor="sales_item_type">Item Type</Label>
-
-                    <SelectShadcn
-                      id="sales_item_type"
-                      value={form.watch("sales_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("sales_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </SelectShadcn>
-                  </div> */}
                 </div>
               </div>
 
@@ -940,39 +897,6 @@ const SalesEdit = () => {
                         </div>
 
                         <div className="grid grid-cols-3 gap-1">
-                          {/* <div>
-                            {isLoadingItems || !product.length ? (
-                              <div className="h-9 bg-gray-200 rounded animate-pulse w-[4rem]"></div>
-                            ) : (
-                              <SelectShadcn
-                                value={entry.sales_sub_item_original}
-                                onValueChange={(value) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_item_original",
-                                    value
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select Original Item..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Original Items</SelectLabel>
-                                    {product.map((item) => (
-                                      <SelectItem
-                                        key={item.product_type}
-                                        value={item.product_type}
-                                      >
-                                        {item.product_type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </SelectShadcn>
-                            )}
-                          </div> */}
                           <div>
                             <Input
                               type="tel"
@@ -1202,43 +1126,25 @@ const SalesEdit = () => {
                     />
                   </div>
 
-                  {/* Auto GST Reference */}
+                  {/* Auto GST Reference - always shows 18% of gross */}
                   <div>
                     <Label className="text-xs text-gray-500">
                       Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
                     </Label>
                   </div>
 
-                  {/* Chargeable GST % */}
-                  <div>
-                    <Label>Chargeable GST %</Label>
-                    <Input
-                      type="tel"
-                      {...form.register("sales_gst_percentage")}
-                      className="mt-1 text-right"
-                      maxLength={5}
-                      placeholder="18"
-                      onChange={(e) => {
-                        form.setValue("sales_gst_percentage", e.target.value);
-                        setGstEdited(false);
-                        calculateAndSetTotals(itemEntries);
-                      }}
-                    />
-                  </div>
-
-                  {/* GST Amount */}
+                  {/* GST Amount - Editable but label shows autoGst18 */}
                   <div>
                     <div className="flex items-center justify-between">
                       <Label>
-                        Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
-                        {Number(displayGst).toFixed(2)})
+                        Tax (GST 18% = {Number(autoGst18).toFixed(2)})
                       </Label>
                     </div>
                     <Input
                       type="tel"
-                      value={Number(displayGst).toFixed(2)}
-                      disabled
-                      className="mt-1 text-right bg-gray-100"
+                      {...form.register("sales_tax")}
+                      onChange={handleTaxChange}
+                      className="mt-1 text-right"
                       maxLength={10}
                       placeholder="0"
                     />
@@ -1396,38 +1302,6 @@ const SalesEdit = () => {
                       onKeyDown={handleKeyDown}
                     />
                   </div>
-
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="sales_item_type">
-                      Item Type <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-
-                    <SelectShadcn
-                      id="sales_item_type"
-                      value={form.watch("sales_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("sales_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full bg-white">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </SelectShadcn>
-                  </div> */}
                   <div className="space-y-2 col-span-full">
                     <Label htmlFor="sales_address">Address</Label>
                     <Textarea
@@ -1455,10 +1329,6 @@ const SalesEdit = () => {
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-                          {/* <th className="text-left p-2 font-medium text-sm">
-                            Original Item{" "}
-                            <span className="text-xs text-red-400 ">*</span>
-                          </th> */}
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs)
                           </th>
@@ -1772,45 +1642,22 @@ const SalesEdit = () => {
                       </div>
 
                       {/* Auto GST Reference */}
+
+                      {/* Tax Amount - Editable, label shows autoGst18 */}
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="font-medium">Tax Amount</Label>
+                        <Input
+                          className="w-[150px] text-right shrink-0"
+                          type="tel"
+                          {...form.register("sales_tax")}
+                          onChange={handleTaxChange}
+                          placeholder="0"
+                        />
+                      </div>
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium text-xs text-gray-500">
                           Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
                         </Label>
-                      </div>
-
-                      {/* Chargeable GST % */}
-                      <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">Chargeable GST %</Label>
-                        <Input
-                          className="w-[150px] text-right shrink-0"
-                          type="tel"
-                          {...form.register("sales_gst_percentage")}
-                          maxLength={5}
-                          placeholder="18"
-                          onChange={(e) => {
-                            form.setValue(
-                              "sales_gst_percentage",
-                              e.target.value,
-                            );
-                            setGstEdited(false);
-                            calculateAndSetTotals(itemEntries);
-                          }}
-                        />
-                      </div>
-
-                      {/* GST Amount */}
-                      <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">
-                          Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
-                          {Number(displayGst).toFixed(2)})
-                        </Label>
-                        <Input
-                          className="w-[150px] text-right bg-gray-100 shrink-0"
-                          type="tel"
-                          value={Number(displayGst).toFixed(2)}
-                          disabled
-                          placeholder="0"
-                        />
                       </div>
 
                       {/* Net Total */}
