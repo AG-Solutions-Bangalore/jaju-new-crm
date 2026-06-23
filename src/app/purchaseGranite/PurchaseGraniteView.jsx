@@ -45,6 +45,7 @@ const PurchaseGraniteView = () => {
       return response.data;
     },
   });
+  console.log(purchaseData);
 
   const handleDownloadPDF = () => {
     const input = tableRef.current;
@@ -224,7 +225,9 @@ const PurchaseGraniteView = () => {
                             {item.purchase_sub_pcs}
                           </td>
                           <td className="border p-1 text-right">
-                            {parseFloat(item.purchase_sub_qnty_sqr) || item.purchase_sub_qnty_sqr || 0}
+                            {parseFloat(item.purchase_sub_qnty_sqr) ||
+                              item.purchase_sub_qnty_sqr ||
+                              0}
                           </td>
                           <td className="border p-1 text-right">
                             {item.purchase_sub_rate}
@@ -368,7 +371,9 @@ const PurchaseGraniteView = () => {
                           {item.purchase_sub_pcs}
                         </TableCell>
                         <TableCell className="text-center border-r">
-                          {parseFloat(item.purchase_sub_qnty_sqr) || item.purchase_sub_qnty_sqr || 0}
+                          {parseFloat(item.purchase_sub_qnty_sqr) ||
+                            item.purchase_sub_qnty_sqr ||
+                            0}
                         </TableCell>
                         <TableCell className="text-center border-r">
                           {item.purchase_sub_rate}
