@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
@@ -64,6 +64,8 @@ const PurchaseGraniteAdd = () => {
   const [loadingType, setLoadingType] = useState("Loading Only");
   const [gstEdited, setGstEdited] = useState(false);
   const [autoGst18, setAutoGst18] = useState(0);
+  const [roundOffEdited, setRoundOffEdited] = useState(false);
+  const isUpdatingFromRoundOff = useRef(false);
 
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -120,8 +122,26 @@ const PurchaseGraniteAdd = () => {
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
   };
-
+  // const handleToggleCustomItem = (index) => {
+  //   setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
+  // };
   const handleToggleCustomItem = (index) => {
+    const isCurrentlyCustom = isCustomItem[index];
+
+    if (isCurrentlyCustom) {
+      // We are switching from custom mode back to the select dropdown
+      const customName = customItems[index]?.trim();
+      if (customName) {
+        // Copy the custom name into the entry so it's not lost
+        const updatedEntries = [...itemEntries];
+        updatedEntries[index].purchase_sub_item = customName;
+        setItemEntries(updatedEntries);
+        // Optionally clear the custom input so it's not reused
+        setCustomItems((prev) => ({ ...prev, [index]: "" }));
+      }
+    }
+
+    // Toggle the flag
     setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
@@ -184,7 +204,6 @@ const PurchaseGraniteAdd = () => {
     const grandTotal =
       itemsTotal + tempo + loading + unloading + other + other1;
 
-    // Always compute auto GST at 18% for reference display
     setAutoGst18(grandTotal * 0.18);
 
     if (!skipGst && !gstEdited) {
@@ -192,22 +211,22 @@ const PurchaseGraniteAdd = () => {
       form.setValue("purchase_tax", gstAmount.toFixed(2));
     }
     const currentGst = parseFloat(form.getValues("purchase_tax") || 0);
-    const unroundedNetTotal = grandTotal + currentGst;
-    const roundedNetTotal = Math.ceil(unroundedNetTotal);
-    const roundOff = roundedNetTotal - unroundedNetTotal;
+    const netTotal = grandTotal + currentGst;
 
-    form.setValue("purchase_temp_amount", roundedNetTotal.toString());
-    form.setValue("purchase_amount_round", roundOff.toFixed(2));
-    form.setValue("purchase_gross", roundedNetTotal.toString());
-    form.setValue("purchase_balance", roundedNetTotal.toString());
+    // Net total (purchase_temp_amount) is always the sum, never modified by round-off
+    form.setValue("purchase_temp_amount", netTotal.toFixed(2));
+
+    // Compute final payable amount = netTotal - roundOff
+    const roundOff = parseFloat(form.getValues("purchase_amount_round") || 0);
+    const finalAmount = netTotal - roundOff;
+
+    form.setValue("purchase_gross", finalAmount.toString());
+    form.setValue("purchase_balance", finalAmount.toString());
     form.setValue("purchase_advance", "0");
   };
 
-  useEffect(() => {
-    if (!gstEdited) {
-      calculateAndSetTotals(itemEntries);
-    }
-  }, [gstEdited]);
+  // Remove the previous useEffect that auto‑adjusted roundOff when netTotal changed
+  // The effect that was here has been deleted.
 
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
@@ -227,22 +246,10 @@ const PurchaseGraniteAdd = () => {
     watchOther +
     watchOther1;
   const displayGst = parseFloat(form.watch("purchase_tax") || 0);
+  const displayNetTotal = displayGrandTotal + displayGst;
 
-  const watchTempAmount = parseFloat(form.watch("purchase_temp_amount") || 0);
-  const displayFinalTotal = watchTempAmount;
-
-  const watchTempAmountInput = form.watch("purchase_temp_amount");
-
-  useEffect(() => {
-    if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
-      const tempAmount = parseFloat(watchTempAmountInput || 0);
-      const sumOfAmount = displayGrandTotal + displayGst;
-      const roundOff = tempAmount - sumOfAmount;
-      if (form.getValues("purchase_amount_round") !== roundOff.toFixed(2)) {
-        form.setValue("purchase_amount_round", roundOff.toFixed(2));
-      }
-    }
-  }, [watchTempAmountInput, displayGrandTotal, displayGst]);
+  const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+  const amountToBePaid = displayNetTotal - roundOff;
 
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
@@ -276,6 +283,20 @@ const PurchaseGraniteAdd = () => {
     calculateAndSetTotals(itemEntries, true);
   };
 
+  // Round‑off handler: only updates the round‑off value and recomputes final amount
+  const handleRoundOffChange = (e) => {
+    const value = e.target.value;
+    const roundOffVal = parseFloat(value) || 0;
+    form.setValue("purchase_amount_round", roundOffVal);
+    setRoundOffEdited(true);
+
+    // Recompute final amounts without changing net total
+    const netTotal = parseFloat(form.getValues("purchase_temp_amount") || 0);
+    const finalAmount = netTotal - roundOffVal;
+    form.setValue("purchase_gross", finalAmount.toString());
+    form.setValue("purchase_balance", finalAmount.toString());
+  };
+
   const addItemEntry = () => {
     const updated = [
       ...itemEntries,
@@ -304,6 +325,15 @@ const PurchaseGraniteAdd = () => {
       }
       delete newCustom[updatedEntries.length];
       return newCustom;
+    });
+
+    setIsCustomItem((prev) => {
+      const newCustomFlag = { ...prev };
+      for (let i = index; i < updatedEntries.length; i++) {
+        newCustomFlag[i] = newCustomFlag[i + 1];
+      }
+      delete newCustomFlag[updatedEntries.length];
+      return newCustomFlag;
     });
 
     form.setValue("purchase_no_of_count", updatedEntries.length.toString());
@@ -350,7 +380,6 @@ const PurchaseGraniteAdd = () => {
         !entry.purchase_sub_item || (isCustomItem[index] && !customItems[index])
           ? "required"
           : "",
-
       qntySqr: !entry.purchase_sub_qnty_sqr
         ? "required"
         : isNaN(entry.purchase_sub_qnty_sqr)
@@ -365,7 +394,7 @@ const PurchaseGraniteAdd = () => {
 
     const hasFormErrors = Object.values(formErrors).some((err) => err);
     const hasItemErrors = itemErrors.some(
-      (err) => err.item || err.qnty || err.qntySqr || err.rate,
+      (err) => err.item || err.qntySqr || err.rate,
     );
 
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
@@ -530,7 +559,6 @@ const PurchaseGraniteAdd = () => {
       return;
     }
 
-    // If validation passes, proceed with API call
     await onSubmit(formData);
   };
 
@@ -560,11 +588,9 @@ const PurchaseGraniteAdd = () => {
       const grandTotal =
         itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("purchase_tax") || 0);
-      const tempAmount = parseFloat(
-        form.watch("purchase_temp_amount") || grandTotal + gstAmount,
-      );
+      const netTotal = grandTotal + gstAmount;
       const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
-      const finalTotal = tempAmount;
+      const finalAmount = netTotal - roundOff;
 
       const payload = {
         ...restData,
@@ -574,13 +600,13 @@ const PurchaseGraniteAdd = () => {
         purchase_other: other.toString(),
         purchase_other1: other1.toString(),
         purchase_tax: gstAmount.toString(),
-        purchase_temp_amount: tempAmount.toString(),
-        purchase_gross: finalTotal.toString(),
-        purchase_balance: finalTotal.toString(),
+        purchase_temp_amount: netTotal.toString(), // unchanged net total
+        purchase_gross: finalAmount.toString(), // reduced by round-off
+        purchase_balance: finalAmount.toString(),
         purchase_amount_round: roundOff.toString(),
         purchase_advance: "0",
         purchase_amount_received: restData.purchase_amount_received || "0",
-        purchase_amount: finalTotal.toString(),
+        purchase_amount: restData.purchase_amount_received || "0", // final payable amount
         purchase_year: currentYear,
         purchase_no_of_count: formattedItemEntries.length,
         purchase_sub_data: formattedItemEntries,
@@ -622,7 +648,7 @@ const PurchaseGraniteAdd = () => {
                 Amount to be Paid
               </p>
               <p className="text-sm font-bold text-green-900">
-                {displayFinalTotal || 0}
+                {Number(amountToBePaid).toFixed(0) || 0}
               </p>
             </div>
           </div>
@@ -671,36 +697,6 @@ const PurchaseGraniteAdd = () => {
                       maxLength={10}
                     />
                   </div>
-                  {/* <div>
-                    <Label htmlFor="purchase_item_type">
-                      Item Type <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-                    <SelectShadcn
-                      id="purchase_item_type"
-                      value={form.watch("purchase_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("purchase_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </SelectShadcn>
-                  </div> */}
                 </div>
               </div>
 
@@ -872,7 +868,6 @@ const PurchaseGraniteAdd = () => {
                       value={loadingType}
                       onValueChange={(val) => {
                         setLoadingType(val);
-                        // Reset the other type if we switch
                         if (val === "Loading Only") {
                           form.setValue("purchase_unloading", "");
                         } else {
@@ -994,7 +989,7 @@ const PurchaseGraniteAdd = () => {
                   />
                 </div>
 
-                {/* GST Amount - label now shows autoGst18, input editable */}
+                {/* GST Amount */}
                 <div>
                   <div className="flex items-center justify-between">
                     <Label>Tax Amount</Label>
@@ -1009,7 +1004,7 @@ const PurchaseGraniteAdd = () => {
                   />
                 </div>
 
-                {/* Net Total */}
+                {/* Net Total (unchanged by round-off) */}
                 <div>
                   <Label>Net Total</Label>
                   <Input
@@ -1021,30 +1016,34 @@ const PurchaseGraniteAdd = () => {
                     placeholder="0"
                   />
                 </div>
-                {/* Round Off */}
+
+                {/* Round Off - editable, subtracts from net total */}
                 <div>
                   <Label>Round Off</Label>
                   <Input
                     type="text"
-                    {...form.register("purchase_amount_round")}
-                    disabled
+                    {...form.register("purchase_amount_round", {
+                      onChange: handleRoundOffChange,
+                    })}
                     className="mt-1 text-right font-medium bg-gray-100"
                     maxLength={10}
                     placeholder="0"
                   />
                 </div>
-                {/* Amount to be Paid */}
+
+                {/* Amount to be Paid (Net Total - Round Off) */}
                 <div>
                   <Label className="font-semibold text-blue-900">
                     Amount to be Paid
                   </Label>
                   <Input
                     type="text"
-                    value={Number(displayFinalTotal).toFixed(0)}
+                    value={Number(amountToBePaid).toFixed(0)}
                     disabled
                     className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
                   />
                 </div>
+
                 {/* Final Amount Paid */}
                 <div>
                   <Label>Final Amount Paid</Label>
@@ -1142,36 +1141,6 @@ const PurchaseGraniteAdd = () => {
                       maxLength={10}
                     />
                   </div>
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="purchase_item_type">
-                      Item Type <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-                    <SelectShadcn
-                      id="purchase_item_type"
-                      value={form.watch("purchase_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("purchase_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full bg-white">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </SelectShadcn>
-                  </div> */}
                 </div>
 
                 {/* Items Table */}
@@ -1189,8 +1158,7 @@ const PurchaseGraniteAdd = () => {
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (pcs/box){" "}
-                            {/* <span className="text-xs text-red-400 ">*</span> */}
+                            Qnty (pcs/box)
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqft){" "}
@@ -1499,12 +1467,11 @@ const PurchaseGraniteAdd = () => {
                         />
                       </div>
 
-                      {/* Tax Amount - label now shows autoGst18, input editable */}
-                      <div className="flex items-center justify-between gap-2">
+                      {/* Tax Amount */}
+                      <div className="flex items-center justify-between">
                         <Label className="font-medium">Tax Amount</Label>
-
                         <Input
-                          className="w-[150px] text-right shrink-0"
+                          className="w-[150px] text-right"
                           type="tel"
                           {...form.register("purchase_tax")}
                           onChange={handleTaxChange}
@@ -1512,13 +1479,13 @@ const PurchaseGraniteAdd = () => {
                           maxLength={10}
                         />
                       </div>
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 -mt-5">
                         <Label className="font-medium text-xs text-gray-500">
-                          Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                          GST @ 18% = {Number(autoGst18).toFixed(2)}
                         </Label>
                       </div>
 
-                      {/* Net Total */}
+                      {/* Net Total (unchanged) */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Net Total</Label>
                         <Input
@@ -1531,19 +1498,20 @@ const PurchaseGraniteAdd = () => {
                         />
                       </div>
 
-                      {/* Round Off */}
+                      {/* Round Off - editable, subtracts */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Round Off</Label>
                         <Input
                           className="w-[150px] text-right font-medium bg-gray-100 shrink-0"
                           type="text"
-                          {...form.register("purchase_amount_round")}
-                          disabled
+                          {...form.register("purchase_amount_round", {
+                            onChange: handleRoundOffChange,
+                          })}
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Amount to be Paid */}
+                      {/* Amount to be Paid (Net Total - Round Off) */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-semibold text-blue-900">
                           Amount to be Paid
@@ -1551,7 +1519,7 @@ const PurchaseGraniteAdd = () => {
                         <Input
                           className="w-[150px] bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md shrink-0"
                           type="text"
-                          value={Number(displayFinalTotal).toFixed(0)}
+                          value={Number(amountToBePaid).toFixed(0)}
                           disabled
                         />
                       </div>

@@ -4,7 +4,7 @@ import axios from "axios";
 import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
 import NotInListIcon from "@/components/common/NotInListIcon";
 import moment from "moment";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -64,7 +64,10 @@ const SalesAdd = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [gstEdited, setGstEdited] = useState(false);
   const [autoGst18, setAutoGst18] = useState(0);
+  const [roundOffEdited, setRoundOffEdited] = useState(false);
+  const isUpdatingFromRoundOff = useRef(false);
   const handleKeyDown = useNumericInput();
+
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -75,6 +78,7 @@ const SalesAdd = () => {
       return response.data.year?.current_year;
     },
   });
+
   const { data: salesListForSerial } = useQuery({
     queryKey: ["salesListForSerial"],
     queryFn: async () => {
@@ -85,6 +89,7 @@ const SalesAdd = () => {
       return response.data?.sales || [];
     },
   });
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -111,6 +116,7 @@ const SalesAdd = () => {
       sales_amount_received: "",
     },
   });
+
   useEffect(() => {
     if (salesListForSerial && salesListForSerial.length > 0) {
       const nums = salesListForSerial
@@ -120,6 +126,7 @@ const SalesAdd = () => {
       form.setValue("sales_no", String(nextSerial));
     }
   }, [salesListForSerial]);
+
   const [itemEntries, setItemEntries] = useState([
     {
       sales_sub_type: "",
@@ -131,17 +138,36 @@ const SalesAdd = () => {
       sales_sub_item_original: "",
     },
   ]);
-  const [loadingType, setLoadingType] = useState("Loading");
+  const [loadingType, setLoadingType] = useState("Loading Only");
   const [customItems, setCustomItems] = useState({});
   const [isCustomItem, setIsCustomItem] = useState({});
+
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
   };
 
+  // const handleToggleCustomItem = (index) => {
+  //   setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
+  // };
   const handleToggleCustomItem = (index) => {
+    const isCurrentlyCustom = isCustomItem[index];
+
+    if (isCurrentlyCustom) {
+      // We are switching from custom mode back to the select dropdown
+      const customName = customItems[index]?.trim();
+      if (customName) {
+        // Copy the custom name into the entry so it's not lost
+        const updatedEntries = [...itemEntries];
+        updatedEntries[index].sales_sub_item = customName;
+        setItemEntries(updatedEntries);
+        // Optionally clear the custom input so it's not reused
+        setCustomItems((prev) => ({ ...prev, [index]: "" }));
+      }
+    }
+
+    // Toggle the flag
     setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
-
   const { data: productTypeGroup = [] } = useQuery({
     queryKey: ["productTypeGroup"],
     queryFn: async () => {
@@ -187,6 +213,7 @@ const SalesAdd = () => {
     [product],
   );
 
+  // -------- Calculate totals (unchanged net total, round‑off subtracts) ----------
   const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
@@ -209,23 +236,24 @@ const SalesAdd = () => {
       form.setValue("sales_tax", autoGst.toFixed(2));
     }
     const currentGst = parseFloat(form.getValues("sales_tax") || 0);
-    const unroundedNetTotal = grandTotal + currentGst;
-    const roundedNetTotal = Math.ceil(unroundedNetTotal);
-    const roundOff = roundedNetTotal - unroundedNetTotal;
+    const netTotal = grandTotal + currentGst;
 
-    form.setValue("sales_temp_amount", roundedNetTotal.toString());
-    form.setValue("sales_amount_round", roundOff.toFixed(2));
-    form.setValue("sales_gross", roundedNetTotal.toString());
-    form.setValue("sales_balance", roundedNetTotal.toString());
+    // Net total (sales_temp_amount) is always the sum, never modified by round‑off
+    form.setValue("sales_temp_amount", netTotal.toFixed(2));
+
+    // Compute final payable amount = netTotal - roundOff
+    const roundOff = parseFloat(form.getValues("sales_amount_round") || 0);
+    const finalAmount = netTotal - roundOff;
+
+    form.setValue("sales_gross", finalAmount.toString());
+    form.setValue("sales_balance", finalAmount.toString());
     form.setValue("sales_advance", "0");
   };
 
-  useEffect(() => {
-    if (!gstEdited) {
-      calculateAndSetTotals(itemEntries);
-    }
-  }, [gstEdited]);
+  // -------- Remove the previous auto‑roundoff useEffect (now deleted) ----------
+  // (The old useEffect that updated sales_amount_round when sales_temp_amount changed is gone.)
 
+  // -------- Watched values for display ----------
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
     0,
@@ -244,23 +272,12 @@ const SalesAdd = () => {
     watchOther +
     watchOther1;
   const displayGst = parseFloat(form.watch("sales_tax") || 0);
+  const displayNetTotal = displayGrandTotal + displayGst;
 
-  const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
-  const displayFinalTotal = watchTempAmount;
+  const roundOff = parseFloat(form.watch("sales_amount_round") || 0);
+  const amountToBeCollected = displayNetTotal - roundOff;
 
-  const watchTempAmountInput = form.watch("sales_temp_amount");
-
-  useEffect(() => {
-    if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
-      const tempAmount = parseFloat(watchTempAmountInput || 0);
-      const sumOfAmount = displayGrandTotal + displayGst;
-      const roundOff = tempAmount - sumOfAmount;
-      if (form.getValues("sales_amount_round") !== roundOff.toFixed(2)) {
-        form.setValue("sales_amount_round", roundOff.toFixed(2));
-      }
-    }
-  }, [watchTempAmountInput, displayGrandTotal, displayGst]);
-
+  // -------- Handlers ----------
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
     updatedEntries[index][field] = value;
@@ -295,6 +312,20 @@ const SalesAdd = () => {
     calculateAndSetTotals(itemEntries, true);
   };
 
+  // Round‑off handler: only updates the round‑off value and recomputes final amount
+  const handleRoundOffChange = (e) => {
+    const value = e.target.value;
+    const roundOffVal = parseFloat(value) || 0;
+    form.setValue("sales_amount_round", roundOffVal);
+    setRoundOffEdited(true);
+
+    // Recompute final amounts without changing net total
+    const netTotal = parseFloat(form.getValues("sales_temp_amount") || 0);
+    const finalAmount = netTotal - roundOffVal;
+    form.setValue("sales_gross", finalAmount.toString());
+    form.setValue("sales_balance", finalAmount.toString());
+  };
+
   const addItemEntry = () => {
     const newEntry = {
       sales_sub_type: "",
@@ -327,6 +358,7 @@ const SalesAdd = () => {
     calculateAndSetTotals(updatedEntries);
   };
 
+  // -------- Mutation ----------
   const createSalesMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -355,6 +387,7 @@ const SalesAdd = () => {
     },
   });
 
+  // -------- Validation ----------
   const validateForm = (data) => {
     const formErrors = {
       date: !data.sales_date ? "Date is required" : "",
@@ -372,7 +405,6 @@ const SalesAdd = () => {
         isNaN(entry.sales_sub_qnty)
           ? "Quantity must be a number"
           : "",
-
       rate: !entry.sales_sub_rate
         ? "required"
         : isNaN(entry.sales_sub_rate)
@@ -394,6 +426,7 @@ const SalesAdd = () => {
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
   };
 
+  // -------- Submit ----------
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -495,7 +528,6 @@ const SalesAdd = () => {
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Item
                         </th>
-
                         <th className="px-1.5 py-1.5 text-left text-xs font-medium text-red-800 border-b border-red-200">
                           Qty
                         </th>
@@ -582,11 +614,9 @@ const SalesAdd = () => {
       const grandTotal =
         itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("sales_tax") || 0);
-      const tempAmount = parseFloat(
-        form.watch("sales_temp_amount") || grandTotal + gstAmount,
-      );
+      const netTotal = grandTotal + gstAmount;
       const roundOff = parseFloat(form.watch("sales_amount_round") || 0);
-      const finalTotal = tempAmount;
+      const finalAmount = netTotal - roundOff;
 
       const payload = {
         ...restData,
@@ -596,12 +626,12 @@ const SalesAdd = () => {
         sales_other: other.toString(),
         sales_other1: other1.toString(),
         sales_tax: gstAmount.toString(),
-        sales_temp_amount: tempAmount.toString(),
-        sales_gross: finalTotal.toString(),
-        sales_balance: finalTotal.toString(),
+        sales_temp_amount: netTotal.toString(), // unchanged net total
+        sales_gross: restData.sales_amount_received || "0", // reduced by round-off
+        sales_balance: finalAmount.toString(),
         sales_amount_round: roundOff.toString(),
         sales_advance: "0",
-        sales_amount_received: restData.sales_amount_received,
+        sales_amount_received: restData.sales_amount_received || "0",
         sales_year: currentYear,
         sales_no_of_count: formattedItemEntries.length,
         sales_sub_data: formattedItemEntries,
@@ -626,8 +656,8 @@ const SalesAdd = () => {
   return (
     <Page>
       <div className="w-full p-0 md:p-0">
+        {/* ====== MOBILE VIEW ====== */}
         <div className="sm:hidden">
-          {/* Mobile View */}
           <div className="sticky top-0 z-10 border border-gray-200 rounded-lg bg-blue-50 shadow-sm p-2 mb-2">
             <div className="flex justify-between items-center mb-2">
               <button
@@ -656,7 +686,7 @@ const SalesAdd = () => {
 
           <div className="mb-14">
             <form onSubmit={handleFormSubmit} className="space-y-4">
-              Customer Info
+              {/* Customer Info */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <h3 className="font-medium mb-3">Customer Information</h3>
                 <div className="space-y-3">
@@ -732,6 +762,7 @@ const SalesAdd = () => {
                   </div>
                 </div>
               </div>
+
               {/* Items */}
               <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-3">
@@ -873,11 +904,11 @@ const SalesAdd = () => {
                   Add Item
                 </Button>
               </div>
+
               {/* Charges and Totals */}
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-4">
                 <h3 className="font-medium">Charges & Totals</h3>
                 <div className="space-y-3">
-                  {/* Tempo Charges */}
                   <div>
                     <Label htmlFor="sales_tempo">Tempo Charges</Label>
                     <Input
@@ -893,7 +924,6 @@ const SalesAdd = () => {
                     />
                   </div>
 
-                  {/* Loading/Unloading */}
                   <div>
                     <Label>Labour Charges</Label>
                     <div className="grid grid-cols-2 gap-2 mt-1">
@@ -952,7 +982,6 @@ const SalesAdd = () => {
                   </div>
                 </div>
 
-                {/* Other 1 */}
                 <div className="space-y-1">
                   <Label>Other Charges 1</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -976,7 +1005,6 @@ const SalesAdd = () => {
                   </div>
                 </div>
 
-                {/* Other 2 */}
                 <div className="space-y-1">
                   <Label>Other Charges 2</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -1000,7 +1028,6 @@ const SalesAdd = () => {
                   </div>
                 </div>
 
-                {/* Gross Total */}
                 <div>
                   <Label>Gross Total</Label>
                   <Input
@@ -1011,14 +1038,12 @@ const SalesAdd = () => {
                   />
                 </div>
 
-                {/* Auto GST Reference */}
                 <div>
                   <Label className="text-xs text-gray-500">
                     Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
                   </Label>
                 </div>
 
-                {/* GST Amount - Editable, label shows autoGst18 */}
                 <div>
                   <div className="flex items-center justify-between">
                     <Label>
@@ -1035,7 +1060,6 @@ const SalesAdd = () => {
                   />
                 </div>
 
-                {/* Net Total */}
                 <div>
                   <Label>Net Total</Label>
                   <Input
@@ -1048,33 +1072,32 @@ const SalesAdd = () => {
                   />
                 </div>
 
-                {/* Round Off */}
+                {/* Round Off - now editable */}
                 <div>
                   <Label>Round Off</Label>
                   <Input
                     type="text"
-                    {...form.register("sales_amount_round")}
-                    disabled
+                    {...form.register("sales_amount_round", {
+                      onChange: handleRoundOffChange,
+                    })}
                     className="mt-1 text-right font-medium bg-gray-100"
                     maxLength={10}
                     placeholder="0"
                   />
                 </div>
 
-                {/* Amount to be Collected */}
                 <div>
                   <Label className="font-semibold text-blue-900">
                     Amount to be Collected
                   </Label>
                   <Input
                     type="text"
-                    value={Number(displayFinalTotal).toFixed(0)}
+                    value={Number(amountToBeCollected).toFixed(0)}
                     disabled
                     className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
                   />
                 </div>
 
-                {/* Final Amount Received */}
                 <div>
                   <Label>Final Amount Received</Label>
                   <Input
@@ -1087,6 +1110,7 @@ const SalesAdd = () => {
                   />
                 </div>
               </div>
+
               {/* Action Buttons */}
               <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-2 flex justify-between">
                 <Button
@@ -1109,8 +1133,8 @@ const SalesAdd = () => {
           </div>
         </div>
 
+        {/* ====== DESKTOP VIEW ====== */}
         <div className="hidden sm:block">
-          {/* Desktop View */}
           <Card className="shadow-sm">
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -1150,7 +1174,6 @@ const SalesAdd = () => {
                     <Label htmlFor="sales_date">
                       Date <span className="text-xs text-red-400 ">*</span>
                     </Label>
-
                     <Input
                       id="sales_date"
                       type="date"
@@ -1194,7 +1217,6 @@ const SalesAdd = () => {
                       }}
                     />
                   </div>
-
                   <div className="space-y-2 col-span-full">
                     <Label htmlFor="sales_address">Address</Label>
                     <Textarea
@@ -1228,7 +1250,6 @@ const SalesAdd = () => {
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
-
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (pcs/box)
                           </th>
@@ -1309,7 +1330,6 @@ const SalesAdd = () => {
                                 )}
                               </div>
                             </td>
-
                             <td className="p-2">
                               <Input
                                 type="tel"
@@ -1407,7 +1427,6 @@ const SalesAdd = () => {
                   <div></div>
                   <div className="border rounded-lg p-3 bg-white">
                     <div className="grid grid-cols-1 gap-2">
-                      {/* Labour Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
                           <Label className="font-medium shrink-0">
@@ -1467,7 +1486,6 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Tempo Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <Label htmlFor="sales_tempo">Tempo Charges</Label>
                         <Input
@@ -1484,7 +1502,6 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Other 1 */}
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
@@ -1506,7 +1523,6 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Other 2 */}
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
@@ -1528,7 +1544,6 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Gross Total */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Gross Total</Label>
                         <Input
@@ -1539,9 +1554,6 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Auto GST Reference */}
-
-                      {/* Tax (GST) - Editable, label shows autoGst18 */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Tax Amount</Label>
                         <Input
@@ -1552,13 +1564,12 @@ const SalesAdd = () => {
                           placeholder="0"
                         />
                       </div>
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 -mt-5">
                         <Label className="font-medium text-xs text-gray-500">
-                          Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                          GST @ 18% = {Number(autoGst18).toFixed(2)}
                         </Label>
                       </div>
 
-                      {/* Net Total */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Net Total</Label>
                         <Input
@@ -1571,19 +1582,19 @@ const SalesAdd = () => {
                         />
                       </div>
 
-                      {/* Round Off */}
+                      {/* Round Off - editable */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Round Off</Label>
                         <Input
                           className="w-[150px] text-right font-medium bg-gray-100 shrink-0"
                           type="text"
-                          {...form.register("sales_amount_round")}
-                          disabled
+                          {...form.register("sales_amount_round", {
+                            onChange: handleRoundOffChange,
+                          })}
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Amount to be Collected */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-semibold text-blue-900">
                           Amount to be Collected
@@ -1591,12 +1602,11 @@ const SalesAdd = () => {
                         <Input
                           className="w-[150px] bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md shrink-0"
                           type="text"
-                          value={Number(displayFinalTotal).toFixed(0)}
+                          value={Number(amountToBeCollected).toFixed(0)}
                           disabled
                         />
                       </div>
 
-                      {/* Final Amount Received */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">
                           Final Amount Received

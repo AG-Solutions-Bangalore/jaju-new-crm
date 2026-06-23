@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { z } from "zod";
@@ -67,7 +67,9 @@ const PurchaseGraniteEdit = () => {
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [loadingType, setLoadingType] = useState("Loading Only");
   const [gstEdited, setGstEdited] = useState(false);
-  const [autoGst18, setAutoGst18] = useState(0); // NEW: auto GST reference
+  const [autoGst18, setAutoGst18] = useState(0);
+  const [roundOffEdited, setRoundOffEdited] = useState(false);
+  const isUpdatingFromRoundOff = useRef(false);
 
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
@@ -185,6 +187,7 @@ const PurchaseGraniteEdit = () => {
     [product],
   );
 
+  // -------- Load existing data ----------
   useEffect(() => {
     if (purchaseByid) {
       const { purchase: pId, purchaseSub: pSub } = purchaseByid;
@@ -267,6 +270,7 @@ const PurchaseGraniteEdit = () => {
     }
   }, [purchaseByid]);
 
+  // -------- Calculate totals ----------
   const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
       (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
@@ -290,23 +294,25 @@ const PurchaseGraniteEdit = () => {
       form.setValue("purchase_tax", gstAmount.toFixed(2));
     }
     const currentGst = parseFloat(form.getValues("purchase_tax") || 0);
-    const unroundedNetTotal = grandTotal + currentGst;
-    const roundedNetTotal = Math.ceil(unroundedNetTotal);
-    const roundOff = roundedNetTotal - unroundedNetTotal;
+    const netTotal = grandTotal + currentGst;
 
-    form.setValue("purchase_temp_amount", roundedNetTotal.toString());
-    form.setValue("purchase_amount_round", roundOff.toFixed(2));
-    form.setValue("purchase_gross", roundedNetTotal.toString());
-    form.setValue("purchase_balance", roundedNetTotal.toString());
+    // Net total (purchase_temp_amount) is always the sum, never modified by round-off
+    form.setValue("purchase_temp_amount", netTotal.toFixed(2));
+
+    // Compute final payable amount = netTotal - roundOff
+    const roundOff = parseFloat(form.getValues("purchase_amount_round") || 0);
+    const finalAmount = netTotal - roundOff;
+
+    form.setValue("purchase_gross", finalAmount.toString());
+    form.setValue("purchase_balance", finalAmount.toString());
     form.setValue("purchase_advance", "0");
   };
 
-  useEffect(() => {
-    if (!gstEdited) {
-      calculateAndSetTotals(itemEntries);
-    }
-  }, [gstEdited]);
+  // -------- Remove the previous auto-roundoff useEffect --------
+  // (the one that used to update purchase_amount_round when netTotal changed)
+  // That effect is now deleted.
 
+  // -------- Watched values for display ----------
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
     0,
@@ -325,23 +331,12 @@ const PurchaseGraniteEdit = () => {
     watchOther +
     watchOther1;
   const displayGst = parseFloat(form.watch("purchase_tax") || 0);
+  const displayNetTotal = displayGrandTotal + displayGst;
 
-  const watchTempAmount = parseFloat(form.watch("purchase_temp_amount") || 0);
-  const displayFinalTotal = watchTempAmount;
+  const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
+  const amountToBePaid = displayNetTotal - roundOff;
 
-  const watchTempAmountInput = form.watch("purchase_temp_amount");
-
-  useEffect(() => {
-    if (watchTempAmountInput !== undefined && watchTempAmountInput !== "") {
-      const tempAmount = parseFloat(watchTempAmountInput || 0);
-      const sumOfAmount = displayGrandTotal + displayGst;
-      const roundOff = tempAmount - sumOfAmount;
-      if (form.getValues("purchase_amount_round") !== roundOff.toFixed(2)) {
-        form.setValue("purchase_amount_round", roundOff.toFixed(2));
-      }
-    }
-  }, [watchTempAmountInput, displayGrandTotal, displayGst]);
-
+  // -------- Handlers ----------
   const handleItemChange = (index, field, value) => {
     const updatedEntries = [...itemEntries];
     updatedEntries[index][field] = value;
@@ -365,6 +360,27 @@ const PurchaseGraniteEdit = () => {
   const handleChargeChange = (field, value) => {
     form.setValue(field, value);
     calculateAndSetTotals(itemEntries);
+  };
+
+  const handleTaxChange = (e) => {
+    const value = e.target.value;
+    form.setValue("purchase_tax", value);
+    setGstEdited(true);
+    calculateAndSetTotals(itemEntries, true);
+  };
+
+  // Round‑off handler: only updates the round‑off value and recomputes final amount
+  const handleRoundOffChange = (e) => {
+    const value = e.target.value;
+    const roundOffVal = parseFloat(value) || 0;
+    form.setValue("purchase_amount_round", roundOffVal);
+    setRoundOffEdited(true);
+
+    // Recompute final amounts without changing net total
+    const netTotal = parseFloat(form.getValues("purchase_temp_amount") || 0);
+    const finalAmount = netTotal - roundOffVal;
+    form.setValue("purchase_gross", finalAmount.toString());
+    form.setValue("purchase_balance", finalAmount.toString());
   };
 
   const removeItemEntry = (index) => {
@@ -414,6 +430,7 @@ const PurchaseGraniteEdit = () => {
     calculateAndSetTotals(updated);
   };
 
+  // -------- Update mutation ----------
   const updatePurchaseMutation = useMutation({
     mutationFn: async (payload) => {
       const token = Cookies.get("token");
@@ -442,6 +459,7 @@ const PurchaseGraniteEdit = () => {
     },
   });
 
+  // -------- Validation ----------
   const validateForm = (data) => {
     const formErrors = {
       date: !data.purchase_date ? "Date is required" : "",
@@ -476,6 +494,7 @@ const PurchaseGraniteEdit = () => {
     return { formErrors, itemErrors, hasFormErrors, hasItemErrors };
   };
 
+  // -------- Submit ----------
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -664,11 +683,9 @@ const PurchaseGraniteEdit = () => {
       const grandTotal =
         itemsTotal + tempo + loading + unloading + other + other1;
       const gstAmount = parseFloat(form.watch("purchase_tax") || 0);
-      const tempAmount = parseFloat(
-        form.watch("purchase_temp_amount") || grandTotal + gstAmount,
-      );
+      const netTotal = grandTotal + gstAmount;
       const roundOff = parseFloat(form.watch("purchase_amount_round") || 0);
-      const finalTotal = tempAmount;
+      const finalAmount = netTotal - roundOff;
 
       const payload = {
         ...restData,
@@ -678,13 +695,13 @@ const PurchaseGraniteEdit = () => {
         purchase_other: other.toString(),
         purchase_other1: other1.toString(),
         purchase_tax: gstAmount.toString(),
-        purchase_temp_amount: tempAmount.toString(),
-        purchase_gross: finalTotal.toString(),
-        purchase_balance: finalTotal.toString(),
+        purchase_temp_amount: netTotal.toString(), // unchanged net total
+        purchase_gross: finalAmount.toString(), // reduced by round-off
+        purchase_balance: finalAmount.toString(),
         purchase_amount_round: roundOff.toString(),
         purchase_advance: "0",
         purchase_amount_received: restData.purchase_amount_received || "0",
-        purchase_amount: finalTotal.toString(),
+        purchase_amount: restData.purchase_amount_received || "0", // final payable amount
         purchase_year: currentYear,
         purchase_no_of_count: formattedItemEntries.length,
         purchase_sub_data: formattedItemEntries,
@@ -706,6 +723,7 @@ const PurchaseGraniteEdit = () => {
     navigate("/purchase");
   };
 
+  // -------- Render ----------
   if (isFetching) {
     return (
       <Page>
@@ -738,8 +756,8 @@ const PurchaseGraniteEdit = () => {
   return (
     <Page>
       <div className="w-full p-0 md:p-0">
+        {/* ====== MOBILE VIEW ====== */}
         <div className="sm:hidden">
-          {/* Mobile View */}
           <div className="sticky top-0 z-10 border border-gray-200 rounded-lg bg-blue-50 shadow-sm p-2 mb-2">
             <div className="flex justify-between items-center mb-2">
               <button
@@ -747,7 +765,7 @@ const PurchaseGraniteEdit = () => {
                 className="flex items-center text-blue-800"
               >
                 <ArrowLeft className="h-5 w-5 mr-1" />
-                <h1 className="text-base font-bold">Edit Purchase </h1>
+                <h1 className="text-base font-bold">Edit Purchase</h1>
               </button>
             </div>
             <div className="bg-green-50 border border-green-100 rounded-md p-2">
@@ -755,7 +773,7 @@ const PurchaseGraniteEdit = () => {
                 Amount to be Paid
               </p>
               <p className="text-sm font-bold text-green-900">
-                {displayFinalTotal || 0}
+                {Number(amountToBePaid).toFixed(0) || 0}
               </p>
             </div>
           </div>
@@ -800,36 +818,6 @@ const PurchaseGraniteEdit = () => {
                       maxLength={10}
                     />
                   </div>
-                  {/* <div>
-                    <Label htmlFor="purchase_item_type">
-                      Item Type <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-                    <SelectShadcn
-                      id="purchase_item_type"
-                      value={form.watch("purchase_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("purchase_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </SelectShadcn>
-                  </div> */}
                 </div>
               </div>
 
@@ -997,7 +985,6 @@ const PurchaseGraniteEdit = () => {
 
               {/* Other Amount & Total */}
               <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-3">
-                {/* Labour Charges */}
                 <div>
                   <Label>Labour Charges</Label>
                   <div className="grid grid-cols-2 gap-2 mt-1">
@@ -1055,7 +1042,6 @@ const PurchaseGraniteEdit = () => {
                   </div>
                 </div>
 
-                {/* Tempo Charges */}
                 <div>
                   <Label htmlFor="purchase_tempo">Tempo Charges</Label>
                   <Input
@@ -1071,7 +1057,6 @@ const PurchaseGraniteEdit = () => {
                   />
                 </div>
 
-                {/* Other 1 */}
                 <div className="space-y-1">
                   <Label>Other Charges 1</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -1095,7 +1080,6 @@ const PurchaseGraniteEdit = () => {
                   </div>
                 </div>
 
-                {/* Other 2 */}
                 <div className="space-y-1">
                   <Label>Other Charges 2</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -1119,7 +1103,6 @@ const PurchaseGraniteEdit = () => {
                   </div>
                 </div>
 
-                {/* Gross Total */}
                 <div>
                   <Label>Gross Total</Label>
                   <Input
@@ -1130,7 +1113,6 @@ const PurchaseGraniteEdit = () => {
                   />
                 </div>
 
-                {/* GST Amount - EDITED: label shows autoGst18, input editable */}
                 <div>
                   <div className="flex items-center justify-between">
                     <Label>
@@ -1140,11 +1122,7 @@ const PurchaseGraniteEdit = () => {
                   <Input
                     type="tel"
                     {...form.register("purchase_tax")}
-                    onChange={(e) => {
-                      form.setValue("purchase_tax", e.target.value);
-                      setGstEdited(true);
-                      calculateAndSetTotals(itemEntries, true);
-                    }}
+                    onChange={handleTaxChange}
                     onKeyDown={handleKeyDown}
                     className="mt-1 text-right font-medium"
                     maxLength={10}
@@ -1152,7 +1130,6 @@ const PurchaseGraniteEdit = () => {
                   />
                 </div>
 
-                {/* Net Total */}
                 <div>
                   <Label>Net Total</Label>
                   <Input
@@ -1165,33 +1142,32 @@ const PurchaseGraniteEdit = () => {
                   />
                 </div>
 
-                {/* Round Off */}
+                {/* Round Off - editable, subtracts */}
                 <div>
                   <Label>Round Off</Label>
                   <Input
                     type="text"
-                    {...form.register("purchase_amount_round")}
-                    disabled
+                    {...form.register("purchase_amount_round", {
+                      onChange: handleRoundOffChange,
+                    })}
                     className="mt-1 text-right font-medium bg-gray-100"
                     maxLength={10}
                     placeholder="0"
                   />
                 </div>
 
-                {/* Amount to be Paid */}
                 <div>
                   <Label className="font-semibold text-blue-900">
                     Amount to be Paid
                   </Label>
                   <Input
                     type="text"
-                    value={Number(displayFinalTotal).toFixed(0)}
+                    value={Number(amountToBePaid).toFixed(0)}
                     disabled
                     className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
                   />
                 </div>
 
-                {/* Final Amount Paid */}
                 <div>
                   <Label>Final Amount Paid</Label>
                   <Input
@@ -1205,7 +1181,6 @@ const PurchaseGraniteEdit = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-2 flex justify-between">
                 <Button
                   type="button"
@@ -1227,8 +1202,8 @@ const PurchaseGraniteEdit = () => {
           </div>
         </div>
 
+        {/* ====== DESKTOP VIEW ====== */}
         <div className="hidden sm:block">
-          {/* Desktop View */}
           <Card className="shadow-sm">
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -1241,7 +1216,7 @@ const PurchaseGraniteEdit = () => {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle>Edit Purchase </CardTitle>
+                  <CardTitle>Edit Purchase</CardTitle>
                 </div>
               </div>
             </CardHeader>
@@ -1288,36 +1263,6 @@ const PurchaseGraniteEdit = () => {
                       maxLength={10}
                     />
                   </div>
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="purchase_item_type">
-                      Item Type <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-                    <SelectShadcn
-                      id="purchase_item_type"
-                      value={form.watch("purchase_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("purchase_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full bg-white">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </SelectShadcn>
-                  </div> */}
                 </div>
 
                 {/* Items Table */}
@@ -1335,7 +1280,7 @@ const PurchaseGraniteEdit = () => {
                             <span className="text-xs text-red-400 ">*</span>
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
-                            Qnty (pcs/box){" "}
+                            Qnty (pcs/box)
                           </th>
                           <th className="text-left p-2 font-medium text-sm w-[90px] min-w-[80px]">
                             Qnty (sqft){" "}
@@ -1472,17 +1417,9 @@ const PurchaseGraniteEdit = () => {
                               <Input
                                 type="tel"
                                 value={entry.purchase_sub_amount}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    index,
-                                    "purchase_sub_amount",
-                                    e.target.value,
-                                  )
-                                }
-                                className="h-9 text-right"
+                                disabled
+                                className="h-9 bg-gray-100 text-right"
                                 placeholder="0"
-                                onKeyDown={handleKeyDown}
-                                maxLength={10}
                               />
                             </td>
                             <td className="p-2">
@@ -1521,7 +1458,6 @@ const PurchaseGraniteEdit = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div></div>
                     <div className="space-y-2">
-                      {/* Labour Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
                           <Label className="font-medium shrink-0">
@@ -1581,7 +1517,6 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* Tempo Charges */}
                       <div className="flex items-center justify-between gap-2">
                         <Label htmlFor="purchase_tempo">Tempo Charges</Label>
                         <Input
@@ -1598,7 +1533,6 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* Other Charges 1 */}
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
@@ -1620,7 +1554,6 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* Other Charges 2 */}
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
@@ -1645,7 +1578,6 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* Gross Total */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Gross Total</Label>
                         <Input
@@ -1656,29 +1588,23 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* GST Amount - EDITED: label shows autoGst18, input editable */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Tax Amount</Label>
                         <Input
                           className="w-[150px] text-right font-medium shrink-0"
                           type="tel"
                           {...form.register("purchase_tax")}
-                          onChange={(e) => {
-                            form.setValue("purchase_tax", e.target.value);
-                            setGstEdited(true);
-                            calculateAndSetTotals(itemEntries, true);
-                          }}
+                          onChange={handleTaxChange}
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
                       </div>
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 -mt-5">
                         <Label className="font-medium text-xs text-gray-500">
-                          Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                          GST @ 18% = {Number(autoGst18).toFixed(2)}
                         </Label>
                       </div>
 
-                      {/* Net Total */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Net Total</Label>
                         <Input
@@ -1691,19 +1617,19 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* Round Off */}
+                      {/* Round Off - editable, subtracts */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Round Off</Label>
                         <Input
                           className="w-[150px] text-right font-medium bg-gray-100 shrink-0"
                           type="text"
-                          {...form.register("purchase_amount_round")}
-                          disabled
+                          {...form.register("purchase_amount_round", {
+                            onChange: handleRoundOffChange,
+                          })}
                           placeholder="0"
                         />
                       </div>
 
-                      {/* Amount to be Paid */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-semibold text-blue-900">
                           Amount to be Paid
@@ -1711,12 +1637,11 @@ const PurchaseGraniteEdit = () => {
                         <Input
                           className="w-[150px] bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md shrink-0"
                           type="text"
-                          value={Number(displayFinalTotal).toFixed(0)}
+                          value={Number(amountToBePaid).toFixed(0)}
                           disabled
                         />
                       </div>
 
-                      {/* Final Amount Paid */}
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium">Final Amount Paid</Label>
                         <Input
@@ -1732,7 +1657,6 @@ const PurchaseGraniteEdit = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-4 border-t">
                   <Button
                     type="button"
