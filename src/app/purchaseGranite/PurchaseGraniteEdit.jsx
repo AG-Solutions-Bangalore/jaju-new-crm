@@ -67,6 +67,8 @@ const PurchaseGraniteEdit = () => {
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [loadingType, setLoadingType] = useState("Loading Only");
   const [gstEdited, setGstEdited] = useState(false);
+  const [autoGst18, setAutoGst18] = useState(0); // NEW: auto GST reference
+
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -278,6 +280,11 @@ const PurchaseGraniteEdit = () => {
 
     const grandTotal =
       itemsTotal + tempo + loading + unloading + other + other1;
+
+    // Always compute auto GST at 18% for reference display
+    const autoGst = grandTotal * 0.18;
+    setAutoGst18(autoGst);
+
     if (!skipGst && !gstEdited) {
       const gstAmount = grandTotal * 0.18;
       form.setValue("purchase_tax", gstAmount.toFixed(2));
@@ -299,6 +306,7 @@ const PurchaseGraniteEdit = () => {
       calculateAndSetTotals(itemEntries);
     }
   }, [gstEdited]);
+
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
     0,
@@ -1122,18 +1130,23 @@ const PurchaseGraniteEdit = () => {
                   />
                 </div>
 
-                {/* GST Amount */}
+                {/* GST Amount - EDITED: label shows autoGst18, input editable */}
                 <div>
                   <div className="flex items-center justify-between">
                     <Label>
-                      Tax (GST 18% = {Number(displayGst).toFixed(2)})
+                      Tax (GST 18% = {Number(autoGst18).toFixed(2)})
                     </Label>
                   </div>
                   <Input
                     type="tel"
-                    value={Number(displayGst).toFixed(2)}
-                    disabled
-                    className="mt-1 text-right bg-gray-100 font-medium"
+                    {...form.register("purchase_tax")}
+                    onChange={(e) => {
+                      form.setValue("purchase_tax", e.target.value);
+                      setGstEdited(true);
+                      calculateAndSetTotals(itemEntries, true);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    className="mt-1 text-right font-medium"
                     maxLength={10}
                     placeholder="0"
                   />
@@ -1643,18 +1656,26 @@ const PurchaseGraniteEdit = () => {
                         />
                       </div>
 
-                      {/* GST Amount */}
+                      {/* GST Amount - EDITED: label shows autoGst18, input editable */}
                       <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">
-                          Tax (GST 18% = {Number(displayGst).toFixed(2)})
-                        </Label>
+                        <Label className="font-medium">Tax Amount</Label>
                         <Input
-                          className="w-[150px] text-right bg-gray-100 font-medium shrink-0"
+                          className="w-[150px] text-right font-medium shrink-0"
                           type="tel"
-                          value={Number(displayGst).toFixed(2)}
-                          disabled
+                          {...form.register("purchase_tax")}
+                          onChange={(e) => {
+                            form.setValue("purchase_tax", e.target.value);
+                            setGstEdited(true);
+                            calculateAndSetTotals(itemEntries, true);
+                          }}
+                          onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="font-medium text-xs text-gray-500">
+                          Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                        </Label>
                       </div>
 
                       {/* Net Total */}

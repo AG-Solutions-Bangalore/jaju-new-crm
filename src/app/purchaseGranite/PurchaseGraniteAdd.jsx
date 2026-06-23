@@ -63,6 +63,8 @@ const PurchaseGraniteAdd = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingType, setLoadingType] = useState("Loading Only");
   const [gstEdited, setGstEdited] = useState(false);
+  const [autoGst18, setAutoGst18] = useState(0);
+
   const { data: currentYear } = useQuery({
     queryKey: ["currentYear"],
     queryFn: async () => {
@@ -73,6 +75,7 @@ const PurchaseGraniteAdd = () => {
       return response.data.year?.current_year;
     },
   });
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -101,6 +104,7 @@ const PurchaseGraniteAdd = () => {
       purchase_no_of_count: "1",
     },
   });
+
   const [itemEntries, setItemEntries] = useState([
     {
       purchase_sub_item: "",
@@ -179,6 +183,10 @@ const PurchaseGraniteAdd = () => {
 
     const grandTotal =
       itemsTotal + tempo + loading + unloading + other + other1;
+
+    // Always compute auto GST at 18% for reference display
+    setAutoGst18(grandTotal * 0.18);
+
     if (!skipGst && !gstEdited) {
       const gstAmount = grandTotal * 0.18;
       form.setValue("purchase_tax", gstAmount.toFixed(2));
@@ -200,6 +208,7 @@ const PurchaseGraniteAdd = () => {
       calculateAndSetTotals(itemEntries);
     }
   }, [gstEdited]);
+
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.purchase_sub_amount || 0),
     0,
@@ -258,6 +267,13 @@ const PurchaseGraniteAdd = () => {
   const handleChargeChange = (field, value) => {
     form.setValue(field, value);
     calculateAndSetTotals(itemEntries);
+  };
+
+  const handleTaxChange = (e) => {
+    const value = e.target.value;
+    form.setValue("purchase_tax", value);
+    setGstEdited(true);
+    calculateAndSetTotals(itemEntries, true);
   };
 
   const addItemEntry = () => {
@@ -906,7 +922,6 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                 </div>
-
                 {/* Tempo Charges */}
                 <div>
                   <Label htmlFor="purchase_tempo">Tempo Charges</Label>
@@ -922,7 +937,6 @@ const PurchaseGraniteAdd = () => {
                     placeholder="0"
                   />
                 </div>
-
                 {/* Other 1 */}
                 <div className="space-y-1">
                   <Label>Other Charges 1</Label>
@@ -946,7 +960,6 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                 </div>
-
                 {/* Other 2 */}
                 <div className="space-y-1">
                   <Label>Other Charges 2</Label>
@@ -970,7 +983,6 @@ const PurchaseGraniteAdd = () => {
                     />
                   </div>
                 </div>
-
                 {/* Gross Total */}
                 <div>
                   <Label>Gross Total</Label>
@@ -982,18 +994,16 @@ const PurchaseGraniteAdd = () => {
                   />
                 </div>
 
-                {/* GST Amount */}
+                {/* GST Amount - label now shows autoGst18, input editable */}
                 <div>
                   <div className="flex items-center justify-between">
-                    <Label>
-                      Tax (GST 18% = {Number(displayGst).toFixed(2)})
-                    </Label>
+                    <Label>Tax Amount</Label>
                   </div>
                   <Input
                     type="tel"
-                    value={Number(displayGst).toFixed(2)}
-                    disabled
-                    className="mt-1 text-right bg-gray-100 font-medium"
+                    {...form.register("purchase_tax")}
+                    onChange={handleTaxChange}
+                    className="mt-1 text-right"
                     maxLength={10}
                     placeholder="0"
                   />
@@ -1011,7 +1021,6 @@ const PurchaseGraniteAdd = () => {
                     placeholder="0"
                   />
                 </div>
-
                 {/* Round Off */}
                 <div>
                   <Label>Round Off</Label>
@@ -1024,7 +1033,6 @@ const PurchaseGraniteAdd = () => {
                     placeholder="0"
                   />
                 </div>
-
                 {/* Amount to be Paid */}
                 <div>
                   <Label className="font-semibold text-blue-900">
@@ -1037,7 +1045,6 @@ const PurchaseGraniteAdd = () => {
                     className="mt-1 bg-gradient-to-r from-blue-700 to-blue-900 font-bold border-blue-800 text-white text-right rounded-md"
                   />
                 </div>
-
                 {/* Final Amount Paid */}
                 <div>
                   <Label>Final Amount Paid</Label>
@@ -1492,18 +1499,23 @@ const PurchaseGraniteAdd = () => {
                         />
                       </div>
 
-                      {/* GST Amount */}
+                      {/* Tax Amount - label now shows autoGst18, input editable */}
                       <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">
-                          Tax (GST 18% = {Number(displayGst).toFixed(2)})
-                        </Label>
+                        <Label className="font-medium">Tax Amount</Label>
+
                         <Input
-                          className="w-[150px] text-right bg-gray-100 font-medium shrink-0"
+                          className="w-[150px] text-right shrink-0"
                           type="tel"
-                          value={Number(displayGst).toFixed(2)}
-                          disabled
+                          {...form.register("purchase_tax")}
+                          onChange={handleTaxChange}
                           placeholder="0"
+                          maxLength={10}
                         />
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="font-medium text-xs text-gray-500">
+                          Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
+                        </Label>
                       </div>
 
                       {/* Net Total */}

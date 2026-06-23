@@ -42,7 +42,6 @@ const formSchema = z.object({
   sales_mobile: z.string(),
   sales_no: z.string(),
   sales_item_type: z.string(),
-  sales_gst_percentage: z.string().optional(),
   sales_tax: z.string(),
   sales_tempo: z.string(),
   sales_loading: z.string(),
@@ -96,7 +95,6 @@ const SalesAdd = () => {
       sales_mobile: "",
       sales_no: "",
       sales_item_type: "",
-      sales_gst_percentage: "18",
       sales_tax: "",
       sales_tempo: "",
       sales_loading: "",
@@ -188,6 +186,7 @@ const SalesAdd = () => {
     ],
     [product],
   );
+
   const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
       (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
@@ -203,14 +202,11 @@ const SalesAdd = () => {
       itemsTotal + tempo + loading + unloading + other + other1;
 
     // Always compute auto GST at 18% for reference display
-    setAutoGst18(grandTotal * 0.18);
+    const autoGst = grandTotal * 0.18;
+    setAutoGst18(autoGst);
 
     if (!skipGst && !gstEdited) {
-      const chargeablePct = parseFloat(
-        form.getValues("sales_gst_percentage") || 18,
-      );
-      const chargeableGst = grandTotal * (chargeablePct / 100);
-      form.setValue("sales_tax", chargeableGst.toFixed(2));
+      form.setValue("sales_tax", autoGst.toFixed(2));
     }
     const currentGst = parseFloat(form.getValues("sales_tax") || 0);
     const unroundedNetTotal = grandTotal + currentGst;
@@ -229,6 +225,7 @@ const SalesAdd = () => {
       calculateAndSetTotals(itemEntries);
     }
   }, [gstEdited]);
+
   const itemsTotal = itemEntries.reduce(
     (sum, entry) => sum + parseFloat(entry.sales_sub_amount || 0),
     0,
@@ -249,7 +246,6 @@ const SalesAdd = () => {
   const displayGst = parseFloat(form.watch("sales_tax") || 0);
 
   const watchTempAmount = parseFloat(form.watch("sales_temp_amount") || 0);
-  const watchRoundOff = parseFloat(form.watch("sales_amount_round") || 0);
   const displayFinalTotal = watchTempAmount;
 
   const watchTempAmountInput = form.watch("sales_temp_amount");
@@ -290,6 +286,13 @@ const SalesAdd = () => {
   const handleChargeChange = (field, value) => {
     form.setValue(field, value);
     calculateAndSetTotals(itemEntries);
+  };
+
+  const handleTaxChange = (e) => {
+    const value = e.target.value;
+    form.setValue("sales_tax", value);
+    setGstEdited(true);
+    calculateAndSetTotals(itemEntries, true);
   };
 
   const addItemEntry = () => {
@@ -351,6 +354,7 @@ const SalesAdd = () => {
       });
     },
   });
+
   const validateForm = (data) => {
     const formErrors = {
       date: !data.sales_date ? "Date is required" : "",
@@ -586,7 +590,6 @@ const SalesAdd = () => {
 
       const payload = {
         ...restData,
-        sales_gst_percentage: form.getValues("sales_gst_percentage") || "18",
         sales_tempo: tempo.toString(),
         sales_loading: loading.toString(),
         sales_unloading: unloading.toString(),
@@ -727,35 +730,6 @@ const SalesAdd = () => {
                       rows={2}
                     />
                   </div>
-                  {/* <div>
-                    <Label htmlFor="sales_item_type">Item Type</Label>
-
-                    <Select
-                      id="sales_item_type"
-                      value={form.watch("sales_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("sales_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div> */}
                 </div>
               </div>
               {/* Items */}
@@ -1044,36 +1018,18 @@ const SalesAdd = () => {
                   </Label>
                 </div>
 
-                {/* Chargeable GST % */}
-                <div>
-                  <Label>Chargeable GST %</Label>
-                  <Input
-                    type="tel"
-                    {...form.register("sales_gst_percentage")}
-                    className="mt-1 text-right"
-                    maxLength={5}
-                    placeholder="18"
-                    onChange={(e) => {
-                      form.setValue("sales_gst_percentage", e.target.value);
-                      setGstEdited(false);
-                      calculateAndSetTotals(itemEntries);
-                    }}
-                  />
-                </div>
-
-                {/* GST Amount */}
+                {/* GST Amount - Editable, label shows autoGst18 */}
                 <div>
                   <div className="flex items-center justify-between">
                     <Label>
-                      Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
-                      {Number(displayGst).toFixed(2)})
+                      Tax (GST 18% = {Number(autoGst18).toFixed(2)})
                     </Label>
                   </div>
                   <Input
                     type="tel"
-                    value={Number(displayGst).toFixed(2)}
-                    disabled
-                    className="mt-1 text-right bg-gray-100"
+                    {...form.register("sales_tax")}
+                    onChange={handleTaxChange}
+                    className="mt-1 text-right"
                     maxLength={10}
                     placeholder="0"
                   />
@@ -1239,37 +1195,6 @@ const SalesAdd = () => {
                     />
                   </div>
 
-                  {/* <div className="space-y-2">
-                    <Label htmlFor="sales_item_type">
-                      Item Type <span className="text-xs text-red-400 ">*</span>
-                    </Label>
-
-                    <Select
-                      id="sales_item_type"
-                      value={form.watch("sales_item_type")}
-                      onValueChange={(value) => {
-                        form.setValue("sales_item_type", value);
-                        refetchProducts();
-                      }}
-                    >
-                      <SelectTrigger className="w-full bg-white">
-                        <SelectValue placeholder="Select item type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Item Types</SelectLabel>
-                          {productTypeGroup.map((type) => (
-                            <SelectItem
-                              key={type.product_type_group}
-                              value={type.product_type_group}
-                            >
-                              {type.product_type_group}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div> */}
                   <div className="space-y-2 col-span-full">
                     <Label htmlFor="sales_address">Address</Label>
                     <Textarea
@@ -1299,10 +1224,6 @@ const SalesAdd = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          {/* <th className="text-left p-2 font-medium text-sm">
-                            Type{" "}
-                            <span className="text-xs text-red-400 ">*</span>
-                          </th> */}
                           <th className="text-left p-2 font-medium text-sm w-[200px] min-w-[160px]">
                             Item{" "}
                             <span className="text-xs text-red-400 ">*</span>
@@ -1329,35 +1250,6 @@ const SalesAdd = () => {
                       <tbody>
                         {itemEntries.map((entry, index) => (
                           <tr key={index} className="border-b">
-                            {/* <td className="p-2">
-                              <Select
-                                value={entry.sales_sub_type}
-                                onValueChange={(value) =>
-                                  handleItemChange(
-                                    index,
-                                    "sales_sub_type",
-                                    value,
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-[8rem]">
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>Item Types</SelectLabel>
-                                    {typeOptions.map((type) => (
-                                      <SelectItem
-                                        key={type.value}
-                                        value={type.value}
-                                      >
-                                        {type.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </td> */}
                             <td className="p-2">
                               <div className="flex gap-2 items-start">
                                 {isCustomItem[index] ? (
@@ -1648,45 +1540,22 @@ const SalesAdd = () => {
                       </div>
 
                       {/* Auto GST Reference */}
+
+                      {/* Tax (GST) - Editable, label shows autoGst18 */}
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="font-medium">Tax Amount</Label>
+                        <Input
+                          className="w-[150px] text-right shrink-0"
+                          type="tel"
+                          {...form.register("sales_tax")}
+                          onChange={handleTaxChange}
+                          placeholder="0"
+                        />
+                      </div>
                       <div className="flex items-center justify-between gap-2">
                         <Label className="font-medium text-xs text-gray-500">
                           Auto GST @ 18% = {Number(autoGst18).toFixed(2)}
                         </Label>
-                      </div>
-
-                      {/* Chargeable GST % */}
-                      <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">Chargeable GST %</Label>
-                        <Input
-                          className="w-[150px] text-right shrink-0"
-                          type="tel"
-                          {...form.register("sales_gst_percentage")}
-                          maxLength={5}
-                          placeholder="18"
-                          onChange={(e) => {
-                            form.setValue(
-                              "sales_gst_percentage",
-                              e.target.value,
-                            );
-                            setGstEdited(false);
-                            calculateAndSetTotals(itemEntries);
-                          }}
-                        />
-                      </div>
-
-                      {/* GST Amount */}
-                      <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">
-                          Tax (GST {form.watch("sales_gst_percentage") || 18}% ={" "}
-                          {Number(displayGst).toFixed(2)})
-                        </Label>
-                        <Input
-                          className="w-[150px] text-right bg-gray-100 shrink-0"
-                          type="tel"
-                          value={Number(displayGst).toFixed(2)}
-                          disabled
-                          placeholder="0"
-                        />
                       </div>
 
                       {/* Net Total */}
