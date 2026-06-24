@@ -122,23 +122,18 @@ const PurchaseGraniteAdd = () => {
   const handleCustomItemChange = (index, value) => {
     setCustomItems((prev) => ({ ...prev, [index]: value }));
   };
-  // const handleToggleCustomItem = (index) => {
-  //   setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
-  // };
   const handleToggleCustomItem = (index) => {
     const isCurrentlyCustom = isCustomItem[index];
 
     if (isCurrentlyCustom) {
-      // We are switching from custom mode back to the select dropdown
-      const customName = customItems[index]?.trim();
-      if (customName) {
-        // Copy the custom name into the entry so it's not lost
-        const updatedEntries = [...itemEntries];
-        updatedEntries[index].purchase_sub_item = customName;
-        setItemEntries(updatedEntries);
-        // Optionally clear the custom input so it's not reused
-        setCustomItems((prev) => ({ ...prev, [index]: "" }));
-      }
+      // Switching from custom mode back to select dropdown
+      // Clear the custom input so it's not submitted or validated
+      setCustomItems((prev) => ({ ...prev, [index]: "" }));
+    } else {
+      // Switching from select dropdown to custom mode
+      // Prefill the custom input with the selected item name so it's not lost
+      const selectedItem = itemEntries[index]?.purchase_sub_item || "";
+      setCustomItems((prev) => ({ ...prev, [index]: selectedItem }));
     }
 
     // Toggle the flag
@@ -377,9 +372,9 @@ const PurchaseGraniteAdd = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
-        !entry.purchase_sub_item || (isCustomItem[index] && !customItems[index])
-          ? "required"
-          : "",
+        isCustomItem[index]
+          ? (!customItems[index] ? "required" : "")
+          : (!entry.purchase_sub_item ? "required" : ""),
       qntySqr: !entry.purchase_sub_qnty_sqr
         ? "required"
         : isNaN(entry.purchase_sub_qnty_sqr)
