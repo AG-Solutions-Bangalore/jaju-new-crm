@@ -27,8 +27,10 @@ import Loader from "@/components/loader/Loader";
 import Cookies from "js-cookie";
 import moment from "moment";
 import { ButtonConfig } from "@/config/ButtonConfig";
+import { useNavigate } from "react-router-dom";
 
 const SaleDashboard = () => {
+  const navigate = useNavigate();
   // Fetch Sales Data
   const {
     data: sales = [],
@@ -72,8 +74,8 @@ const SaleDashboard = () => {
   };
 
   // Slice to last 1 for sales, last 2 for purchases
-  const displayedSales = sales.slice(-1);
-  const displayedPurchases = purchases.slice(-2);
+  const displayedSales = sales.slice(0, 5);
+  const displayedPurchases = purchases.slice(0, 5);
 
   // Metric Computations (Total metrics based on all records)
   const totalSalesAmount = sales.reduce(
@@ -155,13 +157,17 @@ const SaleDashboard = () => {
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Sales Card */}
-          <Card className="relative overflow-hidden border-blue-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
+          <Card className="relative overflow-hidden cursor-pointer border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent
+              className="p-6"
+              onClick={() => navigate("/sales")} // ✅ navigate to sales page
+            >
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
                   <span className="text-sm font-medium text-gray-500">
                     Total Sales
                   </span>
+
                   <div className="text-2xl font-bold text-blue-900">
                     {formatCurrency(totalSalesAmount)}
                   </div>
@@ -179,7 +185,10 @@ const SaleDashboard = () => {
           </Card>
 
           {/* Purchases Card */}
-          <Card className="relative overflow-hidden border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+          <Card
+            className="relative overflow-hidden border-orange-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow "
+            onClick={() => navigate("/purchase")}
+          >
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-2">

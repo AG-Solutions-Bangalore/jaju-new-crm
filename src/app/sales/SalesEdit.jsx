@@ -119,7 +119,7 @@ const SalesEdit = () => {
       sales_sub_item_original: "",
     },
   ]);
-  const [loadingType, setLoadingType] = useState("Loading Only");
+  const [loadingType, setLoadingType] = useState("");
   const [customItems, setCustomItems] = useState({});
   const [isCustomItem, setIsCustomItem] = useState({});
 
@@ -1544,8 +1544,23 @@ const SalesEdit = () => {
                 {/* Charges and Totals */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div></div>
-                  <div className="border rounded-lg p-3 bg-white">
+                  <div className="border rounded-lg ml-20 p-3 bg-white">
                     <div className="grid grid-cols-1 gap-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label htmlFor="sales_tempo">Tempo Charges</Label>
+                        <Input
+                          className="w-[150px] text-right shrink-0"
+                          id="sales_tempo"
+                          type="tel"
+                          {...form.register("sales_tempo")}
+                          onChange={(e) =>
+                            handleChargeChange("sales_tempo", e.target.value)
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
+                      </div>
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
                           <Label className="font-medium shrink-0">
@@ -1606,22 +1621,6 @@ const SalesEdit = () => {
                       </div>
 
                       <div className="flex items-center justify-between gap-2">
-                        <Label htmlFor="sales_tempo">Tempo Charges</Label>
-                        <Input
-                          className="w-[150px] text-right shrink-0"
-                          id="sales_tempo"
-                          type="tel"
-                          {...form.register("sales_tempo")}
-                          onChange={(e) =>
-                            handleChargeChange("sales_tempo", e.target.value)
-                          }
-                          maxLength={10}
-                          onKeyDown={handleKeyDown}
-                          placeholder="0"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
                           placeholder="Other Label 1"
@@ -1674,7 +1673,12 @@ const SalesEdit = () => {
                       </div>
 
                       <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">Tax Amount</Label>
+                        <Label className="font-medium">
+                          Tax Amount{" "}
+                          <Label className="font-medium text-xs text-gray-500">
+                            (GST @ 18% = {Number(autoGst18).toFixed(2)})
+                          </Label>
+                        </Label>
                         <Input
                           className="w-[150px] text-right shrink-0"
                           type="tel"
@@ -1682,11 +1686,6 @@ const SalesEdit = () => {
                           onChange={handleTaxChange}
                           placeholder="0"
                         />
-                      </div>
-                      <div className="flex items-center justify-between gap-2 -mt-5">
-                        <Label className="font-medium text-xs text-gray-500">
-                          GST @ 18% = {Number(autoGst18).toFixed(2)}
-                        </Label>
                       </div>
 
                       <div className="flex items-center justify-between gap-2">

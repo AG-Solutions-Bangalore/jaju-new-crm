@@ -65,7 +65,7 @@ const PurchaseGraniteEdit = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
-  const [loadingType, setLoadingType] = useState("Loading Only");
+  const [loadingType, setLoadingType] = useState("");
   const [gstEdited, setGstEdited] = useState(false);
   const [autoGst18, setAutoGst18] = useState(0);
   const [roundOffEdited, setRoundOffEdited] = useState(false);
@@ -1491,9 +1491,24 @@ const PurchaseGraniteEdit = () => {
 
                 {/* Other Amount & Total */}
                 <div className="border rounded-lg p-3 bg-white">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 space-x-24 md:grid-cols-2 gap-4">
                     <div></div>
                     <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label htmlFor="purchase_tempo">Tempo Charges</Label>
+                        <Input
+                          className="w-[150px] text-right shrink-0"
+                          id="purchase_tempo"
+                          type="tel"
+                          {...form.register("purchase_tempo")}
+                          onChange={(e) =>
+                            handleChargeChange("purchase_tempo", e.target.value)
+                          }
+                          maxLength={10}
+                          onKeyDown={handleKeyDown}
+                          placeholder="0"
+                        />
+                      </div>
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-1">
                           <Label className="font-medium shrink-0">
@@ -1552,23 +1567,6 @@ const PurchaseGraniteEdit = () => {
                           placeholder="0"
                         />
                       </div>
-
-                      <div className="flex items-center justify-between gap-2">
-                        <Label htmlFor="purchase_tempo">Tempo Charges</Label>
-                        <Input
-                          className="w-[150px] text-right shrink-0"
-                          id="purchase_tempo"
-                          type="tel"
-                          {...form.register("purchase_tempo")}
-                          onChange={(e) =>
-                            handleChargeChange("purchase_tempo", e.target.value)
-                          }
-                          maxLength={10}
-                          onKeyDown={handleKeyDown}
-                          placeholder="0"
-                        />
-                      </div>
-
                       <div className="flex items-center justify-between gap-2">
                         <Input
                           type="text"
@@ -1625,7 +1623,12 @@ const PurchaseGraniteEdit = () => {
                       </div>
 
                       <div className="flex items-center justify-between gap-2">
-                        <Label className="font-medium">Tax Amount</Label>
+                        <Label className="font-medium">
+                          Tax Amount{" "}
+                          <Label className="font-medium text-xs text-gray-500">
+                            ( GST @ 18% = {Number(autoGst18).toFixed(2)})
+                          </Label>
+                        </Label>
                         <Input
                           className="w-[150px] text-right font-medium shrink-0"
                           type="tel"
@@ -1634,11 +1637,6 @@ const PurchaseGraniteEdit = () => {
                           onKeyDown={handleKeyDown}
                           placeholder="0"
                         />
-                      </div>
-                      <div className="flex items-center justify-between gap-2 -mt-5">
-                        <Label className="font-medium text-xs text-gray-500">
-                          GST @ 18% = {Number(autoGst18).toFixed(2)}
-                        </Label>
                       </div>
 
                       <div className="flex items-center justify-between gap-2">
