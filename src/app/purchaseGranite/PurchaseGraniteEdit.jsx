@@ -129,6 +129,20 @@ const PurchaseGraniteEdit = () => {
   };
 
   const handleToggleCustomItem = (index) => {
+    const isCurrentlyCustom = isCustomItem[index];
+
+    if (isCurrentlyCustom) {
+      // Switching from custom mode back to select dropdown
+      // Clear the custom input so it's not submitted or validated
+      setCustomItems((prev) => ({ ...prev, [index]: "" }));
+    } else {
+      // Switching from select dropdown to custom mode
+      // Prefill the custom input with the selected item name so it's not lost
+      const selectedItem = itemEntries[index]?.purchase_sub_item || "";
+      setCustomItems((prev) => ({ ...prev, [index]: selectedItem }));
+    }
+
+    // Toggle the flag
     setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
@@ -270,6 +284,32 @@ const PurchaseGraniteEdit = () => {
     }
   }, [purchaseByid]);
 
+  useEffect(() => {
+    if (purchaseByid && product && product.length > 0) {
+      const { purchaseSub: pSub } = purchaseByid;
+      if (pSub && pSub.length > 0) {
+        const newIsCustomItem = {};
+        const newCustomItems = {};
+        pSub.forEach((sub, index) => {
+          const itemName = sub.purchase_sub_item || "";
+          if (itemName) {
+            const exists = product.some((item) => {
+              const name = item.item_name || item.product_type_group || item.product_type;
+              return name === itemName;
+            });
+            if (!exists) {
+              newIsCustomItem[index] = true;
+              newCustomItems[index] = itemName;
+            }
+          }
+        });
+        setIsCustomItem(newIsCustomItem);
+        setCustomItems(newCustomItems);
+      }
+    }
+  }, [purchaseByid, product]);
+
+
   // -------- Calculate totals ----------
   const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
@@ -289,10 +329,6 @@ const PurchaseGraniteEdit = () => {
     const autoGst = grandTotal * 0.18;
     setAutoGst18(autoGst);
 
-    if (!skipGst && !gstEdited) {
-      const gstAmount = grandTotal * 0.18;
-      form.setValue("purchase_tax", gstAmount.toFixed(2));
-    }
     const currentGst = parseFloat(form.getValues("purchase_tax") || 0);
     const netTotal = grandTotal + currentGst;
 
@@ -471,9 +507,9 @@ const PurchaseGraniteEdit = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
-        !entry.purchase_sub_item || (isCustomItem[index] && !customItems[index])
-          ? "required"
-          : "",
+        isCustomItem[index]
+          ? (!customItems[index] ? "required" : "")
+          : (!entry.purchase_sub_item ? "required" : ""),
       qntySqr: !entry.purchase_sub_qnty_sqr
         ? "required"
         : isNaN(entry.purchase_sub_qnty_sqr)

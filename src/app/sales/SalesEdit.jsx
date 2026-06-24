@@ -128,6 +128,20 @@ const SalesEdit = () => {
   };
 
   const handleToggleCustomItem = (index) => {
+    const isCurrentlyCustom = isCustomItem[index];
+
+    if (isCurrentlyCustom) {
+      // Switching from custom mode back to select dropdown
+      // Clear the custom input so it's not submitted or validated
+      setCustomItems((prev) => ({ ...prev, [index]: "" }));
+    } else {
+      // Switching from select dropdown to custom mode
+      // Prefill the custom input with the selected item name so it's not lost
+      const selectedItem = itemEntries[index]?.sales_sub_item || "";
+      setCustomItems((prev) => ({ ...prev, [index]: selectedItem }));
+    }
+
+    // Toggle the flag
     setIsCustomItem((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
@@ -254,6 +268,32 @@ const SalesEdit = () => {
     }
   }, [salesId, form, currentYear]);
 
+  useEffect(() => {
+    if (salesId?.salesSub && product && product.length > 0) {
+      const { salesSub } = salesId;
+      if (salesSub && salesSub.length > 0) {
+        const newIsCustomItem = {};
+        const newCustomItems = {};
+        salesSub.forEach((sub, index) => {
+          const itemName = sub.sales_sub_item || "";
+          if (itemName) {
+            const exists = product.some((item) => {
+              const name = item.item_name || item.product_type_group || item.product_type;
+              return name === itemName;
+            });
+            if (!exists) {
+              newIsCustomItem[index] = true;
+              newCustomItems[index] = itemName;
+            }
+          }
+        });
+        setIsCustomItem(newIsCustomItem);
+        setCustomItems(newCustomItems);
+      }
+    }
+  }, [salesId, product]);
+
+
   // -------- Calculate totals (unchanged net total, round‑off subtracts) ----------
   const calculateAndSetTotals = (entries, skipGst = false) => {
     const itemsTotal = entries.reduce(
@@ -273,10 +313,6 @@ const SalesEdit = () => {
     const autoGst = grandTotal * 0.18;
     setAutoGst18(autoGst);
 
-    if (!skipGst && !gstEdited) {
-      // Auto-calculate tax as 18% of grandTotal
-      form.setValue("sales_tax", autoGst.toFixed(2));
-    }
     const currentGst = parseFloat(form.getValues("sales_tax") || 0);
     const netTotal = grandTotal + currentGst;
 
@@ -455,9 +491,9 @@ const SalesEdit = () => {
 
     const itemErrors = itemEntries.map((entry, index) => ({
       item:
-        !entry.sales_sub_item || (isCustomItem[index] && !customItems[index])
-          ? "required"
-          : "",
+        isCustomItem[index]
+          ? (!customItems[index] ? "required" : "")
+          : (!entry.sales_sub_item ? "required" : ""),
       qnty:
         entry.sales_sub_qnty !== "" &&
         entry.sales_sub_qnty != null &&
