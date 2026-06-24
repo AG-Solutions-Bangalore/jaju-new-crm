@@ -20,18 +20,21 @@ const Home = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [initialLoad, setInitialLoad] = useState(true);
-const token = Cookies.get("token")
+  const token = Cookies.get("token");
   // Fetch highlighted dates
   const { data: highlightedDates = [] } = useQuery({
     queryKey: ["daybookDates"],
     queryFn: async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/api/web-fetch-daybook-date`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await axios.get(
+          `${BASE_URL}/api/web-fetch-daybook-date`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
-        return response?.data?.received_date.map(item => item.received_date);
+        );
+        return response?.data?.received_date.map((item) => item.received_date);
       } catch (error) {
         toast({
           title: "Error",
@@ -46,9 +49,9 @@ const token = Cookies.get("token")
     if (highlightedDates.length > 0 && initialLoad) {
       // Find the most recent date with daybook entry
       const sortedDates = highlightedDates
-        .map(date => new Date(date))
+        .map((date) => new Date(date))
         .sort((a, b) => b - a); // Sort in descending order (most recent first)
-      
+
       if (sortedDates.length > 0) {
         const latestDate = sortedDates[0];
         setCurrentMonth(latestDate.getMonth());
@@ -91,47 +94,64 @@ const token = Cookies.get("token")
     }
   };
   const hasEntriesInCurrentMonth = () => {
-    return highlightedDates.some(dateString => {
+    return highlightedDates.some((dateString) => {
       const date = new Date(dateString);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      return (
+        date.getMonth() === currentMonth && date.getFullYear() === currentYear
+      );
     });
   };
   const renderCalendar = () => {
-    const monthNames = ["January", "February", "March", "April", "May", "June", 
-      "July", "August", "September", "October", "November", "December"];
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
     // ------
     const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
     // ----
     const days = [];
-    
+
     // Empty cells for days before the first of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(<div key={`empty-${i}`} className="h-8 w-8"></div>);
     }
-    
+
     // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day);
       const isHighlighted = isDateHighlighted(date);
-      
+
       days.push(
         <button
           key={`day-${day}`}
           onClick={() => handleDateChange(day)}
           className={`h-10 w-10 flex items-center justify-center rounded-full text-sm
-            ${isHighlighted 
-              ? 'bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200' 
-              : 'text-gray-600 hover:bg-gray-100'}`}
+            ${
+              isHighlighted
+                ? "bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
         >
           {day}
-        </button>
+        </button>,
       );
     }
-    
+
     const now = new Date();
-    const isCurrentMonth = currentYear === now.getFullYear() && currentMonth === now.getMonth();
+    const isCurrentMonth =
+      currentYear === now.getFullYear() && currentMonth === now.getMonth();
 
     return (
       <div className="space-y-4 ">
@@ -144,11 +164,11 @@ const token = Cookies.get("token")
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          
+
           <h3 className="text-lg font-medium">
             {monthNames[currentMonth]} {currentYear}
           </h3>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -159,16 +179,14 @@ const token = Cookies.get("token")
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-500">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div key={day}>{day}</div>
           ))}
         </div>
-        
-        <div className="grid grid-cols-7 gap-1">
-          {days}
-        </div>
+
+        <div className="grid grid-cols-7 gap-1">{days}</div>
       </div>
     );
   };
@@ -185,25 +203,21 @@ const token = Cookies.get("token")
         <CardContent>
           {renderCalendar()}
           <div className="mt-4 flex items-center justify-center gap-4">
-            {hasEntriesInCurrentMonth() ?
-            (
-<>
-<div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
-              <span className="text-xs">Day Book Exists</span>
-            </div>
-</>
-
-            ):(
-
+            {hasEntriesInCurrentMonth() ? (
               <>
-               <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-white border border-gray-300"></div>
-              <span className="text-xs">No Entry</span>
-            </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-blue-100 border border-blue-300"></div>
+                  <span className="text-xs">Day Book Exists</span>
+                </div>
               </>
-            )
-          }          
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded-full bg-white border border-gray-300"></div>
+                  <span className="text-xs">No Entry</span>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
