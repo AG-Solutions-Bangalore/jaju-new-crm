@@ -12,7 +12,6 @@ function App() {
   const navigate = useNavigate();
   const time = Cookies.get("token-expire-time");
   const handleLogout = () => {
- 
     navigate("/");
   };
   return (

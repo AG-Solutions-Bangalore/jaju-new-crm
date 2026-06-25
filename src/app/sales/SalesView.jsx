@@ -300,18 +300,20 @@ const SalesView = () => {
                           {Number(salesData?.sales?.sales_tempo).toFixed(0)}
                         </td>
                       </tr>
-                      <tr>
-                        <td className="border p-1 text-right font-medium">
-                          Loading
-                        </td>
-                        <td className="border p-1 text-right">
-                          {Number(salesData?.sales?.sales_loading).toFixed(0)}
-                        </td>
-                      </tr>
+                      {Number(salesData?.sales?.sales_loading || 0) > 0 && (
+                        <tr>
+                          <td className="border p-1 text-right font-medium">
+                            Loading Only
+                          </td>
+                          <td className="border p-1 text-right">
+                            {Number(salesData?.sales?.sales_loading).toFixed(0)}
+                          </td>
+                        </tr>
+                      )}
                       {Number(salesData?.sales?.sales_unloading || 0) > 0 && (
                         <tr>
                           <td className="border p-1 text-right font-medium">
-                            Unloading
+                            Loading & Unloading
                           </td>
                           <td className="border p-1 text-right">
                             {Number(salesData?.sales?.sales_unloading).toFixed(
@@ -531,7 +533,7 @@ const SalesView = () => {
                           colSpan={5}
                           className="text-right bg-white font-medium border-r border-b"
                         >
-                          Loading
+                          Loading Only
                         </TableCell>
                         <TableCell className="text-right bg-white border-b pr-4">
                           {Number(salesData?.sales?.sales_loading).toFixed(0)}
@@ -544,7 +546,7 @@ const SalesView = () => {
                           colSpan={5}
                           className="text-right bg-white font-medium border-r border-b"
                         >
-                          Unloading
+                          Loading & Unloading
                         </TableCell>
                         <TableCell className="text-right bg-white border-b pr-4">
                           {Number(salesData?.sales?.sales_unloading).toFixed(0)}
@@ -624,7 +626,7 @@ const SalesView = () => {
                         </TableCell>
                         <TableCell className="text-right bg-white border-b pr-4">
                           {Math.round(roundOff) > 0
-                            ? `+${Math.round(roundOff)}`
+                            ? `${Math.round(roundOff)}`
                             : Math.round(roundOff)}
                         </TableCell>
                       </TableRow>

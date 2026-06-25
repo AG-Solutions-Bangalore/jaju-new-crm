@@ -173,18 +173,18 @@ export function AppSidebar({ ...props }) {
         isActive: false,
       },
       {
-        title: "STOCK",
+        title: "REPORTS",
         icon: Warehouse,
         isActive: false,
         items: [
           {
-            title: "Box",
+            title: "Stock",
             url: "/stocks",
             icon: Box,
           },
           {
-            title: "Piece",
-            url: "/stocks-piece",
+            title: "Single Item Stock",
+            url: "/single-item-stock",
             icon: Package,
           },
         ],

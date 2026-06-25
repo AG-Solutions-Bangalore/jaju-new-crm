@@ -14,6 +14,16 @@ import {
   Plus,
   Pencil,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MemoizedSelect } from "@/components/common/MemoizedSelect";
+
+// Inside your component:
 import { useNavigate } from "react-router-dom";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -53,11 +63,18 @@ const formSchema = z.object({
   to_date: z.string().min(1, "To date is required"),
 });
 
-const PiaeceReport = () => {
+const SingleItemStockReport = () => {
   const { toast } = useToast();
   const tableRef = useRef(null);
+  // Unit selection state
+  const [selectedUnits, setSelectedUnits] = useState({
+    box: true, // Box/Piece
+    sqft: true, // Sqft
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [selectedItem, setSelectedItem] = useState("");
+
   const [searchParams, setSearchParams] = useState(null);
 
   // New Item dialog
@@ -79,20 +96,36 @@ const PiaeceReport = () => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      from_date: getFirstDayOfMonth(),
+      from_date: "2026-04-01",
       to_date: getTodayDate(),
     },
   });
-
+  // const handleUnitToggle = (unit) => {
+  //   setSelectedUnits((prev) => {
+  //     // If this unit is currently true and both are true, toggling off would make both false
+  //     // So we only toggle off if the other unit is true
+  //     if (prev[unit] && !prev[unit === "box" ? "sqft" : "box"]) {
+  //       // This is the only selected one, don't allow unchecking
+  //       return prev;
+  //     }
+  //     return { ...prev, [unit]: !prev[unit] };
+  //   });
+  // };
   const { data: stocksData, isLoading } = useQuery({
     queryKey: ["stocksReport", searchParams],
     queryFn: async () => {
       if (!searchParams) return { stocks: [] };
+      // if (!selectedItem || selectedItem == "") {
+      //   return { stocks: [] };
+      // }
 
       const token = Cookies.get("token");
       const response = await axios.post(
-        `${BASE_URL}/api/web-fetch-stock-new-report`,
-        searchParams,
+        `${BASE_URL}/api/web-fetch-stock-new-report-by-item`,
+        {
+          ...searchParams, // includes from_date, to_date
+          item_name: selectedItem,
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -101,6 +134,11 @@ const PiaeceReport = () => {
     },
     enabled: !!searchParams,
   });
+
+  const filteredStocks =
+    stocksData?.stocks?.filter(
+      (item) => !selectedItem || item.item_name === selectedItem,
+    ) || [];
 
   const { data: productTypes } = useQuery({
     queryKey: ["productTypes"],
@@ -125,6 +163,12 @@ const PiaeceReport = () => {
       return response.data?.data || response.data?.product_type_group || [];
     },
   });
+  const itemOptions = [
+    ...(productGroups?.map((item) => ({
+      value: item.item_name,
+      label: item.item_name,
+    })) || []),
+  ];
 
   const createProductMutation = useMutation({
     mutationFn: async (data) => {
@@ -230,6 +274,14 @@ const PiaeceReport = () => {
   };
 
   const onSubmit = (data) => {
+    if (!selectedItem) {
+      toast({
+        title: "Validation Error",
+        description: "Please select an item from the dropdown.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (searchParams && JSON.stringify(searchParams) === JSON.stringify(data)) {
       toast({
         title: "Same search parameters",
@@ -241,36 +293,80 @@ const PiaeceReport = () => {
     setSearchParams(data);
   };
 
-  const handleDownloadCsv = async () => {
+  const handleDownloadCsv = () => {
     try {
-      if (!searchParams) return;
+      if (filteredStocks.length === 0) {
+        toast({
+          title: "No Data",
+          description: "There is no stock data to download",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      const response = await axios.post(
-        `${BASE_URL}/api/web-download-stock-report`,
-        searchParams,
-        {
-          headers: {
-            Authorization: `Bearer ${Cookies.get("token")}`,
-          },
-          responseType: "blob",
-        },
-      );
+      // Build CSV headers
+      const headers = [
+        "Item Name",
+        "Open Balance",
+        "Purchase",
+        "Sale",
+        "Close Balance",
+      ];
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Build CSV rows
+      const rows = filteredStocks.map((item) => {
+        let openBal = "";
+        let purchaseVal = "";
+        let saleVal = "";
+        let closeBal = "";
+
+        if (selectedUnits.box && selectedUnits.sqft) {
+          openBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs , ${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft"`;
+          purchaseVal = `"${formatStockValue(item.purch_pcs)} Pcs , ${formatStockValue(item.purch_sqr)} Sqft"`;
+          saleVal = `"${formatStockValue(item.sale_pcs)} Pcs , ${formatStockValue(item.sale_sqr)} Sqft"`;
+          closeBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs , ${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft"`;
+        } else if (selectedUnits.box) {
+          openBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs"`;
+          purchaseVal = `"${formatStockValue(item.purch_pcs)} Pcs"`;
+          saleVal = `"${formatStockValue(item.sale_pcs)} Pcs"`;
+          closeBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs"`;
+        } else if (selectedUnits.sqft) {
+          openBal = `"${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft"`;
+          purchaseVal = `"${formatStockValue(item.purch_sqr)} Sqft"`;
+          saleVal = `"${formatStockValue(item.sale_sqr)} Sqft"`;
+          closeBal = `"${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft"`;
+        }
+
+        return [`"${item.item_name}"`, openBal, purchaseVal, saleVal, closeBal];
+      });
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((e) => e.join(",")),
+      ].join("\n");
+
+      // Create download link
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "stocks.csv");
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `single_item_stock_report_${searchParams?.from_date}_to_${searchParams?.to_date}.csv`,
+      );
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
       toast({
         title: "Download Successful",
-        description: "Stocks report downloaded as CSV",
+        description: "Single Item Stock Report downloaded as CSV",
       });
     } catch (error) {
       toast({
         title: "Download Failed",
-        description: "Failed to download stocks report",
+        description: "Failed to download single item stock report",
         variant: "destructive",
       });
     }
@@ -318,7 +414,7 @@ const PiaeceReport = () => {
       .then(() => {
         toast({
           title: "PDF Generated",
-          description: "Stocks report saved as PDF",
+          description: "Single Item Stock Report saved as PDF",
         });
       });
   };
@@ -334,7 +430,7 @@ const PiaeceReport = () => {
               {/* Title + Print Button */}
               <div className="flex justify-between items-center">
                 <h1 className="text-base font-bold text-gray-800 px-2">
-                  Stocks Sqft Report
+                  Stocks Box/piece
                 </h1>
                 <div className="flex gap-[2px]">
                   <button
@@ -447,7 +543,7 @@ const PiaeceReport = () => {
               ) : (
                 <>
                   <div className="text-center font-semibold text-sm mb-2">
-                    Stocks Sqft Report
+                    Single Item Stock Report
                   </div>
                   <div className="text-center text-xs mb-3">
                     From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
@@ -465,8 +561,8 @@ const PiaeceReport = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {stocksData?.stocks?.length ? (
-                        stocksData.stocks.map((item, index) => (
+                      {filteredStocks.length ? (
+                        filteredStocks.map((item, index) => (
                           <tr
                             key={index}
                             className={
@@ -485,18 +581,18 @@ const PiaeceReport = () => {
                               </span>
                             </td>
                             <td className="border p-1 text-right">
-                              {item.openpurch_pcs - item.closesale_pcs}
+                              {item.openpurch - item.closesale}
                             </td>
                             <td className="border p-1 text-right">
-                              {item.purch_pcs}
+                              {item.purch}
                             </td>
                             <td className="border p-1 text-right">
-                              {item.sale_pcs}
+                              {item.sale}
                             </td>
                             <td className="border p-1 text-right">
-                              {item.openpurch_pcs -
-                                item.closesale_pcs +
-                                (item.purch_pcs - item.sale_pcs)}
+                              {item.openpurch -
+                                item.closesale +
+                                (item.purch - item.sale)}
                             </td>
                           </tr>
                         ))
@@ -527,7 +623,7 @@ const PiaeceReport = () => {
                 {/* Title Section */}
                 <div className="w-[30%] shrink-0">
                   <h1 className="text-xl font-bold text-gray-800 truncate">
-                    Stocks Sqft Report
+                    Single Item Stock Report
                   </h1>
                 </div>
 
@@ -536,10 +632,10 @@ const PiaeceReport = () => {
                   <div className="flex flex-col lg:flex-row lg:items-end gap-3">
                     <form
                       onSubmit={form.handleSubmit(onSubmit)}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full"
+                      className="grid grid-cols-1 md:grid-cols-4 gap-1 w-full"
                     >
                       {/* From Date */}
-                      <div className="space-y-1">
+                      <div className="space-y-1 pr-1">
                         <Label
                           htmlFor="from_date"
                           className={`text-xs ${ButtonConfig.cardLabel || "text-gray-700"}`}
@@ -560,7 +656,7 @@ const PiaeceReport = () => {
                       </div>
 
                       {/* To Date */}
-                      <div className="space-y-1">
+                      <div className="space-y-1 pr-1">
                         <Label
                           htmlFor="to_date"
                           className={`text-xs ${ButtonConfig.cardLabel || "text-gray-700"}`}
@@ -579,9 +675,23 @@ const PiaeceReport = () => {
                           </p>
                         )}
                       </div>
+                      {/*Item Name*/}
+
+                      {/* In the mobile section */}
+                      <div className="space-y-1 col-span-2">
+                        <Label htmlFor="itemSelect_mobile" className="text-xs">
+                          Item
+                        </Label>
+                        <MemoizedSelect
+                          value={selectedItem}
+                          onChange={setSelectedItem}
+                          options={itemOptions}
+                          placeholder="All Items"
+                        />
+                      </div>
 
                       {/* Generate Button */}
-                      <div className="md:col-span-3 flex justify-end">
+                      <div className="md:col-span-4 flex justify-end">
                         <Button
                           type="submit"
                           disabled={isLoading}
@@ -620,15 +730,6 @@ const PiaeceReport = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setShowNewItemDialog(true)}
-                        className="bg-green-50 hover:bg-green-100 border-green-300"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Item
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
                         onClick={handleDownloadCsv}
                       >
                         <FaRegFileExcel className="mr-2 h-4 w-4" />
@@ -659,7 +760,7 @@ const PiaeceReport = () => {
                 <CardContent>
                   <div ref={tableRef} className="overflow-x-auto print:p-4">
                     <div className="text-center mb-4 font-semibold">
-                      Stocks Sqft Report
+                      Stocks Box/Piece Report
                     </div>
                     <div className="text-center text-sm mb-6">
                       From{" "}
@@ -667,96 +768,7 @@ const PiaeceReport = () => {
                       {moment(searchParams.to_date).format("DD-MMM-YYYY")}
                     </div>
 
-                    <Table className="border">
-                      <TableHeader>
-                        <TableRow className="bg-gray-100 hover:bg-gray-100">
-                          <TableHead className="text-center text-black font-bold  border-r">
-                            Items Name
-                          </TableHead>
-                          <TableHead className="text-center text-black font-bold border-r">
-                            Open Balance
-                          </TableHead>
-                          <TableHead className="text-center text-black font-bold border-r">
-                            Purchase
-                          </TableHead>
-                          <TableHead className="text-center text-black font-bold border-r">
-                            Sale
-                          </TableHead>
-                          <TableHead className="text-center text-black font-bold">
-                            Close Balance
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stocksData?.stocks?.length ? (
-                          stocksData.stocks.map((item, index) => (
-                            <TableRow
-                              key={index}
-                              className={
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-                              }
-                            >
-                              <TableCell className="text-left border-r">
-                                <span className="flex items-center gap-1">
-                                  {item.item_name}
-                                  <button
-                                    onClick={() =>
-                                      handleEditItem(item.item_name)
-                                    }
-                                    className="text-gray-400 hover:text-blue-600 print:hidden"
-                                  >
-                                    <Pencil className="h-3 w-3" />
-                                  </button>
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-center border-r">
-                                {formatStockValue(
-                                  item.openpurch_pcs - item.closesale_pcs,
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center border-r">
-                                {formatStockValue(item.purch_pcs)}
-                              </TableCell>
-                              <TableCell className="text-center border-r">
-                                {formatStockValue(item.sale_pcs)}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {formatStockValue(
-                                  item.openpurch_pcs -
-                                    item.closesale_pcs +
-                                    (item.purch_pcs - item.sale_pcs),
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={5}
-                              className="text-center py-12 text-gray-500"
-                            >
-                              {isLoading ? (
-                                <div className="flex items-center justify-center gap-2">
-                                  <Loader2 className="h-5 w-5 animate-spin" />
-                                  Loading stock data...
-                                </div>
-                              ) : (
-                                <div className="space-y-2">
-                                  <div className="text-lg">📋</div>
-                                  <div>
-                                    No stock data found for the selected
-                                    criteria
-                                  </div>
-                                  <div className="text-sm text-gray-400">
-                                    Try adjusting your date range
-                                  </div>
-                                </div>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                    <Table className="border"></Table>
                   </div>
                 </CardContent>
               </>
@@ -846,4 +858,4 @@ const PiaeceReport = () => {
   );
 };
 
-export default PiaeceReport;
+export default SingleItemStockReport;

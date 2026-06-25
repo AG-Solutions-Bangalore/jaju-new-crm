@@ -56,6 +56,11 @@ const formSchema = z.object({
 const StocksReport = () => {
   const { toast } = useToast();
   const tableRef = useRef(null);
+  // Unit selection state
+  const [selectedUnits, setSelectedUnits] = useState({
+    box: true, // Box/Piece
+    sqft: true, // Sqft
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useState(null);
@@ -79,11 +84,21 @@ const StocksReport = () => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      from_date: getFirstDayOfMonth(),
+      from_date: "2026-04-01",
       to_date: getTodayDate(),
     },
   });
-
+  const handleUnitToggle = (unit) => {
+    setSelectedUnits((prev) => {
+      // If this unit is currently true and both are true, toggling off would make both false
+      // So we only toggle off if the other unit is true
+      if (prev[unit] && !prev[unit === "box" ? "sqft" : "box"]) {
+        // This is the only selected one, don't allow unchecking
+        return prev;
+      }
+      return { ...prev, [unit]: !prev[unit] };
+    });
+  };
   const { data: stocksData, isLoading } = useQuery({
     queryKey: ["stocksReport", searchParams],
     queryFn: async () => {
@@ -241,27 +256,74 @@ const StocksReport = () => {
     setSearchParams(data);
   };
 
-  const handleDownloadCsv = async () => {
+  const handleDownloadCsv = () => {
     try {
-      if (!searchParams) return;
+      if (!stocksData || !stocksData.stocks || stocksData.stocks.length === 0) {
+        toast({
+          title: "No Data",
+          description: "There is no stock data to download",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      const response = await axios.post(
-        `${BASE_URL}/api/web-download-stock-report`,
-        searchParams,
-        {
-          headers: {
-            Authorization: `Bearer ${Cookies.get("token")}`,
-          },
-          responseType: "blob",
-        },
-      );
+      // Build CSV headers
+      const headers = [
+        "Item Name",
+        "Open Balance",
+        "Purchase",
+        "Sale",
+        "Close Balance"
+      ];
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Build CSV rows
+      const rows = stocksData.stocks.map(item => {
+        let openBal = "";
+        let purchaseVal = "";
+        let saleVal = "";
+        let closeBal = "";
+
+        if (selectedUnits.box && selectedUnits.sqft) {
+          openBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs , ${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft"`;
+          purchaseVal = `"${formatStockValue(item.purch_pcs)} Pcs , ${formatStockValue(item.purch_sqr)} Sqft"`;
+          saleVal = `"${formatStockValue(item.sale_pcs)} Pcs , ${formatStockValue(item.sale_sqr)} Sqft"`;
+          closeBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs , ${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft"`;
+        } else if (selectedUnits.box) {
+          openBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs"`;
+          purchaseVal = `"${formatStockValue(item.purch_pcs)} Pcs"`;
+          saleVal = `"${formatStockValue(item.sale_pcs)} Pcs"`;
+          closeBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs"`;
+        } else if (selectedUnits.sqft) {
+          openBal = `"${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft"`;
+          purchaseVal = `"${formatStockValue(item.purch_sqr)} Sqft"`;
+          saleVal = `"${formatStockValue(item.sale_sqr)} Sqft"`;
+          closeBal = `"${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft"`;
+        }
+
+        return [
+          `"${item.item_name}"`,
+          openBal,
+          purchaseVal,
+          saleVal,
+          closeBal
+        ];
+      });
+
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(e => e.join(","))
+      ].join("\n");
+
+      // Create download link
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "stocks.csv");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `stocks_report_${searchParams?.from_date}_to_${searchParams?.to_date}.csv`);
       document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
       toast({
         title: "Download Successful",
@@ -334,7 +396,7 @@ const StocksReport = () => {
               {/* Title + Print Button */}
               <div className="flex justify-between items-center">
                 <h1 className="text-base font-bold text-gray-800 px-2">
-                  Stocks Box Report
+                  Stocks
                 </h1>
                 <div className="flex gap-[2px]">
                   <button
@@ -447,7 +509,7 @@ const StocksReport = () => {
               ) : (
                 <>
                   <div className="text-center font-semibold text-sm mb-2">
-                    Stocks Box Report
+                    Stocks Report
                   </div>
                   <div className="text-center text-xs mb-3">
                     From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
@@ -527,7 +589,7 @@ const StocksReport = () => {
                 {/* Title Section */}
                 <div className="w-[30%] shrink-0">
                   <h1 className="text-xl font-bold text-gray-800 truncate">
-                    Stocks Box Report
+                    Stocks Report
                   </h1>
                 </div>
 
@@ -658,31 +720,56 @@ const StocksReport = () => {
 
                 <CardContent>
                   <div ref={tableRef} className="overflow-x-auto print:p-4">
-                    <div className="text-center mb-4 font-semibold">
-                      Stocks Box Report
+                    <div className="relative text-center mb-6">
+                      <div className="font-semibold text-lg">Stocks Report</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        From{" "}
+                        {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
+                        to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
+                      </div>
+                      <div
+                        data-html2canvas-ignore="true"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 print:hidden flex items-center gap-4"
+                      >
+                        <Label className="text-xs font-medium">
+                          Show Units:
+                        </Label>
+                        <div className="flex gap-3">
+                          <label className="flex items-center gap-1 text-xs cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedUnits.box}
+                              onChange={() => handleUnitToggle("box")}
+                            />
+                            Box/Piece
+                          </label>
+                          <label className="flex items-center gap-1 text-xs cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedUnits.sqft}
+                              onChange={() => handleUnitToggle("sqft")}
+                            />
+                            Sqft
+                          </label>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-center text-sm mb-6">
-                      From{" "}
-                      {moment(searchParams.from_date).format("DD-MMM-YYYY")} to{" "}
-                      {moment(searchParams.to_date).format("DD-MMM-YYYY")}
-                    </div>
-
-                    <Table className="border">
+                    <Table className="border table-fixed w-full">
                       <TableHeader>
                         <TableRow className="bg-gray-100 hover:bg-gray-100">
-                          <TableHead className="text-center text-black font-bold  border-r">
+                          <TableHead className="text-center text-black font-bold border-r w-[36%]">
                             Items Name
                           </TableHead>
-                          <TableHead className="text-center text-black font-bold border-r">
+                          <TableHead className="text-center text-black font-bold border-r w-[16%]">
                             Open Balance
                           </TableHead>
-                          <TableHead className="text-center text-black font-bold border-r">
+                          <TableHead className="text-center text-black font-bold border-r w-[16%]">
                             Purchase
                           </TableHead>
-                          <TableHead className="text-center text-black font-bold border-r">
+                          <TableHead className="text-center text-black font-bold border-r w-[16%]">
                             Sale
                           </TableHead>
-                          <TableHead className="text-center text-black font-bold">
+                          <TableHead className="text-center text-black font-bold w-[16%]">
                             Close Balance
                           </TableHead>
                         </TableRow>
@@ -703,6 +790,7 @@ const StocksReport = () => {
                                     onClick={() =>
                                       handleEditItem(item.item_name)
                                     }
+                                    data-html2canvas-ignore="true"
                                     className="text-gray-400 hover:text-blue-600 print:hidden"
                                   >
                                     <Pencil className="h-3 w-3" />
@@ -710,22 +798,40 @@ const StocksReport = () => {
                                 </span>
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {formatStockValue(
-                                  item.openpurch - item.closesale,
-                                )}
+                                {selectedUnits.box &&
+                                  `${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs`}
+                                {selectedUnits.box &&
+                                  selectedUnits.sqft &&
+                                  " , "}
+                                {selectedUnits.sqft &&
+                                  `${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft`}
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {formatStockValue(item.purch)}
+                                {selectedUnits.box &&
+                                  `${formatStockValue(item.purch_pcs)} Pcs`}
+                                {selectedUnits.box &&
+                                  selectedUnits.sqft &&
+                                  " , "}
+                                {selectedUnits.sqft &&
+                                  `${formatStockValue(item.purch_sqr)} Sqft`}
                               </TableCell>
                               <TableCell className="text-center border-r">
-                                {formatStockValue(item.sale)}
+                                {selectedUnits.box &&
+                                  `${formatStockValue(item.sale_pcs)} Pcs`}
+                                {selectedUnits.box &&
+                                  selectedUnits.sqft &&
+                                  " , "}
+                                {selectedUnits.sqft &&
+                                  `${formatStockValue(item.sale_sqr)} Sqft`}
                               </TableCell>
                               <TableCell className="text-center">
-                                {formatStockValue(
-                                  item.openpurch -
-                                    item.closesale +
-                                    (item.purch - item.sale),
-                                )}
+                                {selectedUnits.box &&
+                                  `${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs`}
+                                {selectedUnits.box &&
+                                  selectedUnits.sqft &&
+                                  " , "}
+                                {selectedUnits.sqft &&
+                                  `${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft`}
                               </TableCell>
                             </TableRow>
                           ))
@@ -757,6 +863,8 @@ const StocksReport = () => {
                         )}
                       </TableBody>
                     </Table>
+
+                    <Table className="border"></Table>
                   </div>
                 </CardContent>
               </>
@@ -775,7 +883,7 @@ const StocksReport = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
+            <div className="space-y-2 ">
               <Label>Item Name</Label>
               <Input
                 value={newItemName}
