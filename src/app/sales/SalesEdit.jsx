@@ -223,6 +223,12 @@ const SalesEdit = () => {
           ? Math.round(parseFloat(sales.sales_amount_round))
           : Math.round(savedGross - savedTempAmount);
 
+      if (sales.sales_unloading && parseFloat(sales.sales_unloading) > 0) {
+        setLoadingType("Loading & Unloading");
+      } else {
+        setLoadingType("Loading Only");
+      }
+
       form.reset({
         sales_date: moment(sales.sales_date).format("YYYY-MM-DD"),
         sales_year: sales.sales_year || currentYear,
@@ -278,7 +284,8 @@ const SalesEdit = () => {
           const itemName = sub.sales_sub_item || "";
           if (itemName) {
             const exists = product.some((item) => {
-              const name = item.item_name || item.product_type_group || item.product_type;
+              const name =
+                item.item_name || item.product_type_group || item.product_type;
               return name === itemName;
             });
             if (!exists) {
@@ -292,7 +299,6 @@ const SalesEdit = () => {
       }
     }
   }, [salesId, product]);
-
 
   // -------- Calculate totals (unchanged net total, round‑off subtracts) ----------
   const calculateAndSetTotals = (entries, skipGst = false) => {
@@ -490,10 +496,13 @@ const SalesEdit = () => {
     };
 
     const itemErrors = itemEntries.map((entry, index) => ({
-      item:
-        isCustomItem[index]
-          ? (!customItems[index] ? "required" : "")
-          : (!entry.sales_sub_item ? "required" : ""),
+      item: isCustomItem[index]
+        ? !customItems[index]
+          ? "required"
+          : ""
+        : !entry.sales_sub_item
+          ? "required"
+          : "",
       qnty:
         entry.sales_sub_qnty !== "" &&
         entry.sales_sub_qnty != null &&

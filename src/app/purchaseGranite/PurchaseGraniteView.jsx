@@ -94,7 +94,7 @@ const PurchaseGraniteView = () => {
       });
   };
 
-  const calculateTotal = (items) => {
+  const calculateSubTotal = (items) => {
     return items?.reduce(
       (total, item) => total + (parseFloat(item.purchase_sub_amount) || 0),
       0,
@@ -110,6 +110,33 @@ const PurchaseGraniteView = () => {
       </Page>
     );
   }
+
+  const subTotal = calculateSubTotal(purchaseData?.purchaseSub);
+  const tax = parseFloat(purchaseData?.purchase?.purchase_tax || 0);
+  const tempo = parseFloat(purchaseData?.purchase?.purchase_tempo || 0);
+  const loading = parseFloat(purchaseData?.purchase?.purchase_loading || 0);
+  const unloading = parseFloat(purchaseData?.purchase?.purchase_unloading || 0);
+  const other = parseFloat(purchaseData?.purchase?.purchase_other || 0);
+  const other1 = parseFloat(purchaseData?.purchase?.purchase_other1 || 0);
+  const gross = parseFloat(purchaseData?.purchase?.purchase_gross || 0);
+
+  const unroundedTotal =
+    subTotal + tax + tempo + loading + unloading + other + other1;
+
+  const grandTotal = subTotal + tempo + loading + unloading + other + other1;
+  const autoGst = grandTotal * 0.18;
+
+  const roundOff =
+    purchaseData?.purchase?.purchase_amount_round !== undefined &&
+    purchaseData?.purchase?.purchase_amount_round !== null
+      ? parseFloat(purchaseData.purchase.purchase_amount_round)
+      : gross -
+        parseFloat(
+          purchaseData?.purchase?.purchase_temp_amount || unroundedTotal,
+        );
+
+  const displayNetTotal = grandTotal + tax;
+  const amountToBeCollected = displayNetTotal - roundOff;
 
   return (
     <Page>
@@ -246,7 +273,104 @@ const PurchaseGraniteView = () => {
                       <tr className="font-bold">
                         <td className="border p-1 text-right">Total</td>
                         <td className="border p-1 text-right">
-                          {calculateTotal(purchaseData?.purchaseSub)}
+                          {calculateSubTotal(purchaseData?.purchaseSub)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border p-1 text-right font-medium">
+                          Tax (GST{" "}
+                          {purchaseData?.purchase?.purchase_gst_percentage ||
+                            18}
+                          % ={" "}
+                          {Number(purchaseData?.purchase?.purchase_tax).toFixed(
+                            0,
+                          )}
+                          )
+                        </td>
+                        <td className="border p-1 text-right">
+                          {Number(purchaseData?.purchase?.purchase_tax).toFixed(
+                            0,
+                          )}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border p-1 text-right font-medium">
+                          Tempo Charges
+                        </td>
+                        <td className="border p-1 text-right">
+                          {Number(
+                            purchaseData?.purchase?.purchase_tempo,
+                          ).toFixed(0)}
+                        </td>
+                      </tr>
+                      {Number(purchaseData?.purchase?.purchase_loading || 0) >
+                        0 && (
+                        <tr>
+                          <td className="border p-1 text-right font-medium">
+                            Loading Only
+                          </td>
+                          <td className="border p-1 text-right">
+                            {Number(
+                              purchaseData?.purchase?.purchase_loading,
+                            ).toFixed(0)}
+                          </td>
+                        </tr>
+                      )}
+                      {Number(purchaseData?.purchase?.purchase_unloading || 0) >
+                        0 && (
+                        <tr>
+                          <td className="border p-1 text-right font-medium">
+                            Loading & Unloading
+                          </td>
+                          <td className="border p-1 text-right">
+                            {Number(
+                              purchaseData?.purchase?.purchase_unloading,
+                            ).toFixed(0)}
+                          </td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td className="border p-1 text-right font-medium">
+                          Other Charges
+                        </td>
+                        <td className="border p-1 text-right">
+                          {Number(
+                            purchaseData?.purchase?.purchase_other,
+                          ).toFixed(0)}
+                        </td>
+                      </tr>
+                      {Number(purchaseData?.purchase?.purchase_other1 || 0) >
+                        0 && (
+                        <tr>
+                          <td className="border p-1 text-right font-medium">
+                            {purchaseData?.purchase?.purchase_other1_label ||
+                              "Other Charges 2"}
+                          </td>
+                          <td className="border p-1 text-right">
+                            {Number(
+                              purchaseData?.purchase?.purchase_other1,
+                            ).toFixed(0)}
+                          </td>
+                        </tr>
+                      )}
+                      {Math.abs(Math.round(roundOff)) > 0 && (
+                        <tr>
+                          <td className="border p-1 text-right font-medium">
+                            Round Off
+                          </td>
+                          <td className="border p-1 text-right">
+                            {Math.round(roundOff) > 0
+                              ? `+${Math.round(roundOff)}`
+                              : Math.round(roundOff)}
+                          </td>
+                        </tr>
+                      )}
+                      <tr className="font-bold">
+                        <td className="border p-1 text-right">
+                          Amount to be Collected
+                        </td>
+                        <td className="border p-1 text-right">
+                          {Number(amountToBeCollected).toFixed(0)}
                         </td>
                       </tr>
                     </tbody>
@@ -269,9 +393,7 @@ const PurchaseGraniteView = () => {
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
-                  <CardTitle className="text-xl">
-                    Purchase Granite Details
-                  </CardTitle>
+                  <CardTitle className="text-xl">Purchase Details</CardTitle>
                 </div>
                 <div className="flex justify-end gap-2 ">
                   <Button
@@ -387,10 +509,158 @@ const PurchaseGraniteView = () => {
                   <TableFooter>
                     <TableRow className="bg-white font-bold">
                       <TableCell colSpan={5} className="text-right border-r">
-                        Total
+                        Sub-Total
                       </TableCell>
                       <TableCell className="text-right">
-                        {calculateTotal(purchaseData?.purchaseSub)}
+                        {Number(
+                          calculateSubTotal(purchaseData?.purchaseSub),
+                        ).toFixed(0)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-right  bg-white font-medium border-r border-b"
+                      >
+                        Tempo Charges
+                      </TableCell>
+                      <TableCell className="text-right  bg-white border-b pr-4">
+                        {Number(purchaseData?.purchase?.purchase_tempo).toFixed(
+                          0,
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    {Number(purchaseData?.purchase?.purchase_loading || 0) >
+                      0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-right bg-white font-medium border-r border-b"
+                        >
+                          Loading Only
+                        </TableCell>
+                        <TableCell className="text-right bg-white border-b pr-4">
+                          {Number(
+                            purchaseData?.purchase?.purchase_loading,
+                          ).toFixed(0)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {Number(purchaseData?.purchase?.purchase_unloading || 0) >
+                      0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-right bg-white font-medium border-r border-b"
+                        >
+                          Loading & Unloading
+                        </TableCell>
+                        <TableCell className="text-right bg-white border-b pr-4">
+                          {Number(
+                            purchaseData?.purchase?.purchase_unloading,
+                          ).toFixed(0)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {purchaseData?.purchase_other_label && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-right bg-white font-medium border-r border-b"
+                        >
+                          {purchaseData.purchase_other_label}
+                        </TableCell>
+                        <TableCell className="text-right bg-white border-b pr-4">
+                          {Number(
+                            purchaseData?.purchase?.purchase_other,
+                          ).toFixed(0)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {purchaseData.purchase_other1_label && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-right bg-white font-medium border-r border-b"
+                        >
+                          {purchaseData.purchase_other1_label}
+                        </TableCell>
+                        <TableCell className="text-right bg-white border-b pr-4">
+                          {Number(
+                            purchaseData?.purchase?.purchase_other1,
+                          ).toFixed(0)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-right bg-white  font-medium border-r border-b"
+                      >
+                        Gross Total
+                      </TableCell>
+                      <TableCell className="text-right bg-white border-b pr-4">
+                        {Number(grandTotal).toFixed(0)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-right bg-white  font-medium border-r border-b"
+                      >
+                        Tax (GST{" "}
+                        {purchaseData?.purchase?.purchase_gst_percentage || 18}%
+                        = {Number(autoGst).toFixed(2)})
+                      </TableCell>
+                      <TableCell className="text-right bg-white border-b pr-4">
+                        {Number(purchaseData?.purchase?.purchase_tax).toFixed(
+                          2,
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    {Number(purchaseData?.purchase?.purchase_other1 || 0) >
+                      0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-right bg-white font-medium border-r border-b"
+                        >
+                          {purchaseData?.purchase?.purchase_other1_label ||
+                            "Other Charges 2"}
+                        </TableCell>
+                        <TableCell className="text-right bg-white border-b pr-4">
+                          {Number(
+                            purchaseData?.purchase?.purchase_other1,
+                          ).toFixed(0)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {Math.abs(Math.round(roundOff)) > 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-right bg-white font-medium border-r border-b"
+                        >
+                          Round Off
+                        </TableCell>
+                        <TableCell className="text-right bg-white border-b pr-4">
+                          {Math.round(roundOff) > 0
+                            ? `${Math.round(roundOff)}`
+                            : Math.round(roundOff)}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow className="font-bold">
+                      <TableCell
+                        colSpan={5}
+                        className="text-right bg-white border-r border-b"
+                      >
+                        Amount to be Collected
+                      </TableCell>
+                      <TableCell className="text-right  bg-white border-b pr-4">
+                        {Number(purchaseData?.purchase?.purchase_gross).toFixed(
+                          0,
+                        )}
                       </TableCell>
                     </TableRow>
                   </TableFooter>

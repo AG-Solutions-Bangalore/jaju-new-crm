@@ -31,6 +31,7 @@ import EstimateSalesAdd from "@/app/sales/EstimateSalesAdd";
 import ChangeLedger from "@/app/changeLedger/ChangeLedger";
 import PiaeceReport from "@/app/stocks/PiaeceReport";
 import SaleDashboard from "@/app/home/SaleDashboard";
+import SingleItemStockReport from "@/app/stocks/SingleItemStockReport";
 
 function AppRoutes() {
   return (
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="/sales/view/:id" element={<SalesView />} />
         <Route path="/sales/edit/:id" element={<SalesEdit />} />
         <Route path="/stocks" element={<StocksReport />} />
+        <Route path="/single-item-stock" element={<SingleItemStockReport />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
