@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import * as z from "zod";
@@ -13,17 +13,8 @@ import {
   ChevronLeft,
   Plus,
   Pencil,
+  CalendarDays,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MemoizedSelect } from "@/components/common/MemoizedSelect";
-
-// Inside your component:
 import { useNavigate } from "react-router-dom";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -46,6 +37,8 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Loader2 } from "lucide-react";
 import ReactToPrint from "react-to-print";
 import Page from "@/app/dashboard/page";
@@ -56,7 +49,8 @@ import html2pdf from "html2pdf.js";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { FaRegFilePdf, FaRegFileExcel } from "react-icons/fa";
 import Cookies from "js-cookie";
-import { getFirstDayOfMonth } from "@/utils/getFirstDayOfMonth";
+import { MemoizedSelect } from "@/components/common/MemoizedSelect";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   from_date: z.string().min(1, "From date is required"),
@@ -66,15 +60,9 @@ const formSchema = z.object({
 const SingleItemStockReport = () => {
   const { toast } = useToast();
   const tableRef = useRef(null);
-  // Unit selection state
-  const [selectedUnits, setSelectedUnits] = useState({
-    box: true, // Box/Piece
-    sqft: true, // Sqft
-  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedItem, setSelectedItem] = useState("");
-
   const [searchParams, setSearchParams] = useState(null);
 
   // New Item dialog
@@ -86,13 +74,13 @@ const SingleItemStockReport = () => {
   const [showEditItemDialog, setShowEditItemDialog] = useState(false);
   const [editItemName, setEditItemName] = useState("");
   const [editingProductId, setEditingProductId] = useState(null);
-  const formatStockValue = (value) => {
-    if (value === undefined || value === null || value === "") return "0";
+
+  const formatCellValue = (value) => {
+    if (value === undefined || value === null || value === "") return "";
     const num = parseFloat(value);
     return isNaN(num) ? value : parseFloat(num.toFixed(4));
   };
-  const hello = getTodayDate();
-  console.log("stock date ", hello);
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -100,32 +88,16 @@ const SingleItemStockReport = () => {
       to_date: getTodayDate(),
     },
   });
-  // const handleUnitToggle = (unit) => {
-  //   setSelectedUnits((prev) => {
-  //     // If this unit is currently true and both are true, toggling off would make both false
-  //     // So we only toggle off if the other unit is true
-  //     if (prev[unit] && !prev[unit === "box" ? "sqft" : "box"]) {
-  //       // This is the only selected one, don't allow unchecking
-  //       return prev;
-  //     }
-  //     return { ...prev, [unit]: !prev[unit] };
-  //   });
-  // };
+
   const { data: stocksData, isLoading } = useQuery({
     queryKey: ["stocksReport", searchParams],
     queryFn: async () => {
-      if (!searchParams) return { stocks: [] };
-      // if (!selectedItem || selectedItem == "") {
-      //   return { stocks: [] };
-      // }
+      if (!searchParams) return null;
 
       const token = Cookies.get("token");
       const response = await axios.post(
         `${BASE_URL}/api/web-fetch-stock-new-report-by-item`,
-        {
-          ...searchParams, // includes from_date, to_date
-          item_name: selectedItem,
-        },
+        searchParams,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -134,11 +106,6 @@ const SingleItemStockReport = () => {
     },
     enabled: !!searchParams,
   });
-
-  const filteredStocks =
-    stocksData?.stocks?.filter(
-      (item) => !selectedItem || item.item_name === selectedItem,
-    ) || [];
 
   const { data: productTypes } = useQuery({
     queryKey: ["productTypes"],
@@ -163,12 +130,15 @@ const SingleItemStockReport = () => {
       return response.data?.data || response.data?.product_type_group || [];
     },
   });
-  const itemOptions = [
-    ...(productGroups?.map((item) => ({
-      value: item.item_name,
-      label: item.item_name,
-    })) || []),
-  ];
+
+  const itemOptions = useMemo(() => {
+    return (productGroups || [])
+      .map((item) => {
+        const name = item.item_name || item.product_type_group || item.product_type || "";
+        return { value: name, label: name };
+      })
+      .filter((opt) => opt.value !== "");
+  }, [productGroups]);
 
   const createProductMutation = useMutation({
     mutationFn: async (data) => {
@@ -183,7 +153,7 @@ const SingleItemStockReport = () => {
     onSuccess: () => {
       toast({ title: "Success", description: "New item created successfully" });
       queryClient.invalidateQueries({ queryKey: ["productTypes"] });
-      queryClient.invalidateQueries({ queryKey: ["stocksReport"] });
+      queryClient.invalidateQueries({ queryKey: ["productGroups"] });
       setShowNewItemDialog(false);
       setNewItemName("");
       setNewItemGroup("");
@@ -210,7 +180,7 @@ const SingleItemStockReport = () => {
     onSuccess: () => {
       toast({ title: "Success", description: "Item renamed successfully" });
       queryClient.invalidateQueries({ queryKey: ["productTypes"] });
-      queryClient.invalidateQueries({ queryKey: ["stocksReport"] });
+      queryClient.invalidateQueries({ queryKey: ["productGroups"] });
       setShowEditItemDialog(false);
       setEditItemName("");
       setEditingProductId(null);
@@ -239,11 +209,19 @@ const SingleItemStockReport = () => {
     });
   };
 
-  const handleEditItem = (itemName) => {
+  const handleEditItem = () => {
+    if (!selectedItem) {
+      toast({
+        title: "Validation Error",
+        description: "Please select an item to rename.",
+        variant: "destructive",
+      });
+      return;
+    }
     const product = productTypes?.find(
       (p) =>
         (p.product_type || p.item_name || "").toLowerCase() ===
-        itemName.toLowerCase(),
+        selectedItem.toLowerCase(),
     );
     if (!product) {
       toast({
@@ -282,7 +260,13 @@ const SingleItemStockReport = () => {
       });
       return;
     }
-    if (searchParams && JSON.stringify(searchParams) === JSON.stringify(data)) {
+    
+    const params = {
+      ...data,
+      item_name: selectedItem,
+    };
+
+    if (searchParams && JSON.stringify(searchParams) === JSON.stringify(params)) {
       toast({
         title: "Same search parameters",
         description: "You're already viewing results for these search criteria",
@@ -290,12 +274,126 @@ const SingleItemStockReport = () => {
       });
       return;
     }
-    setSearchParams(data);
+    setSearchParams(params);
+  };
+
+  // Normalization and running balance calculations
+  const { normalizedTxs, openingPieces, openingSqft, closingPieces, closingSqft, lastTxDate } = useMemo(() => {
+    const stockItem = stocksData?.stocks?.[0] || {};
+    
+    const opPieces = Number(stockItem.openpurch_pcs || 0) - Number(stockItem.closesale_pcs || 0);
+    const opSqft = Number(stockItem.openpurch_sqr || 0) - Number(stockItem.closesale_sqr || 0);
+
+    const clPieces = opPieces + Number(stockItem.purch_pcs || 0) - Number(stockItem.sale_pcs || 0);
+    const clSqft = opSqft + Number(stockItem.purch_sqr || 0) - Number(stockItem.sale_sqr || 0);
+
+    const purchaseList = Array.isArray(stocksData?.purchase) ? stocksData.purchase : [];
+    const saleList = Array.isArray(stocksData?.sale) ? stocksData.sale : [];
+
+    // Map and combine
+    const combined = [
+      ...purchaseList.map((p) => ({
+        ...p,
+        type: "purchase",
+        date: p.purchase_sub_date || "",
+      })),
+      ...saleList.map((s) => ({
+        ...s,
+        type: "sale",
+        date: s.sales_sub_date || "",
+      })),
+    ];
+
+    // Sort by date ascending
+    combined.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    let runningPieces = opPieces;
+    let runningSqft = opSqft;
+
+    const normalized = combined.map((t) => {
+      if (t.type === "purchase") {
+        const inward_pcs = Number(t.purchase_sub_pcs || 0);
+        const inward_sqft = Number(t.purchase_sub_qnty_sqr || 0);
+
+        runningPieces += inward_pcs;
+        runningSqft += inward_sqft;
+
+        return {
+          date: t.purchase_sub_date,
+          reference: t.purchase_ref || "",
+          inward_pieces: inward_pcs,
+          inward_sqft: inward_sqft,
+          outward_pieces: null,
+          outward_sqft: null,
+          balance_pieces: runningPieces,
+          balance_sqft: runningSqft,
+        };
+      } else {
+        const outward_pcs = Number(t.sales_sub_pcs || 0);
+        const outward_sqft = Number(t.sales_sub_qnty_sqr || 0);
+
+        runningPieces -= outward_pcs;
+        runningSqft -= outward_sqft;
+
+        return {
+          date: t.sales_sub_date,
+          reference: t.sales_ref || "",
+          inward_pieces: null,
+          inward_sqft: null,
+          outward_pieces: outward_pcs,
+          outward_sqft: outward_sqft,
+          balance_pieces: runningPieces,
+          balance_sqft: runningSqft,
+        };
+      }
+    });
+
+    // Add opening balance row
+    if (searchParams) {
+      normalized.unshift({
+        date: searchParams.from_date || "",
+        reference: "Opening Balance",
+        isOpening: true,
+        inward_pieces: null,
+        inward_sqft: null,
+        outward_pieces: null,
+        outward_sqft: null,
+        balance_pieces: opPieces,
+        balance_sqft: opSqft,
+      });
+    }
+
+    const lastDate = normalized.length > 0 ? normalized[normalized.length - 1].date : searchParams?.to_date || "";
+
+    return {
+      normalizedTxs: normalized,
+      openingPieces: opPieces,
+      openingSqft: opSqft,
+      closingPieces: clPieces,
+      closingSqft: clSqft,
+      lastTxDate: lastDate,
+    };
+  }, [stocksData, searchParams]);
+
+  const formatClosingBalanceText = (pcs, sqr) => {
+    const p = parseFloat(pcs || 0);
+    const s = parseFloat(sqr || 0);
+    
+    if (p === 0 && s === 0) {
+      return "Zero Pieces and Zero SQFT";
+    }
+    
+    const pcsText = p === 0 ? "Zero Pieces" : `${p} Pieces`;
+    const sqftText = s === 0 ? "Zero SQFT" : `${s} SQFT`;
+    
+    return `${pcsText} and ${sqftText}`;
   };
 
   const handleDownloadCsv = () => {
     try {
-      if (filteredStocks.length === 0) {
+      if (normalizedTxs.length === 0) {
         toast({
           title: "No Data",
           description: "There is no stock data to download",
@@ -304,56 +402,51 @@ const SingleItemStockReport = () => {
         return;
       }
 
-      // Build CSV headers
       const headers = [
-        "Item Name",
-        "Open Balance",
-        "Purchase",
-        "Sale",
-        "Close Balance",
+        "Date",
+        "Reference",
+        "Inward Piece/Box",
+        "Inward SQFT",
+        "Outward Piece/Box",
+        "Outward SQFT",
+        "Balance Piece/Box",
+        "Balance SQFT",
       ];
 
-      // Build CSV rows
-      const rows = filteredStocks.map((item) => {
-        let openBal = "";
-        let purchaseVal = "";
-        let saleVal = "";
-        let closeBal = "";
+      const rows = normalizedTxs.map((t) => [
+        t.date ? moment(t.date).format("DD MMMM YYYY") : "",
+        `"${t.reference}"`,
+        t.inward_pieces ?? "",
+        t.inward_sqft ?? "",
+        t.outward_pieces ?? "",
+        t.outward_sqft ?? "",
+        t.balance_pieces ?? "",
+        t.balance_sqft ?? "",
+      ]);
 
-        if (selectedUnits.box && selectedUnits.sqft) {
-          openBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs , ${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft"`;
-          purchaseVal = `"${formatStockValue(item.purch_pcs)} Pcs , ${formatStockValue(item.purch_sqr)} Sqft"`;
-          saleVal = `"${formatStockValue(item.sale_pcs)} Pcs , ${formatStockValue(item.sale_sqr)} Sqft"`;
-          closeBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs , ${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft"`;
-        } else if (selectedUnits.box) {
-          openBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs)} Pcs"`;
-          purchaseVal = `"${formatStockValue(item.purch_pcs)} Pcs"`;
-          saleVal = `"${formatStockValue(item.sale_pcs)} Pcs"`;
-          closeBal = `"${formatStockValue(item.openpurch_pcs - item.closesale_pcs + (item.purch_pcs - item.sale_pcs))} Pcs"`;
-        } else if (selectedUnits.sqft) {
-          openBal = `"${formatStockValue(item.openpurch_sqr - item.closesale_sqr)} Sqft"`;
-          purchaseVal = `"${formatStockValue(item.purch_sqr)} Sqft"`;
-          saleVal = `"${formatStockValue(item.sale_sqr)} Sqft"`;
-          closeBal = `"${formatStockValue(item.openpurch_sqr - item.closesale_sqr + (item.purch_sqr - item.sale_sqr))} Sqft"`;
-        }
+      rows.push([
+        lastTxDate ? moment(lastTxDate).format("DD MMMM YYYY") : "",
+        `"Closing: ${formatClosingBalanceText(closingPieces, closingSqft)}"`,
+        "",
+        "",
+        "",
+        "",
+        closingPieces,
+        closingSqft,
+      ]);
 
-        return [`"${item.item_name}"`, openBal, purchaseVal, saleVal, closeBal];
-      });
-
-      // Combine headers and rows
       const csvContent = [
         headers.join(","),
         ...rows.map((e) => e.join(",")),
       ].join("\n");
 
-      // Create download link
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
       link.setAttribute(
         "download",
-        `single_item_stock_report_${searchParams?.from_date}_to_${searchParams?.to_date}.csv`,
+        `single_item_stock_${selectedItem}_${searchParams?.from_date}_to_${searchParams?.to_date}.csv`,
       );
       document.body.appendChild(link);
       link.click();
@@ -361,12 +454,12 @@ const SingleItemStockReport = () => {
 
       toast({
         title: "Download Successful",
-        description: "Single Item Stock Report downloaded as CSV",
+        description: "Transaction History downloaded as CSV",
       });
     } catch (error) {
       toast({
         title: "Download Failed",
-        description: "Failed to download single item stock report",
+        description: "Failed to download CSV",
         variant: "destructive",
       });
     }
@@ -376,7 +469,7 @@ const SingleItemStockReport = () => {
     const input = tableRef.current;
     const options = {
       margin: [5, 5, 5, 5],
-      filename: "stocks-report.pdf",
+      filename: `single_item_stock_${selectedItem}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
         scale: 2,
@@ -414,367 +507,324 @@ const SingleItemStockReport = () => {
       .then(() => {
         toast({
           title: "PDF Generated",
-          description: "Single Item Stock Report saved as PDF",
+          description: "Transaction History saved as PDF",
         });
       });
   };
 
   return (
     <Page>
-      <div className="w-full p-0 md:p-0 ">
-        <div className="sm:hidden">
-          <div
-            className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-0 mb-2`}
-          >
-            <div className="flex flex-col gap-2">
-              {/* Title + Print Button */}
-              <div className="flex justify-between items-center">
-                <h1 className="text-base font-bold text-gray-800 px-2">
-                  Stocks Box/piece
-                </h1>
-                <div className="flex gap-[2px]">
-                  <button
-                    className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
-                    onClick={handleDownloadCsv}
-                  >
-                    <FaRegFileExcel className="h-4 w-4" />
-                  </button>
-                  <button
-                    className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
-                    onClick={handleDownloadPDF}
-                  >
-                    <FaRegFilePdf className="h-4 w-4" />
-                  </button>
+      <div className="w-full p-2 md:p-4 space-y-4">
+        {/* Title and Top Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Single Item Stock</h1>
+            <p className="text-xs text-gray-500">View detailed stock transaction history by item</p>
+          </div>
+          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+            <Button
+              onClick={() => setShowNewItemDialog(true)}
+              className="flex-1 sm:flex-none h-9 bg-green-600 hover:bg-green-700 text-white text-xs flex items-center gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              New Item
+            </Button>
+            {selectedItem && (
+              <Button
+                onClick={handleEditItem}
+                variant="outline"
+                className="flex-1 sm:flex-none h-9 text-xs flex items-center gap-1.5"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Rename Item
+              </Button>
+            )}
+          </div>
+        </div>
 
-                  <ReactToPrint
-                    trigger={() => (
-                      <button
-                        className={`sm:w-auto ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor} text-sm p-3 rounded-b-md`}
-                      >
-                        <Printer className=" h-4 w-4" />
-                      </button>
-                    )}
-                    content={() => tableRef.current}
-                    documentTitle="Stock-Report"
+        {/* Filter Card */}
+        <Card className="shadow-xs border-gray-200">
+          <CardContent className="p-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                {/* Select Item */}
+                <div className="space-y-1.5 md:col-span-1">
+                  <Label htmlFor="itemSelect" className="text-xs font-semibold text-gray-700">
+                    Select Item
+                  </Label>
+                  <MemoizedSelect
+                    value={selectedItem}
+                    onChange={setSelectedItem}
+                    options={itemOptions}
+                    placeholder="Search / Select Item"
                   />
-                  <button
-                    onClick={() => setShowNewItemDialog(true)}
-                    className="sm:w-auto bg-green-600 hover:bg-green-700 text-white text-sm p-3 rounded-b-md flex items-center gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
                 </div>
-              </div>
 
-              {/* Form */}
-              <div className="bg-white p-2 rounded-md shadow-xs">
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="from_date_mobile" className="text-xs">
-                      From Date
-                    </Label>
-                    <Input
-                      id="from_date_mobile"
-                      type="date"
-                      {...form.register("from_date")}
-                      className="text-xs h-8"
-                      value={form.watch("from_date")}
-                      onChange={(e) =>
-                        form.setValue("from_date", e.target.value)
-                      }
-                    />
-                    {form.formState.errors.from_date && (
-                      <p className="text-xs text-red-500">
-                        {form.formState.errors.from_date.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label htmlFor="to_date_mobile" className="text-xs">
-                      To Date
-                    </Label>
-                    <Input
-                      id="to_date_mobile"
-                      type="date"
-                      {...form.register("to_date")}
-                      className="text-xs h-8"
-                      value={form.watch("to_date")}
-                      onChange={(e) => form.setValue("to_date", e.target.value)}
-                    />
-                    {form.formState.errors.to_date && (
-                      <p className="text-xs text-red-500">
-                        {form.formState.errors.to_date.message}
-                      </p>
-                    )}
-                  </div>
+                {/* From Date Picker */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-gray-700">From Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-between text-left font-normal h-9 text-xs border-gray-300",
+                          !form.watch("from_date") && "text-muted-foreground"
+                        )}
+                      >
+                        {form.watch("from_date") ? (
+                          moment(form.watch("from_date")).format("DD MMMM YYYY")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarDays className="h-4 w-4 opacity-75 text-gray-500" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={form.watch("from_date") ? new Date(form.watch("from_date")) : undefined}
+                        onSelect={(date) =>
+                          form.setValue("from_date", date ? moment(date).format("YYYY-MM-DD") : "")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-                <div className="pt-1">
+
+                {/* To Date Picker */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-gray-700">To Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-between text-left font-normal h-9 text-xs border-gray-300",
+                          !form.watch("to_date") && "text-muted-foreground"
+                        )}
+                      >
+                        {form.watch("to_date") ? (
+                          moment(form.watch("to_date")).format("DD MMMM YYYY")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarDays className="h-4 w-4 opacity-75 text-gray-500" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={form.watch("to_date") ? new Date(form.watch("to_date")) : undefined}
+                        onSelect={(date) =>
+                          form.setValue("to_date", date ? moment(date).format("YYYY-MM-DD") : "")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Generate Button */}
+                <div>
                   <Button
-                    type="button"
-                    onClick={form.handleSubmit(onSubmit)}
+                    type="submit"
                     disabled={isLoading}
-                    className={`w-full h-8 ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
+                    className={`w-full h-9 text-xs font-semibold ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                         Generating...
                       </>
                     ) : (
                       <>
-                        <Search className="h-3 w-3 mr-1" />
+                        <Search className="h-3.5 w-3.5 mr-1.5" />
                         Generate Report
                       </>
                     )}
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
+            </form>
+          </CardContent>
+        </Card>
 
-          {/* Mobile Results */}
-          {searchParams && (
-            <div className="p-2">
+        {/* Results Container */}
+        {searchParams && (
+          <Card className="shadow-xs border-gray-200">
+            <CardHeader className="p-4 border-b flex flex-row items-center justify-between gap-4 flex-wrap">
+              <div>
+                <CardTitle className="text-lg font-bold text-gray-800">
+                  {selectedItem}
+                </CardTitle>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Report from {moment(searchParams.from_date).format("DD MMMM YYYY")} to{" "}
+                  {moment(searchParams.to_date).format("DD MMMM YYYY")}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 self-stretch sm:self-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadCsv}
+                  className="h-8 text-xs flex-1 sm:flex-none border-gray-300"
+                >
+                  <FaRegFileExcel className="mr-1.5 h-3.5 w-3.5 text-green-600" />
+                  CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadPDF}
+                  className="h-8 text-xs flex-1 sm:flex-none border-gray-300"
+                >
+                  <FaRegFilePdf className="mr-1.5 h-3.5 w-3.5 text-red-600" />
+                  PDF
+                </Button>
+                <ReactToPrint
+                  trigger={() => (
+                    <Button variant="outline" size="sm" className="h-8 text-xs flex-1 sm:flex-none border-gray-300">
+                      <Printer className="mr-1.5 h-3.5 w-3.5 text-gray-600" />
+                      Print
+                    </Button>
+                  )}
+                  content={() => tableRef.current}
+                  documentTitle={`Single-Item-Stock-${selectedItem}`}
+                />
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-4 space-y-4">
               {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <Loader2 className="h-8 w-8 animate-spin" />
+                <div className="flex justify-center items-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               ) : (
-                <>
-                  <div className="text-center font-semibold text-sm mb-2">
-                    Single Item Stock Report
-                  </div>
-                  <div className="text-center text-xs mb-3">
-                    From {moment(searchParams.from_date).format("DD-MMM-YYYY")}{" "}
-                    to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-gray-800">Transaction History</h2>
                   </div>
 
-                  <table className="w-full border-collapse text-xs">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border p-1 text-left">Item Name</th>
-                        <th className="border p-1 text-right">Open</th>
-                        <th className="border p-1 text-right">Purchase</th>
-                        <th className="border p-1 text-right">Sale</th>
-                        <th className="border p-1 text-right">Close</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStocks.length ? (
-                        filteredStocks.map((item, index) => (
-                          <tr
-                            key={index}
-                            className={
-                              index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            }
-                          >
-                            <td className="border p-1 text-left">
-                              <span className="flex items-center gap-1">
-                                {item.item_name}
-                                <button
-                                  onClick={() => handleEditItem(item.item_name)}
-                                  className="text-gray-400 hover:text-blue-600"
-                                >
-                                  <Pencil className="h-3 w-3" />
-                                </button>
-                              </span>
+                  {/* Transaction History Table */}
+                  <div ref={tableRef} className="overflow-x-auto border rounded-lg border-gray-200">
+                    <div className="hidden print:block text-center p-4">
+                      <h2 className="text-xl font-bold">{selectedItem}</h2>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Stock Transaction History (From {moment(searchParams.from_date).format("DD MMMM YYYY")} to {moment(searchParams.to_date).format("DD MMMM YYYY")})
+                      </p>
+                    </div>
+
+                    <Table className="border-collapse w-full text-[11px]">
+                      <TableHeader className="bg-gray-100 text-gray-900 sticky top-0">
+                        <TableRow className="bg-gray-100 hover:bg-gray-100 border-b border-gray-200">
+                          <TableHead rowSpan={2} className="text-center text-gray-800 font-bold border-r border-gray-200 align-middle w-32">
+                            DATE
+                          </TableHead>
+                          <TableHead rowSpan={2} className="text-left text-gray-800 font-bold border-r border-gray-200 align-middle pl-3 min-w-40">
+                            REFERENCE
+                          </TableHead>
+                          <TableHead colSpan={2} className="text-center text-green-800 font-bold border-r border-gray-200 bg-green-50/50 py-1.5">
+                            INWARD
+                          </TableHead>
+                          <TableHead colSpan={2} className="text-center text-red-800 font-bold border-r border-gray-200 bg-red-50/50 py-1.5">
+                            OUTWARD
+                          </TableHead>
+                          <TableHead colSpan={2} className="text-center text-blue-800 font-bold bg-blue-50/50 py-1.5">
+                            BALANCE
+                          </TableHead>
+                        </TableRow>
+                        <TableRow className="bg-gray-100 hover:bg-gray-100 border-b border-gray-200">
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">Piece/Box</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">SQFT</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">Piece/Box</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">SQFT</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 bg-blue-50/20 py-1 w-20 text-gray-700">Piece/Box</TableHead>
+                          <TableHead className="text-right pr-6 bg-blue-50/20 py-1 w-20 text-gray-700">SQFT</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {normalizedTxs.length ? (
+                          normalizedTxs.map((t, index) => (
+                            <TableRow
+                              key={index}
+                              className={cn(
+                                "border-b border-gray-200 hover:bg-gray-50/50",
+                                index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                              )}
+                            >
+                              <TableCell className="text-center border-r border-gray-200 font-medium py-2">
+                                {t.date ? moment(t.date).format("DD MMMM YYYY") : ""}
+                              </TableCell>
+                              <TableCell className="text-left pl-3 border-r border-gray-200 font-medium text-gray-800 py-2">
+                                {t.reference}
+                              </TableCell>
+
+                              {/* INWARD */}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-green-700 font-semibold py-2">
+                                {formatCellValue(t.inward_pieces)}
+                              </TableCell>
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-green-700 font-semibold py-2">
+                                {formatCellValue(t.inward_sqft)}
+                              </TableCell>
+
+                              {/* OUTWARD */}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-red-700 font-semibold py-2">
+                                {formatCellValue(t.outward_pieces)}
+                              </TableCell>
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-red-700 font-semibold py-2">
+                                {formatCellValue(t.outward_sqft)}
+                              </TableCell>
+
+                              {/* BALANCE */}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 bg-blue-50/20 text-gray-800 font-bold py-2">
+                                {formatCellValue(t.balance_pieces)}
+                              </TableCell>
+                              <TableCell className="text-right pr-6 bg-blue-50/20 text-gray-800 font-bold py-2">
+                                {formatCellValue(t.balance_sqft)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <td
+                              colSpan={8}
+                              className="text-center py-12 text-gray-500 font-medium"
+                            >
+                              No transaction history found for the selected criteria
                             </td>
-                            <td className="border p-1 text-right">
-                              {item.openpurch - item.closesale}
-                            </td>
-                            <td className="border p-1 text-right">
-                              {item.purch}
-                            </td>
-                            <td className="border p-1 text-right">
-                              {item.sale}
-                            </td>
-                            <td className="border p-1 text-right">
-                              {item.openpurch -
-                                item.closesale +
-                                (item.purch - item.sale)}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="border p-2 text-center text-gray-500"
-                          >
-                            No stock data found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </>
+                          </TableRow>
+                        )}
+
+                        {/* Final Closing Balance Row */}
+                        {normalizedTxs.length > 0 && (
+                          <TableRow className="bg-slate-900 text-white hover:bg-slate-900 font-bold text-xs">
+                            <TableCell className="text-center py-2.5">
+                              {lastTxDate ? moment(lastTxDate).format("DD MMMM YYYY") : ""}
+                            </TableCell>
+                            <TableCell className="text-left pl-3 py-2.5">
+                              Closing: {formatClosingBalanceText(closingPieces, closingSqft)}
+                            </TableCell>
+                            <TableCell colSpan={4} className="py-2.5"></TableCell>
+                            <TableCell className="text-right pr-6 border-r border-slate-800 py-2.5">
+                              {closingPieces}
+                            </TableCell>
+                            <TableCell className="text-right pr-6 py-2.5">
+                              {closingSqft}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               )}
-            </div>
-          )}
-        </div>
-
-        <div className="hidden sm:block">
-          <Card className="shadow-sm">
-            <div
-              className={`sticky top-0 z-10 border border-gray-200 rounded-lg ${ButtonConfig.cardheaderColor} shadow-sm p-3 mb-2`}
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                {/* Title Section */}
-                <div className="w-[30%] shrink-0">
-                  <h1 className="text-xl font-bold text-gray-800 truncate">
-                    Single Item Stock Report
-                  </h1>
-                </div>
-
-                {/* Form Section */}
-                <div className="bg-white w-full lg:w-[70%] p-3 rounded-md shadow-xs">
-                  <div className="flex flex-col lg:flex-row lg:items-end gap-3">
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="grid grid-cols-1 md:grid-cols-4 gap-1 w-full"
-                    >
-                      {/* From Date */}
-                      <div className="space-y-1 pr-1">
-                        <Label
-                          htmlFor="from_date"
-                          className={`text-xs ${ButtonConfig.cardLabel || "text-gray-700"}`}
-                        >
-                          From Date
-                        </Label>
-                        <Input
-                          id="from_date"
-                          type="date"
-                          {...form.register("from_date")}
-                          className="h-8 text-xs"
-                        />
-                        {form.formState.errors.from_date && (
-                          <p className="text-xs text-red-500">
-                            {form.formState.errors.from_date.message}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* To Date */}
-                      <div className="space-y-1 pr-1">
-                        <Label
-                          htmlFor="to_date"
-                          className={`text-xs ${ButtonConfig.cardLabel || "text-gray-700"}`}
-                        >
-                          To Date
-                        </Label>
-                        <Input
-                          id="to_date"
-                          type="date"
-                          {...form.register("to_date")}
-                          className="h-8 text-xs"
-                        />
-                        {form.formState.errors.to_date && (
-                          <p className="text-xs text-red-500">
-                            {form.formState.errors.to_date.message}
-                          </p>
-                        )}
-                      </div>
-                      {/*Item Name*/}
-
-                      {/* In the mobile section */}
-                      <div className="space-y-1 col-span-2">
-                        <Label htmlFor="itemSelect_mobile" className="text-xs">
-                          Item
-                        </Label>
-                        <MemoizedSelect
-                          value={selectedItem}
-                          onChange={setSelectedItem}
-                          options={itemOptions}
-                          placeholder="All Items"
-                        />
-                      </div>
-
-                      {/* Generate Button */}
-                      <div className="md:col-span-4 flex justify-end">
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className={`h-8 text-xs ${ButtonConfig.backgroundColor} ${ButtonConfig.hoverBackgroundColor} ${ButtonConfig.textColor}`}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                              Generating...
-                            </>
-                          ) : (
-                            <>
-                              <Search className="h-3 w-3 mr-1" />
-                              Generate
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {searchParams && (
-              <>
-                <CardHeader className="border-t">
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between sm:gap-2">
-                    <CardTitle className="text-lg flex flex-row items-center gap-2">
-                      {/* <span>Stock Report Results</span>
-                    <span className="text-blue-800 text-xs">
-                      {moment(searchParams.from_date).format("DD-MMM-YYYY")} to {moment(searchParams.to_date).format("DD-MMM-YYYY")}
-                    </span> */}
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDownloadCsv}
-                      >
-                        <FaRegFileExcel className="mr-2 h-4 w-4" />
-                        CSV
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDownloadPDF}
-                      >
-                        <FaRegFilePdf className="mr-2 h-4 w-4" />
-                        PDF
-                      </Button>
-                      <ReactToPrint
-                        trigger={() => (
-                          <Button variant="outline" size="sm">
-                            <Printer className="mr-2 h-4 w-4" />
-                            Print
-                          </Button>
-                        )}
-                        content={() => tableRef.current}
-                        documentTitle="Stock-Report"
-                      />
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <div ref={tableRef} className="overflow-x-auto print:p-4">
-                    <div className="text-center mb-4 font-semibold">
-                      Stocks Box/Piece Report
-                    </div>
-                    <div className="text-center text-sm mb-6">
-                      From{" "}
-                      {moment(searchParams.from_date).format("DD-MMM-YYYY")} to{" "}
-                      {moment(searchParams.to_date).format("DD-MMM-YYYY")}
-                    </div>
-
-                    <Table className="border"></Table>
-                  </div>
-                </CardContent>
-              </>
-            )}
+            </CardContent>
           </Card>
-        </div>
+        )}
       </div>
 
       {/* New Item Dialog */}
