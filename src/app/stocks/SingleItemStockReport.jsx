@@ -75,8 +75,8 @@ const SingleItemStockReport = () => {
   const [editItemName, setEditItemName] = useState("");
   const [editingProductId, setEditingProductId] = useState(null);
 
-  const formatStockValue = (value) => {
-    if (value === undefined || value === null || value === "") return "-";
+  const formatCellValue = (value) => {
+    if (value === undefined || value === null || value === "") return "";
     const num = parseFloat(value);
     return isNaN(num) ? value : parseFloat(num.toFixed(4));
   };
@@ -278,131 +278,118 @@ const SingleItemStockReport = () => {
   };
 
   // Normalization and running balance calculations
-  const { normalizedTxs, openingBox, openingPc, closingBox, closingPc, lastTxDate } = useMemo(() => {
-    const rawTxs = Array.isArray(stocksData) 
-      ? stocksData 
-      : (stocksData?.stocks || stocksData?.data || []);
+  const { normalizedTxs, openingPieces, openingSqft, closingPieces, closingSqft, lastTxDate } = useMemo(() => {
+    const stockItem = stocksData?.stocks?.[0] || {};
+    
+    const opPieces = Number(stockItem.openpurch_pcs || 0) - Number(stockItem.closesale_pcs || 0);
+    const opSqft = Number(stockItem.openpurch_sqr || 0) - Number(stockItem.closesale_sqr || 0);
 
-    const opBox = stocksData?.opening?.opening_box ?? stocksData?.opening_box ?? stocksData?.open_box ?? 0;
-    const opPc = stocksData?.opening?.opening_pc ?? stocksData?.opening?.opening_pcs ?? stocksData?.opening_pcs ?? stocksData?.open_pcs ?? 0;
+    const clPieces = opPieces + Number(stockItem.purch_pcs || 0) - Number(stockItem.sale_pcs || 0);
+    const clSqft = opSqft + Number(stockItem.purch_sqr || 0) - Number(stockItem.sale_sqr || 0);
 
-    const clBox = stocksData?.closing?.closing_box ?? stocksData?.closing_box ?? stocksData?.close_box ?? 0;
-    const clPc = stocksData?.closing?.closing_pc ?? stocksData?.closing?.closing_pcs ?? stocksData?.closing_pcs ?? stocksData?.close_pcs ?? 0;
+    const purchaseList = Array.isArray(stocksData?.purchase) ? stocksData.purchase : [];
+    const saleList = Array.isArray(stocksData?.sale) ? stocksData.sale : [];
 
-    let runningBox = opBox;
-    let runningPc = opPc;
+    // Map and combine
+    const combined = [
+      ...purchaseList.map((p) => ({
+        ...p,
+        type: "purchase",
+        date: p.purchase_sub_date || "",
+      })),
+      ...saleList.map((s) => ({
+        ...s,
+        type: "sale",
+        date: s.sales_sub_date || "",
+      })),
+    ];
 
-    const normalized = rawTxs.map((t) => {
-      const isOpening = t.reference?.toLowerCase().includes("opening balance") || t.ref_no?.toLowerCase().includes("opening balance");
-
-      if (isOpening) {
-        runningBox = Number(t.balance_box ?? t.box_balance ?? t.balance_pc_box ?? opBox);
-        runningPc = Number(t.balance_pc ?? t.pc_balance ?? t.balance_pcs ?? opPc);
-        return {
-          date: t.date || t.purch_date || t.created_at || "",
-          reference: "Opening Balance",
-          isOpening: true,
-          inward_box: null,
-          inward_pc: null,
-          in_return_box: null,
-          in_return_pc: null,
-          outward_box: null,
-          outward_pc: null,
-          out_return_box: null,
-          out_return_pc: null,
-          balance_box: runningBox,
-          balance_pc: runningPc,
-        };
-      }
-
-      const inward_box = t.inward_box !== undefined ? Number(t.inward_box) : (t.inward?.box !== undefined ? Number(t.inward.box) : null);
-      const inward_pc = t.inward_pc !== undefined ? Number(t.inward_pc) : (t.inward_pcs !== undefined ? Number(t.inward_pcs) : (t.inward?.pc !== undefined ? Number(t.inward.pc) : null));
-
-      const in_return_box = t.in_return_box !== undefined ? Number(t.in_return_box) : (t.in_return?.box !== undefined ? Number(t.in_return.box) : null);
-      const in_return_pc = t.in_return_pc !== undefined ? Number(t.in_return_pc) : (t.in_return_pcs !== undefined ? Number(t.in_return_pcs) : (t.in_return?.pc !== undefined ? Number(t.in_return.pc) : null));
-
-      const outward_box = t.outward_box !== undefined ? Number(t.outward_box) : (t.outward?.box !== undefined ? Number(t.outward.box) : null);
-      const outward_pc = t.outward_pc !== undefined ? Number(t.outward_pc) : (t.outward_pcs !== undefined ? Number(t.outward_pcs) : (t.outward?.pc !== undefined ? Number(t.outward.pc) : null));
-
-      const out_return_box = t.out_return_box !== undefined ? Number(t.out_return_box) : (t.out_return?.box !== undefined ? Number(t.out_return.box) : null);
-      const out_return_pc = t.out_return_pc !== undefined ? Number(t.out_return_pc) : (t.out_return_pcs !== undefined ? Number(t.out_return_pcs) : (t.out_return?.pc !== undefined ? Number(t.out_return.pc) : null));
-
-      let balance_box = t.balance_box !== undefined ? Number(t.balance_box) : (t.box_balance !== undefined ? Number(t.box_balance) : null);
-      let balance_pc = t.balance_pc !== undefined ? Number(t.balance_pc) : (t.pc_balance !== undefined ? Number(t.pc_balance) : (t.balance_pcs !== undefined ? Number(t.balance_pcs) : null));
-
-      if (balance_box === null || balance_pc === null) {
-        const pcsPerBox = stocksData?.pcs_per_box ?? stocksData?.pcs_val ?? 2;
-        const netBox = (inward_box || 0) + (in_return_box || 0) - (outward_box || 0) - (out_return_box || 0);
-        const netPc = (inward_pc || 0) + (in_return_pc || 0) - (outward_pc || 0) - (out_return_pc || 0);
-
-        runningBox += netBox;
-        runningPc += netPc;
-
-        if (runningPc < 0) {
-          const borrowBoxes = Math.ceil(Math.abs(runningPc) / pcsPerBox);
-          runningBox -= borrowBoxes;
-          runningPc += borrowBoxes * pcsPerBox;
-        } else if (runningPc >= pcsPerBox) {
-          const carryBoxes = Math.floor(runningPc / pcsPerBox);
-          runningBox += carryBoxes;
-          runningPc -= carryBoxes * pcsPerBox;
-        }
-
-        balance_box = runningBox;
-        balance_pc = runningPc;
-      } else {
-        runningBox = balance_box;
-        runningPc = balance_pc;
-      }
-
-      return {
-        date: t.date || t.purch_date || t.sales_date || t.created_at || "",
-        reference: t.reference || t.ref_no || t.invoice_no || t.challan_no || t.purchase_no || "",
-        inward_box,
-        inward_pc,
-        in_return_box,
-        in_return_pc,
-        outward_box,
-        outward_pc,
-        out_return_box,
-        out_return_pc,
-        balance_box,
-        balance_pc,
-      };
+    // Sort by date ascending
+    combined.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
     });
 
-    const hasOpening = normalized.some((t) => t.isOpening);
-    let finalTxs = [...normalized];
+    let runningPieces = opPieces;
+    let runningSqft = opSqft;
 
-    if (!hasOpening && searchParams) {
-      finalTxs.unshift({
-        date: searchParams.from_date ? moment(searchParams.from_date).format("YYYY-MM-DD") : "",
+    const normalized = combined.map((t) => {
+      if (t.type === "purchase") {
+        const inward_pcs = Number(t.purchase_sub_pcs || 0);
+        const inward_sqft = Number(t.purchase_sub_qnty_sqr || 0);
+
+        runningPieces += inward_pcs;
+        runningSqft += inward_sqft;
+
+        return {
+          date: t.purchase_sub_date,
+          reference: t.purchase_ref || "",
+          inward_pieces: inward_pcs,
+          inward_sqft: inward_sqft,
+          outward_pieces: null,
+          outward_sqft: null,
+          balance_pieces: runningPieces,
+          balance_sqft: runningSqft,
+        };
+      } else {
+        const outward_pcs = Number(t.sales_sub_pcs || 0);
+        const outward_sqft = Number(t.sales_sub_qnty_sqr || 0);
+
+        runningPieces -= outward_pcs;
+        runningSqft -= outward_sqft;
+
+        return {
+          date: t.sales_sub_date,
+          reference: t.sales_ref || "",
+          inward_pieces: null,
+          inward_sqft: null,
+          outward_pieces: outward_pcs,
+          outward_sqft: outward_sqft,
+          balance_pieces: runningPieces,
+          balance_sqft: runningSqft,
+        };
+      }
+    });
+
+    // Add opening balance row
+    if (searchParams) {
+      normalized.unshift({
+        date: searchParams.from_date || "",
         reference: "Opening Balance",
         isOpening: true,
-        inward_box: null,
-        inward_pc: null,
-        in_return_box: null,
-        in_return_pc: null,
-        outward_box: null,
-        outward_pc: null,
-        out_return_box: null,
-        out_return_pc: null,
-        balance_box: opBox,
-        balance_pc: opPc,
+        inward_pieces: null,
+        inward_sqft: null,
+        outward_pieces: null,
+        outward_sqft: null,
+        balance_pieces: opPieces,
+        balance_sqft: opSqft,
       });
     }
 
-    const lastDate = finalTxs.length > 0 ? finalTxs[finalTxs.length - 1].date : searchParams?.to_date || "";
+    const lastDate = normalized.length > 0 ? normalized[normalized.length - 1].date : searchParams?.to_date || "";
 
     return {
-      normalizedTxs: finalTxs,
-      openingBox: opBox,
-      openingPc: opPc,
-      closingBox: clBox,
-      closingPc: clPc,
+      normalizedTxs: normalized,
+      openingPieces: opPieces,
+      openingSqft: opSqft,
+      closingPieces: clPieces,
+      closingSqft: clSqft,
       lastTxDate: lastDate,
     };
   }, [stocksData, searchParams]);
+
+  const formatClosingBalanceText = (pcs, sqr) => {
+    const p = parseFloat(pcs || 0);
+    const s = parseFloat(sqr || 0);
+    
+    if (p === 0 && s === 0) {
+      return "Zero Pieces and Zero SQFT";
+    }
+    
+    const pcsText = p === 0 ? "Zero Pieces" : `${p} Pieces`;
+    const sqftText = s === 0 ? "Zero SQFT" : `${s} SQFT`;
+    
+    return `${pcsText} and ${sqftText}`;
+  };
 
   const handleDownloadCsv = () => {
     try {
@@ -418,46 +405,34 @@ const SingleItemStockReport = () => {
       const headers = [
         "Date",
         "Reference",
-        "Inward Box",
-        "Inward Pc",
-        "In Return Box",
-        "In Return Pc",
-        "Outward Box",
-        "Outward Pc",
-        "Out Return Box",
-        "Out Return Pc",
-        "Balance Box",
-        "Balance Pc",
+        "Inward Piece/Box",
+        "Inward SQFT",
+        "Outward Piece/Box",
+        "Outward SQFT",
+        "Balance Piece/Box",
+        "Balance SQFT",
       ];
 
       const rows = normalizedTxs.map((t) => [
-        t.date ? moment(t.date).format("DD MMM YYYY") : "",
+        t.date ? moment(t.date).format("DD MMMM YYYY") : "",
         `"${t.reference}"`,
-        t.inward_box ?? "",
-        t.inward_pc ?? "",
-        t.in_return_box ?? "",
-        t.in_return_pc ?? "",
-        t.outward_box ?? "",
-        t.outward_pc ?? "",
-        t.out_return_box ?? "",
-        t.out_return_pc ?? "",
-        t.balance_box ?? "",
-        t.balance_pc ?? "",
+        t.inward_pieces ?? "",
+        t.inward_sqft ?? "",
+        t.outward_pieces ?? "",
+        t.outward_sqft ?? "",
+        t.balance_pieces ?? "",
+        t.balance_sqft ?? "",
       ]);
 
       rows.push([
-        lastTxDate ? moment(lastTxDate).format("DD MMM YYYY") : "",
-        "\"FINAL CLOSING BALANCE\"",
+        lastTxDate ? moment(lastTxDate).format("DD MMMM YYYY") : "",
+        `"Closing: ${formatClosingBalanceText(closingPieces, closingSqft)}"`,
         "",
         "",
         "",
         "",
-        "",
-        "",
-        "",
-        "",
-        closingBox,
-        closingPc,
+        closingPieces,
+        closingSqft,
       ]);
 
       const csvContent = [
@@ -598,7 +573,7 @@ const SingleItemStockReport = () => {
                         )}
                       >
                         {form.watch("from_date") ? (
-                          moment(form.watch("from_date")).format("DD MMM YYYY")
+                          moment(form.watch("from_date")).format("DD MMMM YYYY")
                         ) : (
                           <span>Pick a date</span>
                         )}
@@ -631,7 +606,7 @@ const SingleItemStockReport = () => {
                         )}
                       >
                         {form.watch("to_date") ? (
-                          moment(form.watch("to_date")).format("DD MMM YYYY")
+                          moment(form.watch("to_date")).format("DD MMMM YYYY")
                         ) : (
                           <span>Pick a date</span>
                         )}
@@ -685,8 +660,8 @@ const SingleItemStockReport = () => {
                   {selectedItem}
                 </CardTitle>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Report from {moment(searchParams.from_date).format("DD MMM YYYY")} to{" "}
-                  {moment(searchParams.to_date).format("DD MMM YYYY")}
+                  Report from {moment(searchParams.from_date).format("DD MMMM YYYY")} to{" "}
+                  {moment(searchParams.to_date).format("DD MMMM YYYY")}
                 </p>
               </div>
 
@@ -730,19 +705,8 @@ const SingleItemStockReport = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Title and Balance indicators */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div className="flex justify-between items-center">
                     <h2 className="text-lg font-bold text-gray-800">Transaction History</h2>
-                    <div className="flex gap-2 self-stretch sm:self-auto">
-                      <div className="flex-1 sm:flex-none bg-gray-100 border border-gray-200 text-gray-800 px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between sm:justify-start gap-1">
-                        <span className="text-gray-500">OPENING:</span>
-                        <span className="font-bold">{openingBox} Box {openingPc} Pc</span>
-                      </div>
-                      <div className="flex-1 sm:flex-none bg-blue-50 border border-blue-100 text-blue-800 px-3.5 py-1.5 rounded-md text-xs font-medium flex items-center justify-between sm:justify-start gap-1">
-                        <span className="text-blue-500">CLOSING:</span>
-                        <span className="font-bold">{closingBox} Box {closingPc} Pc</span>
-                      </div>
-                    </div>
                   </div>
 
                   {/* Transaction History Table */}
@@ -750,18 +714,14 @@ const SingleItemStockReport = () => {
                     <div className="hidden print:block text-center p-4">
                       <h2 className="text-xl font-bold">{selectedItem}</h2>
                       <p className="text-xs text-gray-500 mt-1">
-                        Stock Transaction History (From {moment(searchParams.from_date).format("DD MMM YYYY")} to {moment(searchParams.to_date).format("DD MMM YYYY")})
+                        Stock Transaction History (From {moment(searchParams.from_date).format("DD MMMM YYYY")} to {moment(searchParams.to_date).format("DD MMMM YYYY")})
                       </p>
-                      <div className="flex justify-center gap-4 mt-2 text-xs">
-                        <div>OPENING: <b>{openingBox} Box {openingPc} Pc</b></div>
-                        <div>CLOSING: <b>{closingBox} Box {closingPc} Pc</b></div>
-                      </div>
                     </div>
 
                     <Table className="border-collapse w-full text-[11px]">
                       <TableHeader className="bg-gray-100 text-gray-900 sticky top-0">
                         <TableRow className="bg-gray-100 hover:bg-gray-100 border-b border-gray-200">
-                          <TableHead rowSpan={2} className="text-center text-gray-800 font-bold border-r border-gray-200 align-middle w-24">
+                          <TableHead rowSpan={2} className="text-center text-gray-800 font-bold border-r border-gray-200 align-middle w-32">
                             DATE
                           </TableHead>
                           <TableHead rowSpan={2} className="text-left text-gray-800 font-bold border-r border-gray-200 align-middle pl-3 min-w-40">
@@ -770,30 +730,20 @@ const SingleItemStockReport = () => {
                           <TableHead colSpan={2} className="text-center text-green-800 font-bold border-r border-gray-200 bg-green-50/50 py-1.5">
                             INWARD
                           </TableHead>
-                          <TableHead colSpan={2} className="text-center text-teal-800 font-bold border-r border-gray-200 bg-teal-50/50 py-1.5">
-                            IN RETURN
-                          </TableHead>
                           <TableHead colSpan={2} className="text-center text-red-800 font-bold border-r border-gray-200 bg-red-50/50 py-1.5">
                             OUTWARD
-                          </TableHead>
-                          <TableHead colSpan={2} className="text-center text-orange-800 font-bold border-r border-gray-200 bg-orange-50/50 py-1.5">
-                            OUT RETURN
                           </TableHead>
                           <TableHead colSpan={2} className="text-center text-blue-800 font-bold bg-blue-50/50 py-1.5">
                             BALANCE
                           </TableHead>
                         </TableRow>
                         <TableRow className="bg-gray-100 hover:bg-gray-100 border-b border-gray-200">
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">BOX</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">PC</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">BOX</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">PC</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">BOX</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">PC</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">BOX</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 py-1 w-12 text-gray-700">PC</TableHead>
-                          <TableHead className="text-center font-bold border-r border-gray-200 bg-blue-50/20 py-1 w-14 text-gray-700">BOX</TableHead>
-                          <TableHead className="text-center font-bold bg-blue-50/20 py-1 w-14 text-gray-700">PC</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">Piece/Box</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">SQFT</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">Piece/Box</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 py-1 w-20 text-gray-700">SQFT</TableHead>
+                          <TableHead className="text-right pr-6 font-bold border-r border-gray-200 bg-blue-50/20 py-1 w-20 text-gray-700">Piece/Box</TableHead>
+                          <TableHead className="text-right pr-6 bg-blue-50/20 py-1 w-20 text-gray-700">SQFT</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -807,57 +757,41 @@ const SingleItemStockReport = () => {
                               )}
                             >
                               <TableCell className="text-center border-r border-gray-200 font-medium py-2">
-                                {t.date ? moment(t.date).format("DD MMM YYYY") : ""}
+                                {t.date ? moment(t.date).format("DD MMMM YYYY") : ""}
                               </TableCell>
                               <TableCell className="text-left pl-3 border-r border-gray-200 font-medium text-gray-800 py-2">
                                 {t.reference}
                               </TableCell>
 
                               {/* INWARD */}
-                              <TableCell className="text-center border-r border-gray-200 text-green-700 font-semibold py-2">
-                                {formatStockValue(t.inward_box)}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-green-700 font-semibold py-2">
+                                {formatCellValue(t.inward_pieces)}
                               </TableCell>
-                              <TableCell className="text-center border-r border-gray-200 text-green-700 font-semibold py-2">
-                                {formatStockValue(t.inward_pc)}
-                              </TableCell>
-
-                              {/* IN RETURN */}
-                              <TableCell className="text-center border-r border-gray-200 text-teal-700 font-semibold py-2">
-                                {formatStockValue(t.in_return_box)}
-                              </TableCell>
-                              <TableCell className="text-center border-r border-gray-200 text-teal-700 font-semibold py-2">
-                                {formatStockValue(t.in_return_pc)}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-green-700 font-semibold py-2">
+                                {formatCellValue(t.inward_sqft)}
                               </TableCell>
 
                               {/* OUTWARD */}
-                              <TableCell className="text-center border-r border-gray-200 text-red-700 font-semibold py-2">
-                                {formatStockValue(t.outward_box)}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-red-700 font-semibold py-2">
+                                {formatCellValue(t.outward_pieces)}
                               </TableCell>
-                              <TableCell className="text-center border-r border-gray-200 text-red-700 font-semibold py-2">
-                                {formatStockValue(t.outward_pc)}
-                              </TableCell>
-
-                              {/* OUT RETURN */}
-                              <TableCell className="text-center border-r border-gray-200 text-orange-700 font-semibold py-2">
-                                {formatStockValue(t.out_return_box)}
-                              </TableCell>
-                              <TableCell className="text-center border-r border-gray-200 text-orange-700 font-semibold py-2">
-                                {formatStockValue(t.out_return_pc)}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 text-red-700 font-semibold py-2">
+                                {formatCellValue(t.outward_sqft)}
                               </TableCell>
 
                               {/* BALANCE */}
-                              <TableCell className="text-center border-r border-gray-200 bg-blue-50/20 text-gray-800 font-bold py-2">
-                                {t.balance_box ?? "-"}
+                              <TableCell className="text-right pr-6 border-r border-gray-200 bg-blue-50/20 text-gray-800 font-bold py-2">
+                                {formatCellValue(t.balance_pieces)}
                               </TableCell>
-                              <TableCell className="text-center bg-blue-50/20 text-gray-800 font-bold py-2">
-                                {t.balance_pc ?? "-"}
+                              <TableCell className="text-right pr-6 bg-blue-50/20 text-gray-800 font-bold py-2">
+                                {formatCellValue(t.balance_sqft)}
                               </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
                             <td
-                              colSpan={12}
+                              colSpan={8}
                               className="text-center py-12 text-gray-500 font-medium"
                             >
                               No transaction history found for the selected criteria
@@ -869,17 +803,17 @@ const SingleItemStockReport = () => {
                         {normalizedTxs.length > 0 && (
                           <TableRow className="bg-slate-900 text-white hover:bg-slate-900 font-bold text-xs">
                             <TableCell className="text-center py-2.5">
-                              {lastTxDate ? moment(lastTxDate).format("DD MMM YYYY") : ""}
+                              {lastTxDate ? moment(lastTxDate).format("DD MMMM YYYY") : ""}
                             </TableCell>
                             <TableCell className="text-left pl-3 py-2.5">
-                              FINAL CLOSING BALANCE
+                              Closing: {formatClosingBalanceText(closingPieces, closingSqft)}
                             </TableCell>
-                            <TableCell colSpan={8} className="py-2.5"></TableCell>
-                            <TableCell className="text-center border-r border-slate-800 py-2.5">
-                              {closingBox}
+                            <TableCell colSpan={4} className="py-2.5"></TableCell>
+                            <TableCell className="text-right pr-6 border-r border-slate-800 py-2.5">
+                              {closingPieces}
                             </TableCell>
-                            <TableCell className="text-center py-2.5">
-                              {closingPc}
+                            <TableCell className="text-right pr-6 py-2.5">
+                              {closingSqft}
                             </TableCell>
                           </TableRow>
                         )}
