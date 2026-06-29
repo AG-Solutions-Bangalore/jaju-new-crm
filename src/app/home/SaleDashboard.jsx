@@ -29,6 +29,99 @@ import moment from "moment";
 import { ButtonConfig } from "@/config/ButtonConfig";
 import { useNavigate } from "react-router-dom";
 
+// Helper Circular Progress Component
+const CircularProgress = ({ percentage, label, color }) => {
+  const radius = 35;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  const colorMap = {
+    green: "text-[#2e7d32] stroke-[#2e7d32] stroke-emerald-500 text-emerald-500", 
+    indigo: "text-[#5c6bc0] stroke-[#5c6bc0] stroke-indigo-500 text-indigo-500", 
+    orange: "text-[#d84315] stroke-[#d84315] stroke-orange-500 text-orange-500" 
+  };
+
+  const strokeColor = colorMap[color] || colorMap.green;
+
+  return (
+    <Card className="flex flex-col items-center justify-center p-6 border border-gray-100 shadow-sm bg-white rounded-2xl hover:shadow-md transition-shadow">
+      <div className="relative flex items-center justify-center w-28 h-28">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
+          {/* Background Ring */}
+          <circle
+            cx="56"
+            cy="56"
+            r={radius}
+            strokeWidth="7"
+            stroke="#f3f4f6"
+            fill="transparent"
+          />
+          {/* Foreground Progress Ring */}
+          <circle
+            cx="56"
+            cy="56"
+            r={radius}
+            strokeWidth="7"
+            fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className={`${strokeColor} transition-all duration-700 ease-in-out`}
+            stroke="currentColor"
+          />
+        </svg>
+        <span className="absolute text-2xl font-bold text-gray-800">{percentage}%</span>
+      </div>
+      <span className="mt-4 text-sm font-semibold text-gray-600 tracking-wide">{label}</span>
+    </Card>
+  );
+};
+
+const restockAlertsData = [
+  {
+    id: 1,
+    name: "Cotton tote bags",
+    details: "8 left · reorder by Friday",
+    barColor: "bg-[#e28a96]",
+    textColor: "text-[#8c3b4a]"
+  },
+  {
+    id: 2,
+    name: "USB-C cables",
+    details: "15 left · reorder by Tuesday",
+    barColor: "bg-[#d9ad3d]",
+    textColor: "text-[#8f6a1e]"
+  },
+  {
+    id: 3,
+    name: "Ceramic mugs",
+    details: "22 left · reorder by next week",
+    barColor: "bg-[#d9ad3d]",
+    textColor: "text-[#8f6a1e]"
+  }
+];
+
+const warehouseCapacityData = [
+  {
+    id: 1,
+    name: "Warehouse A · Bengaluru",
+    capacity: 82,
+    barColor: "bg-[#d9ad3d]"
+  },
+  {
+    id: 2,
+    name: "Warehouse B · Mumbai",
+    capacity: 64,
+    barColor: "bg-[#56b394]"
+  },
+  {
+    id: 3,
+    name: "Warehouse C · Pune",
+    capacity: 91,
+    barColor: "bg-[#e25c5c]"
+  }
+];
+
 const SaleDashboard = () => {
   const navigate = useNavigate();
   // Fetch Sales Data
@@ -282,6 +375,53 @@ const SaleDashboard = () => {
               </div>
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-violet-100/30 to-transparent rounded-full -mr-8 -mt-8 pointer-events-none" />
             </CardContent>
+          </Card>
+        </div>
+
+        {/* Circular Progress Metrics Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <CircularProgress percentage={82} label="Stock health" color="green" />
+          <CircularProgress percentage={94} label="Order fulfillment" color="indigo" />
+          <CircularProgress percentage={76} label="Supplier reliability" color="orange" />
+        </div>
+
+        {/* Alerts and Warehouse Capacity Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Restock Alerts Card */}
+          <Card className="border border-gray-100 shadow-sm p-6 bg-white rounded-2xl">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Restock alerts</h2>
+            <div className="space-y-6">
+              {restockAlertsData.map((item) => (
+                <div key={item.id} className="flex gap-4 items-stretch">
+                  <div className={`w-[4px] rounded-full ${item.barColor}`} />
+                  <div className="space-y-1">
+                    <h4 className="text-base font-semibold text-gray-800">{item.name}</h4>
+                    <p className={`text-sm font-medium ${item.textColor}`}>{item.details}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Warehouse Capacity Card */}
+          <Card className="border border-gray-100 shadow-sm p-6 bg-white rounded-2xl">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Warehouse capacity</h2>
+            <div className="space-y-6">
+              {warehouseCapacityData.map((item) => (
+                <div key={item.id} className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-semibold text-gray-700">{item.name}</span>
+                    <span className="font-bold text-gray-700">{item.capacity}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.barColor} transition-all duration-500`}
+                      style={{ width: `${item.capacity}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </Card>
         </div>
 

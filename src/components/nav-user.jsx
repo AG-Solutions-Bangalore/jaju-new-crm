@@ -16,7 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
-import ChangePassword from "@/app/auth/ChangePassword";
+import ChangePassword from "@/module/auth/components/ChangePassword";
 import { useState } from "react";
 import Cookies from "js-cookie";
 
@@ -27,7 +27,7 @@ export function NavUser({ user }) {
   const navigate = useNavigate();
   const user_position = Cookies.get("email");
   const handleLogout = () => {
-    ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
+    ["token", "id", "name", "userType", "email"].forEach((cookie) => {
       Cookies.remove(cookie);
     });
     localStorage.clear();

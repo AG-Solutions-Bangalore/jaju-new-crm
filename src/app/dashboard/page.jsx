@@ -1,17 +1,6 @@
 import { AppBottombar } from "@/components/app-bottombar";
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Breadcrumbs } from "@/components/new/breadcrumbs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,14 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, ChevronsUpDown, Key, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import ChangePassword from "../auth/ChangePassword";
-import { useState } from "react";
-import logo from "../../assets/el.png"
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import Cookies from "js-cookie";
-import { Breadcrumbs } from "@/components/new/breadcrumbs";
-
+import { Key, LogOut } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ChangePassword from "@/module/auth/components/ChangePassword";
 
 // eslint-disable-next-line react/prop-types
 export default function Page({ children }) {
@@ -46,7 +38,7 @@ export default function Page({ children }) {
   };
 
   const handleLogout = () => {
-    ['token', 'id', 'name', 'userType', 'email'].forEach(cookie => {
+    ["token", "id", "name", "userType", "email"].forEach((cookie) => {
       Cookies.remove(cookie);
     });
     localStorage.clear();
@@ -61,7 +53,6 @@ export default function Page({ children }) {
     .join("")
     .toUpperCase();
 
-
   return (
     <SidebarProvider>
       {/* Desktop/Tablet Layout - Show sidebar normally */}
@@ -73,11 +64,11 @@ export default function Page({ children }) {
         {/* Header that appears on all screens */}
         <header className="hidden sm:flex flex-row justify-between h-16 shrink-0   items-center gap-2 transition-[width,height] ease-linear">
           <div className="flex items-center gap-2 px-4">
-
             <SidebarTrigger className="-ml-1 hover:bg-blue-100" />
-            <Separator orientation="vertical" className="mr-2 h-4 inline-block" />
-
-
+            <Separator
+              orientation="vertical"
+              className="mr-2 h-4 inline-block"
+            />
 
             {/* Breadcrumb visible on all screens */}
             {/* <Breadcrumb>
@@ -94,13 +85,9 @@ export default function Page({ children }) {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb> */}
-               <Breadcrumbs onBack={handleBackClick} />
+            <Breadcrumbs onBack={handleBackClick} />
           </div>
         </header>
-
-
-
-
 
         {/* Mobile header text - only shown on sm screens */}
 
@@ -121,7 +108,12 @@ export default function Page({ children }) {
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 rounded-xl border border-blue-200 shadow-lg" side="bottom" align="end" sideOffset={4}>
+            <DropdownMenuContent
+              className="w-56 rounded-xl border border-blue-200 shadow-lg"
+              side="bottom"
+              align="end"
+              sideOffset={4}
+            >
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 p-3 text-left text-sm bg-blue-50 rounded-t-xl">
                   <Avatar className="h-10 w-10 rounded-full border-2 border-blue-300">
@@ -131,8 +123,12 @@ export default function Page({ children }) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold text-blue-900">{nameL}</span>
-                    <span className="truncate text-xs text-blue-700">{emailL}</span>
+                    <span className="truncate font-semibold text-blue-900">
+                      {nameL}
+                    </span>
+                    <span className="truncate text-xs text-blue-700">
+                      {emailL}
+                    </span>
                     <span className="text-xs text-green-600 font-medium mt-0.5 flex items-center">
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
                       Online
@@ -142,26 +138,23 @@ export default function Page({ children }) {
               </DropdownMenuLabel>
 
               <DropdownMenuSeparator className="bg-blue-200" />
-              <DropdownMenuItem className="hover:bg-blue-100 focus:bg-blue-100 rounded-md my-0.5 mx-1" onClick={() => setOpen(true)}>
+              <DropdownMenuItem
+                className="hover:bg-blue-100 focus:bg-blue-100 rounded-md my-0.5 mx-1"
+                onClick={() => setOpen(true)}
+              >
                 <Key className="mr-2 h-4 w-4 text-blue-700" />
                 <span className="cursor-pointer">Change Password</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-blue-100 focus:bg-blue-100 rounded-md my-0.5 mx-1" onClick={handleLogout}>
+              <DropdownMenuItem
+                className="hover:bg-blue-100 focus:bg-blue-100 rounded-md my-0.5 mx-1"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4 text-blue-700" />
                 <span className="cursor-pointer">Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-
-
-
-
-
-
-
-
 
         {/* Main content area - adjusted for mobile bottom nav */}
         <div className="flex flex-1 flex-col gap-4 p-0 md:p-4 pt-0">
