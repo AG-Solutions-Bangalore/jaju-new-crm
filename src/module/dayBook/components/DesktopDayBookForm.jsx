@@ -38,11 +38,15 @@ const DesktopDayBookForm = ({
   onSubmit,
   handleCancel,
   isSubmitting,
+  headerTitle = "Add Day Book",
+  buttonLabel = "Submit",
+  buttonLoadingLabel = "Submitting...",
 }) => {
   return (
     <div className="hidden sm:block">
       <DayBookHeader
         date={form.watch("payment_date")}
+        title={headerTitle}
         lastSaveTime={lastSaveTime}
         refreshDraftsTrigger={refreshDraftsTrigger}
         onSaveDraft={onSaveDraft}
@@ -195,7 +199,7 @@ const DesktopDayBookForm = ({
                   disabled={isSubmitting}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
                 >
-                  {isSubmitting ? "Submitting..." : "Submit"}
+                  {isSubmitting ? buttonLoadingLabel : buttonLabel}
                 </Button>
               </div>
             )}

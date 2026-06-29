@@ -21,3 +21,11 @@ export const downloadDayBookReport = (data) => {
     responseType: "blob",
   });
 };
+
+export const fetchDayBookById = (date) => {
+  return axiosInstance.get(`/api/web-fetch-daybook-paid-by-id-new/${date}`);
+};
+
+export const updateDaybook = (date, data) => {
+  return axiosInstance.put(`/api/web-update-daybook-paid-new/${date}`, data);
+};

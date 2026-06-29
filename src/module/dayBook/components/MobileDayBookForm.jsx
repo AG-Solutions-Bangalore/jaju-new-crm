@@ -35,11 +35,15 @@ const MobileDayBookForm = ({
   onSubmit,
   handleCancel,
   isSubmitting,
+  headerTitle = "Add Day Book",
+  buttonLabel = "Save",
+  buttonLoadingLabel = "Saving...",
 }) => {
   return (
     <div className="sm:hidden">
       <DayBookHeader
         date={form.watch("payment_date")}
+        title={headerTitle}
         lastSaveTime={lastSaveTime}
         refreshDraftsTrigger={refreshDraftsTrigger}
         onSaveDraft={onSaveDraft}
@@ -182,7 +186,7 @@ const MobileDayBookForm = ({
             disabled={isSubmitting}
             className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-xs h-9"
           >
-            {isSubmitting ? "Saving..." : "Save"}
+            {isSubmitting ? buttonLoadingLabel : buttonLabel}
           </Button>
         </div>
       )}

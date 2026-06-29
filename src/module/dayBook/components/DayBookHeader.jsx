@@ -11,6 +11,7 @@ import LoadDraft from "@/components/common/LoadDraft";
 
 const DayBookHeader = ({
   date,
+  title = "Add Day Book",
   lastSaveTime,
   refreshDraftsTrigger,
   onSaveDraft,
@@ -26,7 +27,7 @@ const DayBookHeader = ({
       <div className="sticky top-0 z-10 border border-gray-200 rounded-lg bg-blue-50 shadow-sm p-2 mb-2">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-base font-bold text-gray-800">
-            Add Day Book - {formattedDate}
+            {title} - {formattedDate}
           </h1>
           <div className="flex flex-col md:flex-row space-x-2 items-end md:items-center">
             <LoadDraft
@@ -72,7 +73,7 @@ const DayBookHeader = ({
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Add Day Book</CardTitle>
+            <CardTitle>{title}</CardTitle>
             <p className="text-sm text-gray-500">{formattedDate}</p>
           </div>
           <div className="flex items-center space-x-2">
