@@ -457,12 +457,13 @@ const DesktopSalesForm = ({
                 <div className="flex items-center justify-between gap-2">
                   <Label className="font-medium">Net Total</Label>
                   <Input
-                    className="w-[150px] text-right font-medium shrink-0 bg-white"
+                    className="w-[150px] text-right font-medium shrink-0 bg-gray-100"
                     type="tel"
                     {...form.register("sales_temp_amount")}
                     onKeyDown={handleKeyDown}
                     maxLength={10}
                     placeholder="0"
+                    readOnly
                   />
                 </div>
 

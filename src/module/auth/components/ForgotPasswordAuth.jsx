@@ -6,35 +6,54 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ButtonConfig } from "@/config/ButtonConfig";
-import { useLogin } from "@/module/auth/hooks/useAuth";
+import { useForgotPassword } from "@/module/auth/hooks/useAuth";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
 
-export default function LoginAuth() {
-  const navigate = useNavigate();
+export default function ForgotPasswordAuth() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
-  const loginMutation = useLogin();
-  const isLoading = loginMutation.isPending;
+  const forgotMutation = useForgotPassword({
+    onSuccess: () => {
+      navigate("/");
+    },
+  });
 
+  const isLoading = forgotMutation.isPending;
+
+  const [loadingMessage, setLoadingMessage] = useState("");
   const loadingMessages = [
-    "Setting things up for you...",
-    "Checking your credentials...",
-    "Preparing your dashboard...",
+    "Verifying your details...",
+    "Sending password...",
     "Almost there...",
   ];
 
+  useEffect(() => {
+    let messageIndex = 0;
+    let intervalId;
+
+    if (isLoading) {
+      setLoadingMessage(loadingMessages[0]);
+      intervalId = setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[messageIndex]);
+      }, 800);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isLoading]);
+
   const handleSubmit = (event) => {
     event.preventDefault();
-    loginMutation.mutate({ username: email, password });
+    forgotMutation.mutate({ username, email });
   };
 
   return (
@@ -59,7 +78,7 @@ export default function LoginAuth() {
             <CardTitle
               className={`text-2xl text-center${ButtonConfig.loginText}`}
             >
-              JaJu Flooring
+              Forgot Password
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -67,7 +86,7 @@ export default function LoginAuth() {
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label
-                    htmlFor="email"
+                    htmlFor="username"
                     className={`${ButtonConfig.loginText}`}
                   >
                     Username
@@ -78,11 +97,11 @@ export default function LoginAuth() {
                     transition={{ delay: 0.2 }}
                   >
                     <Input
-                      id="email"
+                      id="username"
                       type="text"
                       placeholder="Enter your username"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       minLength={1}
                       maxLength={50}
                       required
@@ -92,41 +111,26 @@ export default function LoginAuth() {
 
                 <div className="grid gap-2">
                   <Label
-                    htmlFor="password"
+                    htmlFor="email"
                     className={`${ButtonConfig.loginText}`}
                   >
-                    Password
+                    Email
                   </Label>
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="*******"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={1}
-                        maxLength={16}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
-                      </button>
-                    </div>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      minLength={1}
+                      maxLength={50}
+                    />
                   </motion.div>
                 </div>
 
@@ -147,10 +151,10 @@ export default function LoginAuth() {
                         exit={{ opacity: 0, y: -10 }}
                         className="text-sm"
                       >
-                        Signing in...
+                        {loadingMessage}
                       </motion.span>
                     ) : (
-                      "Sign in"
+                      "Reset Password"
                     )}
                   </Button>
                 </motion.div>
@@ -159,11 +163,9 @@ export default function LoginAuth() {
             <CardDescription
               className={`flex justify-end mt-4 underline ${ButtonConfig.loginText}`}
             >
-              <span
-                onClick={() => navigate("/forgot-password")}
-                className="cursor-pointer"
-              >
-                Forgot Password
+              <span onClick={() => navigate("/")} className="cursor-pointer">
+                {" "}
+                Sign In
               </span>
             </CardDescription>
           </CardContent>

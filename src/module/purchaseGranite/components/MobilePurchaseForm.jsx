@@ -396,9 +396,10 @@ const MobilePurchaseForm = ({
                 type="tel"
                 {...form.register("purchase_temp_amount")}
                 onKeyDown={handleKeyDown}
-                className="mt-1 text-right font-medium bg-white"
+                className="mt-1 text-right font-medium bg-gray-100"
                 maxLength={10}
                 placeholder="0"
+                readOnly
               />
             </div>
 

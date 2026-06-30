@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { loginApi, changePasswordApi } from "../api/auth";
+import { loginApi, changePasswordApi, forgotPasswordApi } from "../api/auth";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +72,37 @@ export const useChangePassword = ({ onSuccess } = {}) => {
         title: "Error",
         description:
           error.response?.data?.message || "Failed to change password",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useForgotPassword = ({ onSuccess } = {}) => {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: forgotPasswordApi,
+    onSuccess: (res) => {
+      if (res?.data?.code === 200) {
+        toast({
+          title: "Success",
+          description: res.data.msg || "Password sent successfully.",
+        });
+        onSuccess?.();
+      } else {
+        toast({
+          title: "Error",
+          description: res.data?.msg || "Unexpected response from server.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message || "Failed to send password reset request.",
         variant: "destructive",
       });
     },
